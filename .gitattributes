@@ -1,0 +1,2 @@
+engine/thirdparty/**/*.dll filter=lfs diff=lfs merge=lfs -text
+engine/thirdparty/**/*.lib filter=lfs diff=lfs merge=lfs -text
