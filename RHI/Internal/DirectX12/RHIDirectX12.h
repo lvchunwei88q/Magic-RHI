@@ -25,10 +25,15 @@ namespace RHI
         
         const D3D_FEATURE_LEVEL& GetFeatureLevel() const { return m_FeatureLevel; }
         ID3D12Device* GetDevice() const { return m_pDevice.Get(); }
+        ID3D12CommandQueue* GetCommandQueue() const { return m_pCommandQueue.Get(); }
+        IDXGIAdapter1* GetAdapter() const { return m_pAdapter.Get(); }
 
     private:
         ComPtr<ID3D12Device> m_pDevice;
         std::wstring m_AdapterName;
         D3D_FEATURE_LEVEL m_FeatureLevel;
+        
+        ComPtr<IDXGIAdapter1> m_pAdapter; // GPU
+        ComPtr<ID3D12CommandQueue> m_pCommandQueue;
     };
 }

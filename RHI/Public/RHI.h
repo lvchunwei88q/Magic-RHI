@@ -13,6 +13,15 @@ namespace RHI
         DirectX12
     };
 
+    struct SwapChainDesc
+    {
+        void* WindowHandle;
+        uint32_t Width;
+        uint32_t Height;
+        uint32_t BufferCount = 2;
+        bool VSync = false;
+    };
+
     class RHI_API Device
     {
     public:
@@ -26,5 +35,20 @@ namespace RHI
         virtual const std::wstring& GetAdapterName() const = 0;
 
         static std::unique_ptr<Device> Create(RHIType type);
+    };
+
+    class RHI_API SwapChain
+    {
+    public:
+        virtual ~SwapChain() = default;
+
+        virtual bool Initialize(Device* device, const SwapChainDesc& desc) = 0;
+        virtual void Shutdown() = 0;
+
+        virtual bool IsValid() const = 0;
+        virtual void Present() = 0;
+        virtual void Resize(uint32_t width, uint32_t height) = 0;
+
+        static std::unique_ptr<SwapChain> Create(RHIType type);
     };
 }

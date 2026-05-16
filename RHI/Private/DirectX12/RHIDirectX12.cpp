@@ -103,14 +103,13 @@ namespace RHI
 
         ComPtr<IDXGIFactory4> factory;
         ThrowIfFailed(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)));
+        GetHardwareAdapter(factory.Get(), &m_pAdapter);
         
-        ComPtr<IDXGIAdapter1> hardwareAdapter;
-        GetHardwareAdapter(factory.Get(), &hardwareAdapter);
-        
-        if (hardwareAdapter) {
+        if (m_pAdapter) {
             DXGI_ADAPTER_DESC1 desc;
-            hardwareAdapter->GetDesc1(&desc);
+            m_pAdapter->GetDesc1(&desc);
             m_AdapterName = desc.Description;  // copy
+            
         } else {
             m_AdapterName = L"Unknown Adapter";
         }
@@ -124,12 +123,18 @@ namespace RHI
         };
         
         for (auto level : featureLevels) {
-            if (SUCCEEDED(D3D12CreateDevice(hardwareAdapter.Get(), level, 
+            if (SUCCEEDED(D3D12CreateDevice(m_pAdapter.Get(), level, 
                                              IID_PPV_ARGS(&m_pDevice)))) {
                 m_FeatureLevel = level;
                 break;
             }
         }
+        
+        D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+        queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+    
+        ThrowIfFailed(m_pDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_pCommandQueue)));
 
 #ifdef _DEBUG
         ComPtr<ID3D12InfoQueue> infoQueue;
@@ -145,6 +150,7 @@ namespace RHI
     void RHIDirectX12::Shutdown()
     {
         m_pDevice.Reset();
+        m_pCommandQueue.Reset();
     }
 
     bool RHIDirectX12::IsValid() const
