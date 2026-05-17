@@ -51,8 +51,10 @@ namespace RHI
             swapChain1.GetAddressOf()
         ));
 
+#if RHI_SWAP_CHAIN_CLOSE_FULL_SCREEN
         // This RHI does not support fullscreen transitions.
         ThrowIfFailed(factory->MakeWindowAssociation(static_cast<HWND>(desc.WindowHandle), DXGI_MWA_NO_ALT_ENTER));
+#endif
 
         ThrowIfFailed(swapChain1.As(&m_pSwapChain));
         m_frameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
