@@ -5,6 +5,10 @@
 #include <memory>
 #include <string>
 
+#ifndef RHI_SWAP_CHAIN_CLOSE_FULL_SCREEN
+#define RHI_SWAP_CHAIN_CLOSE_FULL_SCREEN 1
+#endif
+
 namespace RHI
 {
     enum class RHIType

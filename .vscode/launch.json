@@ -9,7 +9,7 @@
             "type":"lldb",
             "request": "launch",
             "program": "${workspaceRoot}/out/bin/RHIDx11AndDx12.exe",
-            "args": [],
+            "args": ["dx12"],
             "cwd": "${workspaceRoot}"
         }
     ]
