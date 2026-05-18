@@ -1,5 +1,5 @@
-#include <DirectX12/RHIDirectX12.h>
-#include <DirectXHelper.h>
+#include "DirectX12/RHIDirectX12.h"
+#include "DirectXHelper.h"
 
 namespace RHI
 {
