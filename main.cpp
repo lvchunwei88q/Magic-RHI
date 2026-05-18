@@ -73,7 +73,6 @@ int main(int argc, char* argv[])
         swapChainDesc.WindowHandle = hwnd;
         swapChainDesc.Width = 800;
         swapChainDesc.Height = 600;
-        swapChainDesc.BufferCount = 2;
         swapChainDesc.VSync = false;
         
         auto swapChain = RHI::SwapChain::Create(type);

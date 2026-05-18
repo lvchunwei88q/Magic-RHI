@@ -34,9 +34,8 @@ namespace RHI
 
         ComPtr<IDXGISwapChain3> m_pSwapChain;
         ComPtr<ID3D12DescriptorHeap> m_pRtvHeap;
-        ComPtr<ID3D12Resource> m_pRenderTargets[2];
+        ComPtr<ID3D12Resource> m_pRenderTargets[RHI_MULTI_BUFFERING];
 
-        uint32_t m_rtvDescriptorSize;
         uint32_t m_frameIndex;
         SwapChainDesc m_desc;
     };

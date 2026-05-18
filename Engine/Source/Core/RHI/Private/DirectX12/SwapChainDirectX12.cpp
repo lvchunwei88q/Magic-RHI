@@ -6,8 +6,7 @@
 namespace RHI
 {
     SwapChainDirectX12::SwapChainDirectX12()
-        : m_rtvDescriptorSize(0)
-        , m_frameIndex(0)
+        : m_frameIndex(0)
     {
     }
 
@@ -32,7 +31,7 @@ namespace RHI
         ThrowIfFailed(pAdapter->GetParent(IID_PPV_ARGS(&factory)));
 
         DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-        swapChainDesc.BufferCount = desc.BufferCount;
+        swapChainDesc.BufferCount = RHI_MULTI_BUFFERING;
         swapChainDesc.Width = desc.Width;
         swapChainDesc.Height = desc.Height;
         swapChainDesc.Format = DXGI_RTV_FORMAT;
@@ -60,13 +59,11 @@ namespace RHI
         m_frameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
 
         D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-        rtvHeapDesc.NumDescriptors = desc.BufferCount;
+        rtvHeapDesc.NumDescriptors = RHI_MULTI_BUFFERING;
         rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
         rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
         ThrowIfFailed(m_pRHI->GetDevice()->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(m_pRtvHeap.GetAddressOf())));
-
-        m_rtvDescriptorSize = m_pRHI->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
         CreateRTVs();
 
@@ -75,21 +72,23 @@ namespace RHI
 
     void SwapChainDirectX12::CreateRTVs()
     {
+        ComPtr<ID3D12Device> dx12Device;
+        ThrowIfFailed(m_pSwapChain->GetDevice(IID_PPV_ARGS(&dx12Device)));
+        
+        UINT rtvDescriptorSize = dx12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
         CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_pRtvHeap->GetCPUDescriptorHandleForHeapStart());
-
-        for (UINT n = 0; n < m_desc.BufferCount; n++)
+        
+        for (UINT n = 0; n < RHI_MULTI_BUFFERING; n++)
         {
             ThrowIfFailed(m_pSwapChain->GetBuffer(n, IID_PPV_ARGS(m_pRenderTargets[n].GetAddressOf())));
-            ComPtr<ID3D12Device> dx12Device;
-            ThrowIfFailed(m_pSwapChain->GetDevice(IID_PPV_ARGS(&dx12Device)));
             dx12Device->CreateRenderTargetView(m_pRenderTargets[n].Get(), nullptr, rtvHandle);
-            rtvHandle.Offset(1, m_rtvDescriptorSize);
+            rtvHandle.Offset(1, rtvDescriptorSize);
         }
     }
 
     void SwapChainDirectX12::Shutdown()
     {
-        for (UINT n = 0; n < m_desc.BufferCount; n++)
+        for (UINT n = 0; n < RHI_MULTI_BUFFERING; n++)
         {
             m_pRenderTargets[n].Reset();
         }
@@ -113,13 +112,13 @@ namespace RHI
         m_desc.Width = width;
         m_desc.Height = height;
 
-        for (UINT n = 0; n < m_desc.BufferCount; n++)
+        for (UINT n = 0; n < RHI_MULTI_BUFFERING; n++)
         {
             m_pRenderTargets[n].Reset();
         }
 
         ThrowIfFailed(m_pSwapChain->ResizeBuffers(
-            m_desc.BufferCount,
+            RHI_MULTI_BUFFERING,
             width,
             height,
             DXGI_RTV_FORMAT,

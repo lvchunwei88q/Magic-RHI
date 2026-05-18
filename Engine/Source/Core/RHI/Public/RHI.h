@@ -25,6 +25,10 @@
 #define RHI_DESCRIPTOR_HEAP_SIZE_DEPTH_STENCIL 32
 #endif
 
+#ifndef RHI_MULTI_BUFFERING
+#define RHI_MULTI_BUFFERING 2
+#endif
+
 namespace RHI
 {
     // forward declarations
@@ -42,7 +46,6 @@ namespace RHI
         void* WindowHandle;
         uint32_t Width;
         uint32_t Height;
-        uint32_t BufferCount = 2;
         bool VSync = false;
     };
 

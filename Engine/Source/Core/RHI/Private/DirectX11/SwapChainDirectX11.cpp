@@ -34,7 +34,7 @@ namespace RHI
         ThrowIfFailed(adapter->GetParent(IID_PPV_ARGS(&factory)));
 
         DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
-        swapChainDesc.BufferCount = desc.BufferCount;
+        swapChainDesc.BufferCount = RHI_MULTI_BUFFERING;
         swapChainDesc.BufferDesc.Width = desc.Width;
         swapChainDesc.BufferDesc.Height = desc.Height;
         swapChainDesc.BufferDesc.Format = DXGI_RTV_FORMAT;
@@ -106,7 +106,7 @@ namespace RHI
         m_pRenderTargetView.Reset();
 
         ThrowIfFailed(m_pSwapChain->ResizeBuffers(
-            m_desc.BufferCount,
+            0,          // 0: Remain unchanged
             width,
             height,
             DXGI_RTV_FORMAT,
