@@ -11,7 +11,7 @@ using Microsoft::WRL::ComPtr;
 namespace RHI
 {
     class RHIDirectX12;
-
+    
     class SwapChainDirectX12 : public SwapChain
     {
     public:

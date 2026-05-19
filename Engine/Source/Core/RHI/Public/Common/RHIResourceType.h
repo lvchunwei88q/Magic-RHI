@@ -92,4 +92,43 @@ enum class SamplerComparisonFunc : uint8_t
 	Always
 };
 
+/**
+* 缓冲区堆类型
+* 决定缓冲区的内存位置和 CPU/GPU 访问权限
+*/
+enum class BufferHeapType : uint8_t
+{
+	/**
+	* Default 堆（GPU 本地显存）
+	* 
+	* CPU 访问：不可访问
+	* GPU 访问：读写
+	*/
+	Default,
+	
+	/**
+	* Upload 堆（CPU 上传）
+	* 
+	* CPU 访问：可写入
+	* GPU 访问：可读取
+	*/
+	Upload,
+	
+	/**
+	* Readback 堆（CPU 回读）
+	* 
+	* CPU 访问：可读写
+	* GPU 访问：只写（或作为拷贝目标）
+	*/
+	Readback
+};
+
+/* Command List Type */
+enum class RHICmdListType : uint8_t
+{
+	Graphics,
+	Compute,
+	Copy
+};
+
 }

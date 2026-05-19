@@ -1,11 +1,33 @@
 #include "DirectX11/RHIDirectX11.h"
 #include "DirectX11/RHIResourceDirectX11.h"
-#include "DirectXHelper.h"
 
 namespace RHI
 {
     namespace
     {
+        // D3D11 转换
+        D3D11_USAGE ToD3D11Usage(BufferHeapType type)
+        {
+            switch (type)
+            {
+            case BufferHeapType::Default:  return D3D11_USAGE_DEFAULT;
+            case BufferHeapType::Upload:   return D3D11_USAGE_DYNAMIC;
+            case BufferHeapType::Readback: return D3D11_USAGE_STAGING;
+            default:                       return D3D11_USAGE_DEFAULT;
+            }
+        }
+
+        UINT ToD3D11CPUAccessFlags(BufferHeapType type)
+        {
+            switch (type)
+            {
+            case BufferHeapType::Default:  return 0;
+            case BufferHeapType::Upload:   return D3D11_CPU_ACCESS_WRITE;
+            case BufferHeapType::Readback: return D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+            default:                       return 0;
+            }
+        }
+
         D3D11_FILTER ConvertFilter(SamplerFilter filter)
         {
             switch (filter)
@@ -94,5 +116,42 @@ namespace RHI
     void RHIDirectX11::DeleteSamplerState(std::shared_ptr<RHI::RHISamplerState>& samplerState)
     {
         samplerState.reset();
+    }
+
+    std::shared_ptr<RHIBuffer> RHIDirectX11::CreateBuffer(const BufferDesc& desc)
+    {
+        D3D11_BUFFER_DESC bufferDesc = {};
+        bufferDesc.ByteWidth = static_cast<UINT>(desc.SizeInBytes);
+        bufferDesc.MiscFlags = 0;
+        bufferDesc.StructureByteStride = desc.Stride;
+        bufferDesc.Usage = ToD3D11Usage(desc.HeapType);
+        bufferDesc.CPUAccessFlags = ToD3D11CPUAccessFlags(desc.HeapType);
+
+        D3D11_SUBRESOURCE_DATA initData = {};
+        initData.pSysMem = desc.InitialData;
+
+        ComPtr<ID3D11Buffer> pBuffer;
+        if (desc.InitialData != nullptr)
+        {
+            ThrowIfFailed(m_pDevice->CreateBuffer(&bufferDesc, &initData, pBuffer.GetAddressOf()));
+        }
+#if RHI_ENABLE_RESOURCE_INFO
+        else if(desc.InitialData == nullptr)
+            ThrowIfFailed("Creating D3D11_HEAP_TYPE_DEFAULT requires providing heap data");
+#endif
+        else
+        {
+            ThrowIfFailed(m_pDevice->CreateBuffer(&bufferDesc, nullptr, pBuffer.GetAddressOf()));
+        }
+
+        auto buffer = std::make_shared<BufferDirectX11>(pBuffer.Get(), desc);
+        buffer->SetDeviceContext(m_pDeviceContext.Get());
+
+        return buffer;
+    }
+
+    void RHIDirectX11::DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer)
+    {
+        buffer.reset();
     }
 }

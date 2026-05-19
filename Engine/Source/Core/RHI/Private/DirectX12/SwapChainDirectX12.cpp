@@ -1,5 +1,9 @@
-#include "DirectX12/SwapChainDirectX12.h"
+/*
+ * 因为使用到了前向声明所以需要先引入声明定义
+ */
+#include "DirectX12/RHIResourceDirectX12.h"
 #include "DirectX12/RHIDirectX12.h"
+#include "DirectX12/SwapChainDirectX12.h"
 #include "DirectXHelper.h"
 #include "DirectXConfig.h"
 
@@ -42,7 +46,7 @@ namespace RHI
 
         ComPtr<IDXGISwapChain1> swapChain1;
         ThrowIfFailed(factory->CreateSwapChainForHwnd(
-            m_pRHI->GetCommandQueue(),
+            static_cast<GraphicsCommandQueueDirectX12*>(m_pRHI->GetCommandQueue(RHICmdListType::Compute).get())->GetCommandQueue(),
             static_cast<HWND>(desc.WindowHandle),
             &swapChainDesc,
             nullptr,

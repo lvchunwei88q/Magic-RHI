@@ -33,4 +33,9 @@ namespace RHI
             throw HrException(hr);
         }
     }
+
+    inline void ThrowIfFailed(const char* message)
+    {
+        throw std::runtime_error(message);
+    }
 }

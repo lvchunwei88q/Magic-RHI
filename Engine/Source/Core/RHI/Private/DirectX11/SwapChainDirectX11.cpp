@@ -1,3 +1,6 @@
+/*
+* 因为使用到了前向声明所以需要先引入声明定义
+ */
 #include "DirectX11/SwapChainDirectX11.h"
 #include "DirectX11/RHIDirectX11.h"
 #include "DirectXHelper.h"

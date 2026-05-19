@@ -1,11 +1,36 @@
-#include "DirectX12/RHIDirectX12.h"
+/*
+ * 因为使用到了前向声明所以需要先引入声明定义
+ */
 #include "DirectX12/RHIResourceDirectX12.h"
-#include "DirectXHelper.h"
+#include "DirectX12/RHIDirectX12.h"
 
 namespace RHI
 {
     namespace
     {
+        // D3D12 转换
+        D3D12_HEAP_TYPE ToD3D12HeapType(BufferHeapType type)
+        {
+            switch (type)
+            {
+            case BufferHeapType::Default:  return D3D12_HEAP_TYPE_DEFAULT;
+            case BufferHeapType::Upload:   return D3D12_HEAP_TYPE_UPLOAD;
+            case BufferHeapType::Readback: return D3D12_HEAP_TYPE_READBACK;
+            default:                       return D3D12_HEAP_TYPE_DEFAULT;
+            }
+        }
+
+        D3D12_RESOURCE_STATES ToD3D12InitialState(BufferHeapType type)
+        {
+            switch (type)
+            {
+            case BufferHeapType::Default:  return D3D12_RESOURCE_STATE_COMMON;
+            case BufferHeapType::Upload:   return D3D12_RESOURCE_STATE_GENERIC_READ;
+            case BufferHeapType::Readback: return D3D12_RESOURCE_STATE_COPY_DEST;
+            default:                       return D3D12_RESOURCE_STATE_COMMON;
+            }
+        }
+
         D3D12_FILTER ConvertFilter(SamplerFilter filter)
         {
             switch (filter)
@@ -99,5 +124,140 @@ namespace RHI
     {
         m_SamplerHeapAllocator.Free(samplerState->GetBindlessHandle().GetIndex());
         samplerState.reset();
+    }
+
+    std::shared_ptr<RHIBuffer> RHIDirectX12::CreateBuffer(const BufferDesc& desc)
+    {
+        D3D12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(ToD3D12HeapType(desc.HeapType));
+        D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(desc.SizeInBytes, D3D12_RESOURCE_FLAG_NONE);
+
+        ComPtr<ID3D12Resource> pResource;
+        ThrowIfFailed(m_pDevice->CreateCommittedResource(
+            &heapProperties,
+            D3D12_HEAP_FLAG_NONE,                 // 无标志 不优化
+            &resourceDesc,
+            ToD3D12InitialState(desc.HeapType),
+            nullptr,
+            IID_PPV_ARGS(&pResource)));
+
+        if(desc.HeapType == BufferHeapType::Default && desc.InitialData != nullptr){ // 需要Copy数据到Default堆
+            // create Upload heap
+            D3D12_HEAP_PROPERTIES uploadHeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+            ComPtr<ID3D12Resource> pUploadBuffer;
+            
+            ThrowIfFailed(m_pDevice->CreateCommittedResource(
+                &uploadHeapProps,
+                D3D12_HEAP_FLAG_NONE,
+                &resourceDesc,
+                D3D12_RESOURCE_STATE_GENERIC_READ,
+                nullptr,
+                IID_PPV_ARGS(&pUploadBuffer)));
+            
+            // initial data to Upload heap
+            void* pData;
+            ThrowIfFailed(pUploadBuffer->Map(0, nullptr, &pData));
+            memcpy(pData, desc.InitialData, desc.SizeInBytes);
+            pUploadBuffer->Unmap(0, nullptr);
+            
+            //TODO Upload to Default heap
+            auto cmdList = CreateCommandList(RHICmdListType::Copy);
+            cmdList->BeginRecording();
+            
+            // TODO ...
+            
+            cmdList->EndRecording();
+            
+            // run command list
+            m_CopyQueue.get()->ExecuteCommandLists({cmdList});
+            m_CopyQueue.get()->WaitForIdle();
+            
+            // return buffer
+            return std::make_shared<BufferDirectX12>(pResource.Get(), desc, m_pDevice.Get());
+        }
+#if RHI_ENABLE_RESOURCE_INFO
+        else if(desc.InitialData == nullptr) 
+            ThrowIfFailed("Creating D3D12_HEAP_TYPE_DEFAULT requires providing heap data");
+#endif
+
+        return std::make_shared<BufferDirectX12>(pResource.Get(), desc, m_pDevice.Get());
+    }
+
+    void RHIDirectX12::DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer)
+    {
+        buffer.reset();
+    }
+
+    void GraphicsCommandListDirectX12::BeginRecording()
+    {
+        ThrowIfFailed(m_pCommandAllocator->Reset());
+        ThrowIfFailed(m_pCommandList->Reset(m_pCommandAllocator.Get(), nullptr));
+    }
+
+    void GraphicsCommandListDirectX12::EndRecording()
+    {
+        ThrowIfFailed(m_pCommandList->Close());
+    }
+
+    void GraphicsCommandQueueDirectX12::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists)
+    {
+        std::vector<ID3D12CommandList*> d3dCmdLists;
+        d3dCmdLists.reserve(cmdLists.size());
+        
+        for (const auto& cmdList : cmdLists)
+        {
+            auto dx12CmdList = std::static_pointer_cast<GraphicsCommandListDirectX12>(cmdList);
+            d3dCmdLists.push_back(dx12CmdList->GetCommandList());
+        }
+        
+        m_pCommandQueue->ExecuteCommandLists((UINT)d3dCmdLists.size(), d3dCmdLists.data());
+    }
+
+    void GraphicsCommandQueueDirectX12::WaitForIdle()
+    {
+        UINT64 fenceValue = ++m_FenceValue;
+        ThrowIfFailed(m_pCommandQueue->Signal(m_Fence.Get(), fenceValue));
+        
+        if (m_Fence->GetCompletedValue() < fenceValue)
+        {
+            HANDLE eventHandle = CreateEventEx(nullptr, nullptr, 0, EVENT_ALL_ACCESS);
+            ThrowIfFailed(m_Fence->SetEventOnCompletion(fenceValue, eventHandle));
+            WaitForSingleObject(eventHandle, INFINITE);
+            CloseHandle(eventHandle);
+        }
+    }
+
+    uint64_t GraphicsCommandQueueDirectX12::Signal()
+    {
+        if (!m_Fence)
+        {
+            ThrowIfFailed(GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)));
+        }
+        
+        UINT64 fenceValue = ++m_FenceValue;
+        ThrowIfFailed(m_pCommandQueue->Signal(m_Fence.Get(), fenceValue));
+        return fenceValue;
+    }
+
+    bool GraphicsCommandQueueDirectX12::GetTimestampFrequency(uint64_t* frequency)
+    {
+        return SUCCEEDED(m_pCommandQueue->GetTimestampFrequency(frequency));
+    }
+
+    bool GraphicsCommandQueueDirectX12::SetEventOnCompletion(uint64_t fenceValue, void* hEvent)
+    {
+        if (!m_Fence)
+        {
+            ThrowIfFailed(GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)));
+        }
+        return SUCCEEDED(m_Fence->SetEventOnCompletion(fenceValue, (HANDLE)hEvent));
+    }
+
+    uint64_t GraphicsCommandQueueDirectX12::GetCompletedValue() const
+    {
+        if (m_Fence)
+        {
+            return m_Fence->GetCompletedValue();
+        }
+        return 0;
     }
 }

@@ -1,5 +1,8 @@
-#include "DirectX12/RHIDirectX12.h"
+/*
+* 因为使用到了前向声明所以需要先引入声明定义
+ */
 #include "DirectX12/RHIResourceDirectX12.h"
+#include "DirectX12/RHIDirectX12.h"
 #include "DirectXHelper.h"
 
 namespace RHI
@@ -131,11 +134,7 @@ namespace RHI
             }
         }
         
-        D3D12_COMMAND_QUEUE_DESC queueDesc = {};
-        queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-        queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-    
-        ThrowIfFailed(m_pDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&m_pCommandQueue)));
+        CreateQueues(); // 创建队列
 
         m_StandardDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         m_SamplerDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
@@ -185,8 +184,54 @@ namespace RHI
         m_pRTVHeap.Reset();
         m_pSamplerHeap.Reset();
         m_pStandardHeap.Reset();
-        m_pCommandQueue.Reset();
+        m_GraphicsQueue.reset();
+        m_ComputeQueue.reset();
+        m_CopyQueue.reset();
         m_pDevice.Reset();
+    }
+
+    void RHIDirectX12::CreateQueues()
+    {
+        ComPtr<ID3D12CommandQueue> pGraphicsQueue;
+        ComPtr<ID3D12CommandQueue> pComputeQueue;
+        ComPtr<ID3D12CommandQueue> pCopyQueue;
+
+        // 图形队列（DIRECT）- 全能型，执行所有命令
+        D3D12_COMMAND_QUEUE_DESC graphicsQueueDesc = {};
+        graphicsQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        graphicsQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+        graphicsQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+        ThrowIfFailed(m_pDevice->CreateCommandQueue(&graphicsQueueDesc, IID_PPV_ARGS(&pGraphicsQueue)));
+
+        // 计算队列（COMPUTE）- 只执行计算和拷贝命令
+        D3D12_COMMAND_QUEUE_DESC computeQueueDesc = {};
+        computeQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        computeQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
+        computeQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+        ThrowIfFailed(m_pDevice->CreateCommandQueue(&computeQueueDesc, IID_PPV_ARGS(&pComputeQueue)));
+
+        // 拷贝队列（COPY）- 只执行拷贝命令
+        D3D12_COMMAND_QUEUE_DESC copyQueueDesc = {};
+        copyQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        copyQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
+        copyQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+        ThrowIfFailed(m_pDevice->CreateCommandQueue(&copyQueueDesc, IID_PPV_ARGS(&pCopyQueue)));
+
+        m_GraphicsQueue = std::make_shared<GraphicsCommandQueueDirectX12>(
+            RHICmdListType::Graphics, 
+            pGraphicsQueue.Get(),
+            m_pDevice.Get()
+        );
+        m_ComputeQueue = std::make_shared<ComputeCommandQueueDirectX12>(
+            RHICmdListType::Compute, 
+            pComputeQueue.Get(),
+            m_pDevice.Get()
+        );
+        m_CopyQueue = std::make_shared<CopyCommandQueueDirectX12>(
+            RHICmdListType::Copy, 
+            pCopyQueue.Get(),
+            m_pDevice.Get()
+        );
     }
 
     D3D12_CPU_DESCRIPTOR_HANDLE RHIDirectX12::GetStandardCPUHandle(uint32_t index) const
@@ -234,5 +279,53 @@ namespace RHI
     bool RHIDirectX12::IsValid() const
     {
         return m_pDevice != nullptr;
+    }
+    
+    std::shared_ptr<RHICommandList> RHIDirectX12::CreateCommandList(RHICmdListType type)
+    {
+        D3D12_COMMAND_LIST_TYPE d3dType;
+        switch (type)
+        {
+        case RHICmdListType::Graphics:
+            d3dType = D3D12_COMMAND_LIST_TYPE_DIRECT;
+            break;
+        case RHICmdListType::Compute:
+            d3dType = D3D12_COMMAND_LIST_TYPE_COMPUTE;
+            break;
+        case RHICmdListType::Copy:
+            d3dType = D3D12_COMMAND_LIST_TYPE_COPY;
+            break;
+        default:
+            return nullptr;
+        }
+    
+        // Create command allocator
+        ComPtr<ID3D12CommandAllocator> pAllocator;
+        ThrowIfFailed(m_pDevice->CreateCommandAllocator(d3dType, IID_PPV_ARGS(&pAllocator)));
+    
+        // Create command list
+        ComPtr<ID3D12GraphicsCommandList> pCmdList;
+        ThrowIfFailed(m_pDevice->CreateCommandList(0, d3dType, pAllocator.Get(), nullptr, IID_PPV_ARGS(&pCmdList)));
+    
+        // Initial state is closed
+        ThrowIfFailed(pCmdList->Close());
+    
+        // Create RHI wrapper object
+        return std::make_shared<CommandListDirectX12>(type, pCmdList.Get(), pAllocator.Get());
+    }
+    
+    std::shared_ptr<RHICommandQueue> RHIDirectX12::GetCommandQueue(RHICmdListType Type) const
+    {
+        switch (Type)
+        {
+        case RHICmdListType::Graphics:
+            return m_GraphicsQueue;
+        case RHICmdListType::Compute:
+            return m_ComputeQueue;
+        case RHICmdListType::Copy:
+            return m_CopyQueue;
+        default:
+            return nullptr;
+        }
     }
 }

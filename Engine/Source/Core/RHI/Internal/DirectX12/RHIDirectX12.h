@@ -9,6 +9,12 @@
 #include <wrl.h> // ComPtr
 using Microsoft::WRL::ComPtr;
 
+// CommandQueue Forward Declaration
+class CommandQueueDirectX12;
+using GraphicsCommandQueueDirectX12 = CommandQueueDirectX12;
+using ComputeCommandQueueDirectX12 = CommandQueueDirectX12;
+using CopyCommandQueueDirectX12 = CommandQueueDirectX12;
+
 namespace RHI
 {
     class RHIDirectX12 : public Device
@@ -27,9 +33,16 @@ namespace RHI
         std::shared_ptr<RHISamplerState> CreateSamplerState(const SamplerStateDesc& desc) override;
         void DeleteSamplerState(std::shared_ptr<RHI::RHISamplerState>& samplerState) override;
 
+        std::shared_ptr<RHIBuffer> CreateBuffer(const BufferDesc& desc) override;
+        void DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer) override;
+
+        std::shared_ptr<RHICommandList> CreateCommandList(RHICmdListType type) override;
+        std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdListType Type) const override;
+
+        void CreateQueues();
+
         const D3D_FEATURE_LEVEL& GetFeatureLevel() const { return m_FeatureLevel; }
         ID3D12Device* GetDevice() const { return m_pDevice.Get(); }
-        ID3D12CommandQueue* GetCommandQueue() const { return m_pCommandQueue.Get(); }
         IDXGIAdapter1* GetAdapter() const { return m_pAdapter.Get(); }
         
         ID3D12DescriptorHeap* GetStandardHeap() const { return m_pStandardHeap.Get(); }
@@ -50,7 +63,11 @@ namespace RHI
         D3D_FEATURE_LEVEL m_FeatureLevel;
         
         ComPtr<IDXGIAdapter1> m_pAdapter; // GPU
-        ComPtr<ID3D12CommandQueue> m_pCommandQueue;
+
+        // CommandQueue
+        std::shared_ptr<GraphicsCommandQueueDirectX12> m_GraphicsQueue;
+        std::shared_ptr<ComputeCommandQueueDirectX12> m_ComputeQueue;
+        std::shared_ptr<CopyCommandQueueDirectX12> m_CopyQueue;
 
         ComPtr<ID3D12DescriptorHeap> m_pStandardHeap;
         ComPtr<ID3D12DescriptorHeap> m_pSamplerHeap;

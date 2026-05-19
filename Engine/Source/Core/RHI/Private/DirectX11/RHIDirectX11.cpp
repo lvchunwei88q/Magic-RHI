@@ -1,3 +1,7 @@
+/*
+* 因为使用到了前向声明所以需要先引入声明定义
+ */
+#include "DirectX11/RHIResourceDirectX11.h"
 #include "DirectX11/RHIDirectX11.h"
 #include "DirectXHelper.h"
 
@@ -68,5 +72,17 @@ namespace RHI
     bool RHIDirectX11::IsValid() const
     {
         return m_pDevice != nullptr;
+    }
+
+    std::shared_ptr<RHICommandList> RHIDirectX11::CreateCommandList(RHICmdListType type)
+    {
+        // DX 11 不支持命令列表     
+        return std::make_shared<CommandListDirectX11>(type);
+    }
+
+    std::shared_ptr<RHICommandQueue> RHIDirectX11::GetCommandQueue(RHICmdListType Type) const
+    {
+        // DX 11 不支持命令队列
+        return m_CommandQueue;
     }
 }
