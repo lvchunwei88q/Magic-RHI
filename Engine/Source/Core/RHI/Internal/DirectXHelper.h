@@ -7,6 +7,7 @@ using UINT = unsigned int;
 #endif
 
 #include <stdexcept>
+#include <CoreLogCapture/CoreLogCapture.h>
 
 namespace RHI
 {

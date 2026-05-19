@@ -7,6 +7,9 @@
 
 namespace RHI
 {
+/* forward declaration */
+class RHIResource;
+
 /** An enumeration of the different RHI reference types. */
 enum RHIResourceType : uint8_t
 {
@@ -232,5 +235,57 @@ enum class RHIClearFlags : uint8_t
 	DepthStencil = 3
 };
 ENUM_CLASS_FLAGS(RHIClearFlags);
+
+// 资源屏障类型
+enum class ResourceBarrierType : uint8_t
+{
+	Transition,  // 状态转换屏障
+	Aliasing,    // 资源别名屏障
+	UAV          // UAV屏障
+};
+
+// 资源屏障标志
+enum class ResourceBarrierFlags : uint8_t
+{
+	None       = 0,
+	BeginOnly  = 0x1,  // 分割屏障开始
+	EndOnly    = 0x2   // 分割屏障结束
+};
+
+// 过渡屏障描述
+struct ResourceTransitionBarrier
+{
+	class RHIResource* pResource;     // 资源指针
+	uint32_t           Subresource;   // 子资源索引（-1表示所有）
+	uint64_t           StateBefore;   // 转换前状态（平台相关）
+	uint64_t           StateAfter;    // 转换后状态（平台相关）
+};
+
+// 别名屏障描述
+struct ResourceAliasingBarrier
+{
+	class RHIResource* pResourceBefore;  // 切换前资源
+	class RHIResource* pResourceAfter;   // 切换后资源
+};
+
+// UAV屏障描述
+struct ResourceUAVBarrier
+{
+	class RHIResource* pResource;  // UAV资源（可为nullptr）
+};
+
+// 资源屏障描述
+struct BarrierDesc
+{
+	ResourceBarrierType   Type;
+	ResourceBarrierFlags  Flags;
+	union
+	{
+		ResourceTransitionBarrier Transition;
+		ResourceAliasingBarrier   Aliasing;
+		ResourceUAVBarrier        UAV;
+	};
+};
+ENUM_CLASS_FLAGS(ResourceBarrierFlags);
 
 }

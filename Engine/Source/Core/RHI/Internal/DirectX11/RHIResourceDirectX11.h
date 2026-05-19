@@ -38,7 +38,7 @@ namespace RHI
             m_DeviceContext = InDeviceContext;
         }
 
-        ID3D11Buffer* GetBuffer() const { return m_pBuffer.Get(); }
+        void* GetResource() const override { return m_pBuffer.Get(); }
 
         void* Map() override
         {
@@ -146,6 +146,8 @@ namespace RHI
         void CopyResource(RHIResource* pDstResource, RHIResource* pSrcResource) override;
         void CopyBufferRegion(RHIBuffer* pDstBuffer, uint64_t dstOffset, RHIBuffer* pSrcBuffer, uint64_t srcOffset, uint64_t numBytes) override;
 
+        // 屏障
+        void ResourceBarrier(uint32_t numBarriers, const BarrierDesc* pBarriers) override;
     private:
         ID3D11DeviceContext* m_pDeviceContext;
     };

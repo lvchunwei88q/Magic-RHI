@@ -54,6 +54,7 @@ namespace RHI
         RHIResource& operator=(const RHIResource&) = delete;
 
         RHIResourceType GetType() const { return Type; }
+        virtual void* GetResource() const { return nullptr; }
 
 #if RHI_ENABLE_RESOURCE_INFO
         virtual void GetInfo(RHIResourceInfo& OutInfo) const;
@@ -112,7 +113,7 @@ namespace RHI
         float MaxLOD = 3.402823466e+38f;
     };
 
-    class RHISamplerState : public RHIResource 
+    class RHI_API RHISamplerState : public RHIResource 
     {
     public:
         RHISamplerState(const RHIDescriptorHandle& InHandle) 
@@ -140,7 +141,7 @@ namespace RHI
         BufferBindFlag BindFlags = BufferBindFlag::None;
     };
 
-    class RHIBuffer : public RHIResource
+    class RHI_API RHIBuffer : public RHIResource
     {
     public:
         RHIBuffer(const BufferDesc& InDesc, RHIResourceType InType)
@@ -171,73 +172,73 @@ namespace RHI
     using RHIStorageBuffer = RHIBuffer;
 
     // 前向声明和占位符类
-    class RHIVertexShader : public RHIResource
+    class RHI_API RHIVertexShader : public RHIResource
     {
     public:
         RHIVertexShader() : RHIResource(RRT_VertexShader) {}
     };
 
-    class RHIPixelShader : public RHIResource
+    class RHI_API RHIPixelShader : public RHIResource
     {
     public:
         RHIPixelShader() : RHIResource(RRT_PixelShader) {}
     };
 
-    class RHIGeometryShader : public RHIResource
+    class RHI_API RHIGeometryShader : public RHIResource
     {
     public:
         RHIGeometryShader() : RHIResource(RRT_GeometryShader) {}
     };
 
-    class RHIHullShader : public RHIResource
+    class RHI_API RHIHullShader : public RHIResource
     {
     public:
         RHIHullShader() : RHIResource(RRT_None) {}
     };
 
-    class RHIDomainShader : public RHIResource
+    class RHI_API RHIDomainShader : public RHIResource
     {
     public:
         RHIDomainShader() : RHIResource(RRT_None) {}
     };
 
-    class RHIComputeShader : public RHIResource
+    class RHI_API RHIComputeShader : public RHIResource
     {
     public:
         RHIComputeShader() : RHIResource(RRT_ComputeShader) {}
     };
 
-    class RHIRasterizerState : public RHIResource
+    class RHI_API RHIRasterizerState : public RHIResource
     {
     public:
         RHIRasterizerState() : RHIResource(RRT_RasterizerState) {}
     };
 
-    class RHIBlendState : public RHIResource
+    class RHI_API RHIBlendState : public RHIResource
     {
     public:
         RHIBlendState() : RHIResource(RRT_BlendState) {}
     };
 
-    class RHIDepthStencilState : public RHIResource
+    class RHI_API RHIDepthStencilState : public RHIResource
     {
     public:
         RHIDepthStencilState() : RHIResource(RRT_DepthStencilState) {}
     };
 
-    class RHIShaderResourceView : public RHIResource
+    class RHI_API RHIShaderResourceView : public RHIResource
     {
     public:
         RHIShaderResourceView() : RHIResource(RRT_ShaderResourceView) {}
     };
 
-    class RHIRenderTargetView : public RHIResource
+    class RHI_API RHIRenderTargetView : public RHIResource
     {
     public:
         RHIRenderTargetView() : RHIResource(RRT_ShaderResourceView) {}
     };
 
-    class RHIDepthStencilView : public RHIResource
+    class RHI_API RHIDepthStencilView : public RHIResource
     {
     public:
         RHIDepthStencilView() : RHIResource(RRT_ShaderResourceView) {}
@@ -247,7 +248,7 @@ namespace RHI
     // Command lists
     //
 
-    class RHICommandList : public RHIResource
+    class RHI_API RHICommandList : public RHIResource
     {
     public:
         RHICommandList(RHICmdListType InType)
@@ -319,11 +320,14 @@ namespace RHI
         virtual void CopyResource(RHIResource* pDstResource, RHIResource* pSrcResource) = 0;
         virtual void CopyBufferRegion(RHIBuffer* pDstBuffer, uint64_t dstOffset, RHIBuffer* pSrcBuffer, uint64_t srcOffset, uint64_t numBytes) = 0;
 
+        // 屏障
+        virtual void ResourceBarrier(uint32_t numBarriers, const BarrierDesc* pBarriers) = 0;
+
     protected:
         RHICmdListType CmdListType;
     };
 
-    class RHICommandQueue : public RHIResource
+    class RHI_API RHICommandQueue : public RHIResource
     {
     public:
         RHICommandQueue(RHICmdListType InType)
