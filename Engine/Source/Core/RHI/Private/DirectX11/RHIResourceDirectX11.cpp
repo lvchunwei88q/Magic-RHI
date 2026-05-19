@@ -163,7 +163,7 @@ namespace RHI
             ThrowIfFailed(m_pDevice->CreateBuffer(&bufferDesc, &initData, pBuffer.GetAddressOf()));
         }
 #if RHI_ENABLE_RESOURCE_INFO
-        else if(desc.InitialData == nullptr)
+        else if(desc.InitialData == nullptr && desc.HeapType == RHI::BufferHeapType::Default)
             ThrowIfFailed("Creating D3D11_HEAP_TYPE_DEFAULT requires providing heap data");
 #endif
         else
