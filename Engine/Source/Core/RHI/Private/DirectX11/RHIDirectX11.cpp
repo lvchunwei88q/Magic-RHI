@@ -61,6 +61,9 @@ namespace RHI
         ThrowIfFailed(adapter->GetDesc(&desc));
         m_AdapterName = desc.Description;
 
+        // 初始化命令队列
+        m_CommandQueue = std::make_shared<CommandQueueDirectX11>(RHICmdListType::Graphics, m_pDeviceContext.Get());
+
         return true;
     }
 
@@ -82,7 +85,7 @@ namespace RHI
     std::shared_ptr<RHICommandList> RHIDirectX11::CreateCommandList(RHICmdListType type)
     {
         // DX 11 不支持命令列表     
-        return std::make_shared<CommandListDirectX11>(type);
+        return std::make_shared<CommandListDirectX11>(type, m_pDeviceContext.Get());
     }
 
     std::shared_ptr<RHICommandQueue> RHIDirectX11::GetCommandQueue(RHICmdListType Type) const

@@ -184,4 +184,53 @@ enum class BufferBindFlag : uint32_t
 	StreamOutput   = 0x1 << 7,   // 流输出
 };
 ENUM_CLASS_FLAGS(BufferBindFlag);
+
+enum class RHIPrimitiveTopology : uint8_t
+{
+	Undefined,
+	PointList,
+	LineList,
+	LineStrip,
+	TriangleList,
+	TriangleStrip,
+	LineListAdj,
+	LineStripAdj,
+	TriangleListAdj,
+	TriangleStripAdj,
+	ControlPointPatchList
+};
+
+enum class RHIIndexFormat : uint8_t
+{
+	Uint16,
+	Uint32
+};
+
+struct RHIRect
+{
+	float left;
+	float top;
+	float right;
+	float bottom;
+};
+
+struct RHIViewport
+{
+	float topLeftX;
+	float topLeftY;
+	float width;
+	float height;
+	float minDepth;
+	float maxDepth;
+};
+
+enum class RHIClearFlags : uint8_t
+{
+	None = 0,
+	Depth = 1,
+	Stencil = 2,
+	DepthStencil = 3
+};
+ENUM_CLASS_FLAGS(RHIClearFlags);
+
 }
