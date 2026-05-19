@@ -28,6 +28,23 @@ namespace RHI
             }
         }
 
+        // 将 RHI 绑定标志转换为 D3D11 绑定标志
+        UINT ToD3D11BindFlags(BufferBindFlag flags)
+        {
+            UINT d3dFlags = 0;
+            
+            d3dFlags |= EnumHasAnyFlags(flags, BufferBindFlag::VertexBuffer)   ? D3D11_BIND_VERTEX_BUFFER   : 0;
+            d3dFlags |= EnumHasAnyFlags(flags, BufferBindFlag::IndexBuffer)    ? D3D11_BIND_INDEX_BUFFER    : 0;
+            d3dFlags |= EnumHasAnyFlags(flags, BufferBindFlag::ConstantBuffer) ? D3D11_BIND_CONSTANT_BUFFER : 0;
+            d3dFlags |= EnumHasAnyFlags(flags, BufferBindFlag::ShaderResource) ? D3D11_BIND_SHADER_RESOURCE : 0;
+            d3dFlags |= EnumHasAnyFlags(flags, BufferBindFlag::UnorderedAccess)? D3D11_BIND_UNORDERED_ACCESS: 0;
+            d3dFlags |= EnumHasAnyFlags(flags, BufferBindFlag::RenderTarget)   ? D3D11_BIND_RENDER_TARGET   : 0;
+            d3dFlags |= EnumHasAnyFlags(flags, BufferBindFlag::DepthStencil)   ? D3D11_BIND_DEPTH_STENCIL   : 0;
+            d3dFlags |= EnumHasAnyFlags(flags, BufferBindFlag::StreamOutput)   ? D3D11_BIND_STREAM_OUTPUT   : 0;
+            
+            return d3dFlags;
+        }
+
         D3D11_FILTER ConvertFilter(SamplerFilter filter)
         {
             switch (filter)
@@ -123,9 +140,19 @@ namespace RHI
         D3D11_BUFFER_DESC bufferDesc = {};
         bufferDesc.ByteWidth = static_cast<UINT>(desc.SizeInBytes);
         bufferDesc.MiscFlags = 0;
+        bufferDesc.BindFlags = ToD3D11BindFlags(desc.BindFlags);
         bufferDesc.StructureByteStride = desc.Stride;
         bufferDesc.Usage = ToD3D11Usage(desc.HeapType);
         bufferDesc.CPUAccessFlags = ToD3D11CPUAccessFlags(desc.HeapType);
+
+        if(bufferDesc.BindFlags == 0)
+        {
+#if RHI_ENABLE_RESOURCE_INFO
+        ThrowIfFailed("Please set the type for your buffer, otherwise it will fail to be created."); // 直接抛出异常，不支持动态创建
+#else
+        bufferDesc.BindFlags |= D3D11_BIND_CONSTANT_BUFFER; // 选择一个常用的
+#endif
+        }
 
         D3D11_SUBRESOURCE_DATA initData = {};
         initData.pSysMem = desc.InitialData;

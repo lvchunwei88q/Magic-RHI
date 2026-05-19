@@ -137,6 +137,7 @@ namespace RHI
         void* InitialData = nullptr;
         // Buffer heap type.
         BufferHeapType HeapType = BufferHeapType::Default; // CPU 不可访问 默认
+        BufferBindFlag BindFlags = BufferBindFlag::None;
     };
 
     class RHIBuffer : public RHIResource

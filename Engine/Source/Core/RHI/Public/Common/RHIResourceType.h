@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <Tools/EnumClassFlags.h>
 
 #define MAX_uint32_t 0xFFFFFFFF
 #define MAX_uint8_t 0xFF
@@ -170,4 +171,17 @@ inline const char* GetFeatureLevelName(FeatureLevel level)
 	}
 }
 
+enum class BufferBindFlag : uint32_t
+{
+	None           = 0,			 // 无绑定标志
+	VertexBuffer   = 0x1 << 0,   // 顶点缓冲区
+	IndexBuffer    = 0x1 << 1,   // 索引缓冲区
+	ConstantBuffer = 0x1 << 2,   // 常量缓冲区
+	ShaderResource = 0x1 << 3,   // 着色器资源视图 (SRV)
+	UnorderedAccess= 0x1 << 4,   // 无序访问视图 (UAV)
+	RenderTarget   = 0x1 << 5,   // 渲染目标
+	DepthStencil   = 0x1 << 6,   // 深度模板
+	StreamOutput   = 0x1 << 7,   // 流输出
+};
+ENUM_CLASS_FLAGS(BufferBindFlag);
 }

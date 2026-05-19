@@ -92,6 +92,31 @@ int main(int argc, char* argv[])
             if (sampler2 && sampler1)
             {
                 std::cout << "SamplerState created successfully!" << std::endl;
+                struct Vertex
+                {
+                    float Position[3];  // XYZ
+                    float Color[4];     // RGBA
+                };
+                std::vector<Vertex> vertices =
+                {
+                    //  位置(X, Y, Z)        颜色(R, G, B, A)
+                    {{ 0.0f,  0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // 顶点0 - 红色
+                    {{ 0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // 顶点1 - 绿色
+                    {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}}   // 顶点2 - 蓝色
+                };
+
+                uint64_t bufferSize = sizeof(Vertex) * vertices.size();
+
+                RHI::BufferDesc desc;
+                desc.SizeInBytes =  bufferSize; // 总字节数
+                desc.Stride       = sizeof(Vertex);                    // 每个顶点的大小
+                desc.InitialData  = vertices.data();                   // 指向初始数据的指针
+                desc.HeapType     = RHI::BufferHeapType::Upload;
+                desc.BindFlags    = RHI::BufferBindFlag::VertexBuffer;
+                // ========== 3. 调用 CreateBuffer 创建顶点缓冲 ==========
+                std::shared_ptr<RHI::RHIVertexBuffer> vertexBuffer = device->CreateBuffer(desc);
+                device->DeleteBuffer(vertexBuffer);
+                std::cout << "VertexBuffer created successfully!" << std::endl;
 
                 MSG msg = {};
                 while (GetMessage(&msg, nullptr, 0, 0))
