@@ -20,6 +20,50 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     }
 }
 
+#include <random>
+#include <chrono>
+
+struct Vertex
+{
+    float Position[3];  // XYZ
+    float Color[4];     // RGBA
+};
+
+std::vector<Vertex> GenerateRandomVertices(size_t targetSizeMB)
+{
+    constexpr size_t vertexSize = sizeof(Vertex);  // 28 bytes
+    size_t targetVertexCount = (targetSizeMB * 1024 * 1024) / vertexSize;
+    
+    std::vector<Vertex> vertices;
+    vertices.reserve(targetVertexCount);
+    
+    // 随机数生成器
+    unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+    std::mt19937 rng(seed);
+    std::uniform_real_distribution<float> distPos(-1.0f, 1.0f);
+    std::uniform_real_distribution<float> distColor(0.0f, 1.0f);
+    
+    for (size_t i = 0; i < targetVertexCount; ++i)
+    {
+        Vertex v;
+        // 随机位置
+        v.Position[0] = distPos(rng);
+        v.Position[1] = distPos(rng);
+        v.Position[2] = distPos(rng);
+        
+        // 随机颜色
+        v.Color[0] = distColor(rng);
+        v.Color[1] = distColor(rng);
+        v.Color[2] = distColor(rng);
+        v.Color[3] = 1.0f;
+        
+        vertices.push_back(v);
+    }
+    
+    return vertices;
+}
+
+
 int main(int argc, char* argv[])
 {
     std::cout << "Engine Version: " << Core::Core::GetVersion() << std::endl;
@@ -107,30 +151,22 @@ int main(int argc, char* argv[])
             if (sampler2 && sampler1)
             {
                 std::cout << "SamplerState created successfully!" << std::endl;
-                struct Vertex
-                {
-                    float Position[3];  // XYZ
-                    float Color[4];     // RGBA
-                };
-                std::vector<Vertex> vertices =
-                {
-                    //  位置(X, Y, Z)        颜色(R, G, B, A)
-                    {{ 0.0f,  0.5f, 0.0f}, {1.0f, 0.0f, 0.0f, 1.0f}},  // 顶点0 - 红色
-                    {{ 0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f, 1.0f}},  // 顶点1 - 绿色
-                    {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f, 1.0f}}   // 顶点2 - 蓝色
-                };
+
+                std::vector<Vertex> vertices = GenerateRandomVertices(2);  // 2 MB
+                std::cout << "Vertices created successfully! Vertex Count: " << vertices.size() << std::endl;
 
                 uint64_t bufferSize = sizeof(Vertex) * vertices.size();
+                std::cout << "VertexBuffer Size: " << bufferSize << std::endl;
 
                 RHI::BufferDesc desc;
                 desc.SizeInBytes =  bufferSize; // 总字节数
                 desc.Stride       = sizeof(Vertex);                    // 每个顶点的大小
                 desc.InitialData  = vertices.data();                   // 指向初始数据的指针
-                desc.HeapType     = RHI::BufferHeapType::Default;
+                desc.HeapType     = RHI::BufferHeapType::Upload;
                 desc.BindFlags    = RHI::BufferBindFlag::VertexBuffer;
                 // ========== 3. 调用 CreateBuffer 创建顶点缓冲 ==========
                 std::shared_ptr<RHI::RHIVertexBuffer> vertexBuffer = device->CreateBuffer(desc);
-                device->DeleteBuffer(vertexBuffer);
+                //device->DeleteBuffer(vertexBuffer);
                 std::cout << "VertexBuffer created successfully!" << std::endl;
 
                 MSG msg = {};
