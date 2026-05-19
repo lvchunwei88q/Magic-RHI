@@ -1,4 +1,5 @@
-#include "Engine/Source/Core/Core/Public/Core.h"
+#include <CoreLogCapture/CoreLogCapture.h>
+#include <Subsystem/Subsystem.h>
 #include <iostream>
 #include <windows.h>
 #include <cstring>
@@ -30,6 +31,20 @@ int main(int argc, char* argv[])
         std::cout << "Using DirectX12" << std::endl;
     } else {
         std::cout << "Using DirectX11" << std::endl;
+    }
+
+    Core::SubsystemControl::Init();
+
+    { // 注册核心日志捕获
+        Core::ErrorCapture::RegisterCaptureFunction([](const std::string& Message){
+            std::cout << "Error: " << Message << std::endl;
+        });
+        Core::WarningCapture::RegisterCaptureFunction([](const std::string& Message){
+            std::cout << "Warning: " << Message << std::endl;
+        });
+        Core::InfoCapture::RegisterCaptureFunction([](const std::string& Message){
+            std::cout << "Info: " << Message << std::endl;
+        });
     }
 
     const wchar_t CLASS_NAME[] = L"RHIWindowClass";
@@ -140,5 +155,6 @@ int main(int argc, char* argv[])
         std::cout << "Failed to initialize Device!" << std::endl;
     }
     
+    Core::SubsystemControl::Uninstall();
     return 0;
 }
