@@ -3,6 +3,7 @@
  */
 #include "DirectX12/RHIResourceDirectX12.h"
 #include "DirectX12/RHIDirectX12.h"
+#include "DirectXConfig.h"
 #include "DirectXHelper.h"
 
 namespace RHI
@@ -188,6 +189,10 @@ namespace RHI
         m_ComputeQueue.reset();
         m_CopyQueue.reset();
         m_pDevice.Reset();
+    }
+
+    FeatureLevel RHIDirectX12::GetFeatureLevel() const{
+        return FromD3DFeatureLevel(m_FeatureLevel);
     }
 
     void RHIDirectX12::CreateQueues()

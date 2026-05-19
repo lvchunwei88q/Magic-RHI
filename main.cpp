@@ -67,6 +67,7 @@ int main(int argc, char* argv[])
     auto device = RHI::Device::Create(type);
     if (device && device->Initialize())
     {
+        std::cout << "Feature Level: " << GetFeatureLevelName(device->GetFeatureLevel()) << std::endl;
         std::wcout << L"Device initialized successfully: " << device->GetAdapterName() << std::endl;
         
         RHI::SwapChainDesc swapChainDesc = {};

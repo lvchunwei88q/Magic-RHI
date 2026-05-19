@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Common/RHI_API.h"
+#include "Common/RHIResourceType.h"
 
 #include <memory>
 #include <string>
@@ -43,7 +44,6 @@ namespace RHI
     class RHIBuffer;
     struct SamplerStateDesc;
     struct BufferDesc;
-    enum class RHICmdListType : uint8_t;
 
     enum class RHIType
     {
@@ -70,6 +70,7 @@ namespace RHI
         virtual bool IsValid() const = 0;
         virtual RHIType GetType() const = 0;
         virtual const std::wstring& GetAdapterName() const = 0;
+        virtual FeatureLevel GetFeatureLevel() const = 0;
 
         virtual std::shared_ptr<RHISamplerState> CreateSamplerState(const SamplerStateDesc& desc) = 0;
         virtual void DeleteSamplerState(std::shared_ptr<RHI::RHISamplerState>& samplerState) = 0;

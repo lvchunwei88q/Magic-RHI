@@ -131,4 +131,43 @@ enum class RHICmdListType : uint8_t
 	Copy
 };
 
+/* Feature Level Type */
+enum class FeatureLevel : uint32_t
+{
+	// DirectX 9 Level
+	Level_9_1 = 0x9100,   // Shader Model 2.0
+	Level_9_2 = 0x9200,   // Shader Model 2.0+ 
+	Level_9_3 = 0x9300,   // Shader Model 3.0
+	// DirectX 10 Level
+	Level_10_0 = 0xa000,  // Shader Model 4.0
+	Level_10_1 = 0xa100,  // Shader Model 4.1
+	// DirectX 11 Level
+	Level_11_0 = 0xb000,  // Shader Model 5.0
+	Level_11_1 = 0xb100,  // Shader Model 5.0 + More Features
+	// DirectX 12 Level
+	Level_12_0 = 0xc000,  // Shader Model 5.1
+	Level_12_1 = 0xc100,  // Shader Model 5.1 + Rasterizer Order Independent
+	Level_12_2 = 0xc200   // Shader Model 6.0 + Ray Tracing + Mesh Shaders
+	// More ...
+};
+
+inline const char* GetFeatureLevelName(FeatureLevel level)
+{
+	switch (level)
+	{
+	case FeatureLevel::Level_9_1:  return "DirectX 9.1";
+	case FeatureLevel::Level_9_2:  return "DirectX 9.2";
+	case FeatureLevel::Level_9_3:  return "DirectX 9.3";
+	case FeatureLevel::Level_10_0: return "DirectX 10.0";
+	case FeatureLevel::Level_10_1: return "DirectX 10.1";
+	case FeatureLevel::Level_11_0: return "DirectX 11.0";
+	case FeatureLevel::Level_11_1: return "DirectX 11.1";
+	case FeatureLevel::Level_12_0: return "DirectX 12.0";
+	case FeatureLevel::Level_12_1: return "DirectX 12.1";
+	case FeatureLevel::Level_12_2: return "DirectX 12.2 (Ultimate)";
+	// More ...
+	default: return "Unknown";
+	}
+}
+
 }

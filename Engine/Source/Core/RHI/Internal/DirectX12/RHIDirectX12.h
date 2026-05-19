@@ -41,7 +41,7 @@ namespace RHI
 
         void CreateQueues();
 
-        const D3D_FEATURE_LEVEL& GetFeatureLevel() const { return m_FeatureLevel; }
+        FeatureLevel GetFeatureLevel() const override;
         ID3D12Device* GetDevice() const { return m_pDevice.Get(); }
         IDXGIAdapter1* GetAdapter() const { return m_pAdapter.Get(); }
         

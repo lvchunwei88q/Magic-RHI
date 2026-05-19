@@ -3,6 +3,7 @@
  */
 #include "DirectX11/RHIResourceDirectX11.h"
 #include "DirectX11/RHIDirectX11.h"
+#include "DirectXConfig.h"
 #include "DirectXHelper.h"
 
 namespace RHI
@@ -67,6 +68,10 @@ namespace RHI
     {
         m_pDeviceContext.Reset();
         m_pDevice.Reset();
+    }
+
+    FeatureLevel RHIDirectX11::GetFeatureLevel() const{
+        return FromD3DFeatureLevel(m_FeatureLevel);
     }
 
     bool RHIDirectX11::IsValid() const
