@@ -131,6 +131,13 @@ namespace RHI
         D3D12_HEAP_PROPERTIES heapProperties = CD3DX12_HEAP_PROPERTIES(ToD3D12HeapType(desc.HeapType));
         D3D12_RESOURCE_DESC resourceDesc = CD3DX12_RESOURCE_DESC::Buffer(desc.SizeInBytes, D3D12_RESOURCE_FLAG_NONE);
 
+        auto InitBufferData = [&](ComPtr<ID3D12Resource>& pResource){
+            void* pData;
+            ThrowIfFailed(pResource->Map(0, nullptr, &pData));
+            memcpy(pData, desc.InitialData, desc.SizeInBytes);
+            pResource->Unmap(0, nullptr);
+        };  
+
         ComPtr<ID3D12Resource> pResource;
         ThrowIfFailed(m_pDevice->CreateCommittedResource(
             &heapProperties,
@@ -154,10 +161,7 @@ namespace RHI
                 IID_PPV_ARGS(&pUploadBuffer)));
             
             // initial data to Upload heap
-            void* pData;
-            ThrowIfFailed(pUploadBuffer->Map(0, nullptr, &pData));
-            memcpy(pData, desc.InitialData, desc.SizeInBytes);
-            pUploadBuffer->Unmap(0, nullptr);
+            InitBufferData(pUploadBuffer);
             
             //TODO Upload to Default heap
             auto cmdList = CreateCommandList(RHICmdListType::Copy);
@@ -178,6 +182,11 @@ namespace RHI
         else if(desc.HeapType == BufferHeapType::Default && desc.InitialData == nullptr) 
             ThrowIfFailed("Creating D3D12_HEAP_TYPE_DEFAULT requires providing heap data");
 #endif
+
+        if(desc.HeapType != BufferHeapType::Default && desc.InitialData != nullptr){
+            // initial data to Upload heap
+            InitBufferData(pResource);
+        }
 
         return std::make_shared<BufferDirectX12>(pResource.Get(), desc, m_pDevice.Get());
     }
