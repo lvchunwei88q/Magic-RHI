@@ -77,6 +77,91 @@ namespace RHI
             
             *ppAdapter = adapter.Detach();
         }
+
+        [[nodiscard]] static ComPtr<ID3D12GraphicsCommandList> CreateLevelCommandList(
+            ID3D12Device* pDevice,
+            D3D12_COMMAND_LIST_TYPE d3dType,
+            ID3D12CommandAllocator* pAllocator,
+            FeatureLevel featureLevel)
+        {
+            // 0=NOT, 1=BASE, 2=接口1, 3=接口2, 4=接口4
+            static int s_MaxSupportedVersion = 0;
+
+            auto ProbeVersion = [&](auto&& pProbeList, int version) -> bool
+            {
+                HRESULT hr = pDevice->CreateCommandList(
+                    0, d3dType, pAllocator, nullptr,
+                    IID_PPV_ARGS(&pProbeList));
+                if (SUCCEEDED(hr))
+                {
+                    s_MaxSupportedVersion = version;
+                    pProbeList.Reset();
+                    return true;
+                }
+                return false;
+            };
+
+            if (s_MaxSupportedVersion == 0)
+            {
+                if (featureLevel >= FeatureLevel::Level_12_2)
+                {
+                    ComPtr<ID3D12GraphicsCommandList4> pCmdList4;
+                    ProbeVersion(pCmdList4, 4);
+                }
+
+                if (s_MaxSupportedVersion == 0 && featureLevel >= FeatureLevel::Level_12_0)
+                {
+                    ComPtr<ID3D12GraphicsCommandList2> pCmdList2;
+                    ProbeVersion(pCmdList2, 3);
+                }
+
+                if (s_MaxSupportedVersion == 0 && featureLevel >= FeatureLevel::Level_11_0)
+                {
+                    ComPtr<ID3D12GraphicsCommandList1> pCmdList1;
+                    ProbeVersion(pCmdList1, 2);
+                }
+                if (s_MaxSupportedVersion == 0)
+                {
+                    s_MaxSupportedVersion = 1;
+                }
+            }
+
+            switch (s_MaxSupportedVersion)
+            {
+                case 4:
+                {
+                    ComPtr<ID3D12GraphicsCommandList4> pCmdList4;
+                    ThrowIfFailed(pDevice->CreateCommandList(
+                        0, d3dType, pAllocator, nullptr,
+                        IID_PPV_ARGS(&pCmdList4)));
+                    return pCmdList4;
+                }
+                case 3:
+                {
+                    ComPtr<ID3D12GraphicsCommandList2> pCmdList2;
+                    ThrowIfFailed(pDevice->CreateCommandList(
+                        0, d3dType, pAllocator, nullptr,
+                        IID_PPV_ARGS(&pCmdList2)));
+                    return pCmdList2;
+                }
+                case 2:
+                {
+                    ComPtr<ID3D12GraphicsCommandList1> pCmdList1;
+                    ThrowIfFailed(pDevice->CreateCommandList(
+                        0, d3dType, pAllocator, nullptr,
+                        IID_PPV_ARGS(&pCmdList1)));
+                    return pCmdList1;
+                }
+                default:
+                {
+                    ComPtr<ID3D12GraphicsCommandList> pCmdList;
+                    ThrowIfFailed(pDevice->CreateCommandList(
+                        0, d3dType, pAllocator, nullptr,
+                        IID_PPV_ARGS(&pCmdList)));
+                    return pCmdList;
+                }
+            }
+        }
     }
     RHIDirectX12::RHIDirectX12()
     {
@@ -197,6 +282,7 @@ namespace RHI
 
     void RHIDirectX12::CreateQueues()
     {
+        // 创建命令队列 这是唯一的Com接口没有 1，2，3 等版本的接口
         ComPtr<ID3D12CommandQueue> pGraphicsQueue;
         ComPtr<ID3D12CommandQueue> pComputeQueue;
         ComPtr<ID3D12CommandQueue> pCopyQueue;
@@ -288,6 +374,7 @@ namespace RHI
     
     std::shared_ptr<RHICommandList> RHIDirectX12::CreateCommandList(RHICmdListType type)
     {
+
         D3D12_COMMAND_LIST_TYPE d3dType;
         switch (type)
         {
@@ -304,14 +391,18 @@ namespace RHI
             return nullptr;
         }
     
-        // Create command allocator
+        // Create command allocator 这是唯一的Com接口没有 1，2，3 等版本的接口
         ComPtr<ID3D12CommandAllocator> pAllocator;
         ThrowIfFailed(m_pDevice->CreateCommandAllocator(d3dType, IID_PPV_ARGS(&pAllocator)));
     
         // Create command list
-        ComPtr<ID3D12GraphicsCommandList> pCmdList;
-        ThrowIfFailed(m_pDevice->CreateCommandList(0, d3dType, pAllocator.Get(), nullptr, IID_PPV_ARGS(&pCmdList)));
-    
+        ComPtr<ID3D12GraphicsCommandList> pCmdList = CreateLevelCommandList(
+            m_pDevice.Get(),
+            d3dType,
+            pAllocator.Get(),
+            GetFeatureLevel()
+        );
+
         // Initial state is closed
         ThrowIfFailed(pCmdList->Close());
     
