@@ -3,6 +3,7 @@
  */
 #include "DirectX12/RHIResourceDirectX12.h"
 #include "DirectX12/RHIDirectX12.h"
+#include "DirectXHelper.h"
 
 namespace RHI
 {
@@ -171,6 +172,19 @@ namespace RHI
             
             return static_cast<D3D12_CLEAR_FLAGS>(d3dFlags);
         }
+
+        D3D12_RESOURCE_BARRIER_FLAGS ConvertResourceBarrierFlags(ResourceBarrierFlags flags)
+        {
+            D3D12_RESOURCE_BARRIER_FLAGS d3d12Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+            
+            if ((flags & ResourceBarrierFlags::BeginOnly) != ResourceBarrierFlags::None)
+                d3d12Flags |= D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY;
+            
+            if ((flags & ResourceBarrierFlags::EndOnly) != ResourceBarrierFlags::None)
+                d3d12Flags |= D3D12_RESOURCE_BARRIER_FLAG_END_ONLY;
+            
+            return d3d12Flags;
+        }
     }
 
     std::shared_ptr<RHISamplerState> RHIDirectX12::CreateSamplerState(const SamplerStateDesc& desc)
@@ -227,6 +241,8 @@ namespace RHI
             nullptr,
             IID_PPV_ARGS(&pResource)));
 
+        std::shared_ptr<BufferDirectX12> buffer = std::make_shared<BufferDirectX12>(pResource.Get(), desc, m_pDevice.Get());
+
         if(desc.HeapType == BufferHeapType::Default && desc.InitialData != nullptr){ // 需要Copy数据到Default堆
             // create Upload heap
             D3D12_HEAP_PROPERTIES uploadHeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
@@ -242,12 +258,38 @@ namespace RHI
             
             // initial data to Upload heap
             InitBufferData(pUploadBuffer);
+            std::shared_ptr<BufferDirectX12> uploadBuffer = std::make_shared<BufferDirectX12>(pUploadBuffer.Get(), desc, m_pDevice.Get());
             
-            //TODO Upload to Default heap
             auto cmdList = CreateCommandList(RHICmdListType::Copy);
             cmdList->BeginRecording();
             
-            // TODO ...
+            // Default 资源初始状态是 COMMON，需要转换到 COPY_DEST
+            RHI::BarrierDesc barrier = {};
+            barrier.Type = RHI::ResourceBarrierType::Transition;
+            barrier.Flags = RHI::ResourceBarrierFlags::None;
+            barrier.Transition.pResource = buffer.get();
+            barrier.Transition.Subresource = ~0u;  // 所有子资源
+            barrier.Transition.StateBefore = static_cast<uint64_t>(D3D12_RESOURCE_STATE_COMMON);
+            barrier.Transition.StateAfter = static_cast<uint64_t>(D3D12_RESOURCE_STATE_COPY_DEST);
+
+            cmdList->ResourceBarrier(1, &barrier);
+            
+            cmdList->CopyBufferRegion(
+                buffer.get(),         // 目标：Default 堆缓冲区
+                0,                     // 目标偏移
+                uploadBuffer.get(),   // 源：Upload 堆缓冲区
+                0,                     // 源偏移
+                desc.SizeInBytes        // 复制大小
+            );
+
+            RHI::BarrierDesc finalBarrier = {};
+            finalBarrier.Type = RHI::ResourceBarrierType::Transition;
+            finalBarrier.Flags = RHI::ResourceBarrierFlags::None;
+            finalBarrier.Transition.pResource = buffer.get();
+            finalBarrier.Transition.Subresource = ~0u;
+            finalBarrier.Transition.StateBefore = static_cast<uint64_t>(D3D12_RESOURCE_STATE_COPY_DEST);
+            finalBarrier.Transition.StateAfter = static_cast<uint64_t>(D3D12_RESOURCE_STATE_COMMON);
+            cmdList->ResourceBarrier(1, &finalBarrier);
             
             cmdList->EndRecording();
             
@@ -256,7 +298,7 @@ namespace RHI
             m_CopyQueue.get()->WaitForIdle();
             
             // return buffer
-            return std::make_shared<BufferDirectX12>(pResource.Get(), desc, m_pDevice.Get());
+            return buffer;
         }
 #if RHI_ENABLE_RESOURCE_INFO
         else if(desc.HeapType == BufferHeapType::Default && desc.InitialData == nullptr) 
@@ -268,7 +310,7 @@ namespace RHI
             InitBufferData(pResource);
         }
 
-        return std::make_shared<BufferDirectX12>(pResource.Get(), desc, m_pDevice.Get());
+        return buffer;
     }
 
     void RHIDirectX12::DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer)
@@ -372,7 +414,7 @@ namespace RHI
         {
             BufferDirectX12* dxBuffer = static_cast<BufferDirectX12*>(ppBuffers[i]);
             D3D12_VERTEX_BUFFER_VIEW view = {};
-            view.BufferLocation = dxBuffer->GetResource()->GetGPUVirtualAddress();
+            view.BufferLocation = ((ID3D12Resource*)dxBuffer->GetResource())->GetGPUVirtualAddress();
             view.StrideInBytes = dxBuffer->GetStride();
             view.SizeInBytes = (UINT)dxBuffer->GetSize();
             vertexBufferViews.push_back(view);
@@ -387,7 +429,7 @@ namespace RHI
         {
             BufferDirectX12* dxBuffer = static_cast<BufferDirectX12*>(pIndexBuffer);
             D3D12_INDEX_BUFFER_VIEW view = {};
-            view.BufferLocation = dxBuffer->GetResource()->GetGPUVirtualAddress() + offset;
+            view.BufferLocation = ((ID3D12Resource*)dxBuffer->GetResource())->GetGPUVirtualAddress() + offset;
             view.Format = ConvertIndexFormat(format);
             view.SizeInBytes = (UINT)dxBuffer->GetSize() - (UINT)offset;
             m_pCommandList->IASetIndexBuffer(&view);
@@ -507,7 +549,7 @@ namespace RHI
         {
             BufferDirectX12* dstBuffer = static_cast<BufferDirectX12*>(pDstResource);
             BufferDirectX12* srcBuffer = static_cast<BufferDirectX12*>(pSrcResource);
-            m_pCommandList->CopyResource(dstBuffer->GetResource(), srcBuffer->GetResource());
+            m_pCommandList->CopyResource((ID3D12Resource*)dstBuffer->GetResource(), (ID3D12Resource*)srcBuffer->GetResource());
         }
     }
 
@@ -518,11 +560,81 @@ namespace RHI
             BufferDirectX12* dxDstBuffer = static_cast<BufferDirectX12*>(pDstBuffer);
             BufferDirectX12* dxSrcBuffer = static_cast<BufferDirectX12*>(pSrcBuffer);
             m_pCommandList->CopyBufferRegion(
-                dxDstBuffer->GetResource(),
+                (ID3D12Resource*)dxDstBuffer->GetResource(),
                 dstOffset,
-                dxSrcBuffer->GetResource(),
+                (ID3D12Resource*)dxSrcBuffer->GetResource(),
                 srcOffset,
                 numBytes);
+        }
+    }
+
+    void CommandListDirectX12::ResourceBarrier(uint32_t numBarriers, const BarrierDesc* pBarriers)
+    {
+        if (numBarriers == 0 || pBarriers == nullptr)
+            return;
+        
+        // 转换 RHI 屏障描述到 D3D12 屏障
+        std::vector<D3D12_RESOURCE_BARRIER> d3d12Barriers;
+        d3d12Barriers.reserve(numBarriers);
+        
+        for (uint32_t i = 0; i < numBarriers; ++i)
+        {
+            const auto& rhiBarrier = pBarriers[i];
+            D3D12_RESOURCE_BARRIER d3d12Barrier = {};
+            
+            switch (rhiBarrier.Type)
+            {
+            case ResourceBarrierType::Transition:
+            {
+                d3d12Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+                d3d12Barrier.Flags = ConvertResourceBarrierFlags(rhiBarrier.Flags);
+                
+                // 获取 D3D12 资源指针
+                auto* buffer = static_cast<BufferDirectX12*>(rhiBarrier.Transition.pResource);
+                d3d12Barrier.Transition.pResource = buffer ? (ID3D12Resource*)buffer->GetResource() : nullptr;
+                d3d12Barrier.Transition.Subresource = rhiBarrier.Transition.Subresource;
+                d3d12Barrier.Transition.StateBefore = static_cast<D3D12_RESOURCE_STATES>(rhiBarrier.Transition.StateBefore);
+                d3d12Barrier.Transition.StateAfter = static_cast<D3D12_RESOURCE_STATES>(rhiBarrier.Transition.StateAfter);
+                break;
+            }
+            case ResourceBarrierType::Aliasing:
+            {
+                d3d12Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
+                d3d12Barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+                
+                auto* pResourceBefore = static_cast<BufferDirectX12*>(rhiBarrier.Aliasing.pResourceBefore);
+                auto* pResourceAfter = static_cast<BufferDirectX12*>(rhiBarrier.Aliasing.pResourceAfter);
+                d3d12Barrier.Aliasing.pResourceBefore = pResourceBefore ? (ID3D12Resource*)pResourceBefore->GetResource() : nullptr;
+                d3d12Barrier.Aliasing.pResourceAfter = pResourceAfter ? (ID3D12Resource*)pResourceAfter->GetResource() : nullptr;
+                break;
+            }
+            case ResourceBarrierType::UAV:
+            {
+                d3d12Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
+                d3d12Barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+                
+                auto* pResource = static_cast<BufferDirectX12*>(rhiBarrier.UAV.pResource);
+                d3d12Barrier.UAV.pResource = pResource ? (ID3D12Resource*)pResource->GetResource() : nullptr;
+                break;
+            }
+            default:
+#if RHI_ENABLE_RESOURCE_INFO
+                ThrowIfFailed("Unknown barrier type");
+#endif
+                Core::ErrorCapture::Capture("Unknown barrier type");
+                continue;
+            }
+            
+            d3d12Barriers.push_back(d3d12Barrier);
+        }
+        
+        // 调用 D3D12 命令列表的 ResourceBarrier
+        if (!d3d12Barriers.empty())
+        {
+            m_pCommandList->ResourceBarrier(
+                static_cast<UINT>(d3d12Barriers.size()),
+                d3d12Barriers.data()
+            );
         }
     }
 }

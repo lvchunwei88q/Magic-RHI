@@ -33,7 +33,7 @@ namespace RHI
 
         ~BufferDirectX12() override = default;
 
-        ID3D12Resource* GetResource() const { return m_pResource.Get(); }
+        void* GetResource() const override { return m_pResource.Get(); }
 
         void* Map() override
         {
@@ -142,6 +142,9 @@ namespace RHI
         // 资源操作
         void CopyResource(RHIResource* pDstResource, RHIResource* pSrcResource) override;
         void CopyBufferRegion(RHIBuffer* pDstBuffer, uint64_t dstOffset, RHIBuffer* pSrcBuffer, uint64_t srcOffset, uint64_t numBytes) override;
+
+        // 屏障
+        void ResourceBarrier(uint32_t numBarriers, const BarrierDesc* pBarriers) override;
 
         ID3D12GraphicsCommandList* GetCommandList() const { return m_pCommandList.Get(); }
 

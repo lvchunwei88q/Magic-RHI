@@ -126,7 +126,7 @@ int main(int argc, char* argv[])
                 desc.SizeInBytes =  bufferSize; // 总字节数
                 desc.Stride       = sizeof(Vertex);                    // 每个顶点的大小
                 desc.InitialData  = vertices.data();                   // 指向初始数据的指针
-                desc.HeapType     = RHI::BufferHeapType::Upload;
+                desc.HeapType     = RHI::BufferHeapType::Default;
                 desc.BindFlags    = RHI::BufferBindFlag::VertexBuffer;
                 // ========== 3. 调用 CreateBuffer 创建顶点缓冲 ==========
                 std::shared_ptr<RHI::RHIVertexBuffer> vertexBuffer = device->CreateBuffer(desc);
