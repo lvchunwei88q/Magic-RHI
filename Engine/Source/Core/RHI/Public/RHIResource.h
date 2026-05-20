@@ -2,6 +2,7 @@
 
 #include "Common/RHI_API.h"
 #include "Common/RHIResourceType.h"
+#include <Tools/Cast.h>
 #include <string>
 #include <memory>
 #include <vector>

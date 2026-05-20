@@ -275,7 +275,7 @@ namespace RHI
         for (uint32_t i = 0; i < numBuffers; ++i)
         {
             BufferDirectX11* dxBuffer = static_cast<BufferDirectX11*>(ppBuffers[i]);
-            buffers.push_back((ID3D11Buffer*)dxBuffer->GetResource());
+            buffers.push_back(SafeCast<ID3D11Buffer>(dxBuffer->GetResource()));
             strides.push_back(dxBuffer->GetStride());
             offsets.push_back(pOffsets ? (UINT)pOffsets[i] : 0);
         }
@@ -288,7 +288,8 @@ namespace RHI
         if (pIndexBuffer)
         {
             BufferDirectX11* dxBuffer = static_cast<BufferDirectX11*>(pIndexBuffer);
-            m_pDeviceContext->IASetIndexBuffer((ID3D11Buffer*)dxBuffer->GetResource(), ConvertIndexFormat(format), (UINT)offset);
+            m_pDeviceContext->IASetIndexBuffer(SafeCast<ID3D11Buffer>(dxBuffer->GetResource()),
+             ConvertIndexFormat(format), (UINT)offset);
         }
         else
         {
@@ -405,7 +406,8 @@ namespace RHI
         {
             BufferDirectX11* dstBuffer = static_cast<BufferDirectX11*>(pDstResource);
             BufferDirectX11* srcBuffer = static_cast<BufferDirectX11*>(pSrcResource);
-            m_pDeviceContext->CopyResource((ID3D11Resource*)dstBuffer->GetResource(), (ID3D11Resource*)srcBuffer->GetResource());
+            m_pDeviceContext->CopyResource(SafeCast<ID3D11Buffer>(dstBuffer->GetResource()),
+             SafeCast<ID3D11Buffer>(srcBuffer->GetResource()));
         }
     }
 
@@ -425,8 +427,8 @@ namespace RHI
             srcBox.back = 1;
             
             m_pDeviceContext->CopySubresourceRegion(
-                (ID3D11Resource*)dxDstBuffer->GetResource(), 0, (UINT)dstOffset, 0, 0,
-                (ID3D11Resource*)dxSrcBuffer->GetResource(), 0, &srcBox);
+                SafeCast<ID3D11Buffer>(dxDstBuffer->GetResource()), 0, (UINT)dstOffset, 0, 0,
+                SafeCast<ID3D11Buffer>(dxSrcBuffer->GetResource()), 0, &srcBox);
         }
     }
 

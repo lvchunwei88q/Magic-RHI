@@ -414,7 +414,7 @@ namespace RHI
         {
             BufferDirectX12* dxBuffer = static_cast<BufferDirectX12*>(ppBuffers[i]);
             D3D12_VERTEX_BUFFER_VIEW view = {};
-            view.BufferLocation = ((ID3D12Resource*)dxBuffer->GetResource())->GetGPUVirtualAddress();
+            view.BufferLocation = SafeCast<ID3D12Resource>(dxBuffer->GetResource())->GetGPUVirtualAddress();
             view.StrideInBytes = dxBuffer->GetStride();
             view.SizeInBytes = (UINT)dxBuffer->GetSize();
             vertexBufferViews.push_back(view);
@@ -428,8 +428,8 @@ namespace RHI
         if (pIndexBuffer)
         {
             BufferDirectX12* dxBuffer = static_cast<BufferDirectX12*>(pIndexBuffer);
-            D3D12_INDEX_BUFFER_VIEW view = {};
-            view.BufferLocation = ((ID3D12Resource*)dxBuffer->GetResource())->GetGPUVirtualAddress() + offset;
+            D3D12_INDEX_BUFFER_VIEW view = {};  
+            view.BufferLocation = SafeCast<ID3D12Resource>(dxBuffer->GetResource())->GetGPUVirtualAddress() + offset;
             view.Format = ConvertIndexFormat(format);
             view.SizeInBytes = (UINT)dxBuffer->GetSize() - (UINT)offset;
             m_pCommandList->IASetIndexBuffer(&view);
@@ -549,7 +549,8 @@ namespace RHI
         {
             BufferDirectX12* dstBuffer = static_cast<BufferDirectX12*>(pDstResource);
             BufferDirectX12* srcBuffer = static_cast<BufferDirectX12*>(pSrcResource);
-            m_pCommandList->CopyResource((ID3D12Resource*)dstBuffer->GetResource(), (ID3D12Resource*)srcBuffer->GetResource());
+            m_pCommandList->CopyResource(SafeCast<ID3D12Resource>(dstBuffer->GetResource()),
+             SafeCast<ID3D12Resource>(srcBuffer->GetResource()));
         }
     }
 
@@ -560,9 +561,9 @@ namespace RHI
             BufferDirectX12* dxDstBuffer = static_cast<BufferDirectX12*>(pDstBuffer);
             BufferDirectX12* dxSrcBuffer = static_cast<BufferDirectX12*>(pSrcBuffer);
             m_pCommandList->CopyBufferRegion(
-                (ID3D12Resource*)dxDstBuffer->GetResource(),
+                SafeCast<ID3D12Resource>(dxDstBuffer->GetResource()),
                 dstOffset,
-                (ID3D12Resource*)dxSrcBuffer->GetResource(),
+                SafeCast<ID3D12Resource>(dxSrcBuffer->GetResource()),
                 srcOffset,
                 numBytes);
         }
@@ -591,7 +592,7 @@ namespace RHI
                 
                 // 获取 D3D12 资源指针
                 auto* buffer = static_cast<BufferDirectX12*>(rhiBarrier.Transition.pResource);
-                d3d12Barrier.Transition.pResource = buffer ? (ID3D12Resource*)buffer->GetResource() : nullptr;
+                d3d12Barrier.Transition.pResource = buffer ? SafeCast<ID3D12Resource>(buffer->GetResource()) : nullptr;
                 d3d12Barrier.Transition.Subresource = rhiBarrier.Transition.Subresource;
                 d3d12Barrier.Transition.StateBefore = static_cast<D3D12_RESOURCE_STATES>(rhiBarrier.Transition.StateBefore);
                 d3d12Barrier.Transition.StateAfter = static_cast<D3D12_RESOURCE_STATES>(rhiBarrier.Transition.StateAfter);
@@ -604,8 +605,8 @@ namespace RHI
                 
                 auto* pResourceBefore = static_cast<BufferDirectX12*>(rhiBarrier.Aliasing.pResourceBefore);
                 auto* pResourceAfter = static_cast<BufferDirectX12*>(rhiBarrier.Aliasing.pResourceAfter);
-                d3d12Barrier.Aliasing.pResourceBefore = pResourceBefore ? (ID3D12Resource*)pResourceBefore->GetResource() : nullptr;
-                d3d12Barrier.Aliasing.pResourceAfter = pResourceAfter ? (ID3D12Resource*)pResourceAfter->GetResource() : nullptr;
+                d3d12Barrier.Aliasing.pResourceBefore = pResourceBefore ? SafeCast<ID3D12Resource>(pResourceBefore->GetResource()) : nullptr;
+                d3d12Barrier.Aliasing.pResourceAfter = pResourceAfter ? SafeCast<ID3D12Resource>(pResourceAfter->GetResource()) : nullptr;
                 break;
             }
             case ResourceBarrierType::UAV:
@@ -614,7 +615,7 @@ namespace RHI
                 d3d12Barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
                 
                 auto* pResource = static_cast<BufferDirectX12*>(rhiBarrier.UAV.pResource);
-                d3d12Barrier.UAV.pResource = pResource ? (ID3D12Resource*)pResource->GetResource() : nullptr;
+                d3d12Barrier.UAV.pResource = pResource ? SafeCast<ID3D12Resource>(pResource->GetResource()) : nullptr;
                 break;
             }
             default:
