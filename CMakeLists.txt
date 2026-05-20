@@ -18,7 +18,9 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${PROJECT_SOURCE_DIR}/out/lib")
 
 # add engine modules
 EngineModule(Core/Core)
-EngineModule(Core/RHI)
+EngineModule(RHI/DirectX11RHI)
+EngineModule(RHI/DirectX12RHI)
+EngineModule(RHI/RHI)
 
 add_executable(${PROJECT_NAME} main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE RHI Core)

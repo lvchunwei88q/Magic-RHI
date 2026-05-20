@@ -1,0 +1,5 @@
+﻿; DirectX12RHI.def
+EXPORTS
+    CreateDevice
+    CreateSwapChain
+    GetRHIType

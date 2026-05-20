@@ -5,8 +5,8 @@
 #include <cstring>
 
 #include <Core.h>
-#include <RHI.h>
-#include <RHIResource.h>
+#include <RHI.hpp>
+
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -74,6 +74,7 @@ int main(int argc, char* argv[])
         type = RHI::RHIType::DirectX12;
         std::cout << "Using DirectX12" << std::endl;
     } else {
+        type = RHI::RHIType::DirectX11;
         std::cout << "Using DirectX11" << std::endl;
     }
 
@@ -122,8 +123,11 @@ int main(int argc, char* argv[])
     ShowWindow(hwnd, SW_SHOW);
     
     std::cout << "Initializing Device..." << std::endl;
+
+    RHI::IRHILoader* loader = RHI::GetLoader();
+    loader->Load(type);
     
-    auto device = RHI::Device::Create(type);
+    auto device = loader->CreateDevice();
     if (device && device->Initialize())
     {
         std::cout << "Feature Level: " << GetFeatureLevelName(device->GetFeatureLevel()) << std::endl;
@@ -135,7 +139,7 @@ int main(int argc, char* argv[])
         swapChainDesc.Height = 600;
         swapChainDesc.VSync = false;
         
-        auto swapChain = RHI::SwapChain::Create(type);
+        auto swapChain = loader->CreateSwapChain(device.get(), swapChainDesc);
         if (swapChain && swapChain->Initialize(device.get(), swapChainDesc))
         {
             std::cout << "SwapChain created successfully!" << std::endl;
