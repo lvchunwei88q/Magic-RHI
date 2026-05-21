@@ -73,7 +73,7 @@ namespace RHI
 
         bool CompileShaderToBytecode(const std::string& source, const std::string& entryPoint, 
                                     const std::string& profile, bool enableDebug,
-                                    std::vector<uint8_t>& outBytecode);
+                                    std::vector<uint8_t>& outBytecode,std::string& basePath);
     private:
         ComPtr<ID3D12Device> m_pDevice;
         std::wstring m_AdapterName;

@@ -7,6 +7,8 @@
 #include <Converter.h>
 #include <FileManager.h>
 
+#include <CoreLogCapture/CoreLogCapture.h>
+
 namespace RHI
 {
     namespace
@@ -39,7 +41,7 @@ namespace RHI
                 result += match.prefix().str();
             
                 std::string includePath = match[1].str();
-                std::string fullPath = basePath + "/" + includePath;
+                std::string fullPath = basePath + "\\" + includePath;
                 std::string includeContent = ReadFileToString(fullPath);
                 
                 result += ProcessShaderIncludes(includeContent, basePath);
@@ -82,12 +84,37 @@ namespace RHI
 
             if (FAILED(hr))
             {
+                std::string errorMsg = "Shader compilation failed";
+                
+                // 添加 HRESULT 信息
+                char hrMsg[64];
+                sprintf_s(hrMsg, " (HRESULT: 0x%08X)", static_cast<unsigned int>(hr));
+                errorMsg += hrMsg;
+                errorMsg += ":\n";
+                
                 if (errorBlob)
                 {
-                    std::string errorMsg = "Shader compilation failed:\n";
                     errorMsg += reinterpret_cast<const char*>(errorBlob->GetBufferPointer());
-                    ThrowErrorMessage(errorMsg.c_str());
                 }
+                else
+                {
+                    // 没有详细错误信息时，根据 HRESULT 提供提示
+                    switch (hr)
+                    {
+                    case E_OUTOFMEMORY:
+                        errorMsg += "Out of memory";
+                        break;
+                    case E_INVALIDARG:
+                        errorMsg += "Invalid argument (check shader target or entry point)";
+                        break;
+                    default:
+                        errorMsg += "Unknown error";
+                        break;
+                    }
+                }
+                
+                Core::ErrorCapture::Capture(errorMsg.c_str());
+                // ThrowErrorMessage(errorMsg.c_str());   这里不要直接抛出异常，否则会导致程序崩溃
                 return false;
             }
 

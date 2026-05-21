@@ -6,6 +6,8 @@
 
 #include <Core.h>
 #include <RHI.hpp>
+#include <AbsolutePath.h>
+#include <Converter.h>
 
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -210,11 +212,18 @@ int main(int argc, char* argv[])
                 //device->DeleteBuffer(vertexBuffer);
                 std::cout << "VertexBuffer created successfully!" << std::endl;
 
-                // 从内存编译顶点着色器
+                std::cout << "Shader compilation..." << std::endl;
+                // 从文件编译顶点着色器
+                std::string exePath = IO::Converter::ToNarrowString(IO::AbsolutePath::Get().GetExecutableDirectory());
+                std::string shaderPath = exePath + "\\..\\..\\Test\\test.hlsl";
                 RHI::ShaderCompileDesc vsDesc{};
                 vsDesc.Type = RHI::ShaderType::Vertex;
-                vsDesc.SourceCode = "struct PSInput { float4 position : SV_POSITION; }; PSInput main() { PSInput o; o.position = float4(0,0,0,1); return o; }";
+                vsDesc.EnableDebugInfo = true;
+                vsDesc.FilePath = shaderPath.c_str();
+
                 auto vertexShader = device->CompileVertexShader(vsDesc);
+
+                std::cout << "VertexShader compiled successfully!" << std::endl;
 
                 MSG msg = {};
                 while (GetMessage(&msg, nullptr, 0, 0))

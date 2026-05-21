@@ -2,8 +2,12 @@
 #include "RHIDirectX12.h"
 #include "DirectXHelper.h"
 
+#include <include/Support/ErrorCodes.h>
+
 #include <Converter.h>
 #include <FileManager.h>
+
+#include <CoreLogCapture/CoreLogCapture.h>
 
 namespace RHI
 {
@@ -117,7 +121,7 @@ namespace RHI
             std::string entryPoint = desc.EntryPoint ? desc.EntryPoint : "main";
 
             std::vector<uint8_t> bytecode;
-            if (!device->CompileShaderToBytecode(source, entryPoint, profile, desc.EnableDebugInfo, bytecode))
+            if (!device->CompileShaderToBytecode(source, entryPoint, profile, desc.EnableDebugInfo, bytecode,basePath))
                 return nullptr;
 
             return std::make_shared<ShaderType>(bytecode);
@@ -144,7 +148,7 @@ namespace RHI
 
     bool RHIDirectX12::CompileShaderToBytecode(const std::string& source, const std::string& entryPoint, 
                                 const std::string& profile, bool enableDebug,
-                                std::vector<uint8_t>& outBytecode)
+                                std::vector<uint8_t>& outBytecode,std::string& basePath)
     {   
         if (!compiler || !utils)
         {
@@ -165,11 +169,14 @@ namespace RHI
             DXC_CP_WIDE,
             &sourceBlob
         ));
+
+        std::wstring shaderPath = IO::Converter::ToWideString(basePath);
         
         // 准备参数
         std::vector<LPCWSTR> args;
         args.push_back(L"-T"); args.push_back(profileW.c_str());
         args.push_back(L"-E"); args.push_back(entryPointW.c_str());
+        args.push_back(L"-I"); args.push_back(shaderPath.c_str()); // 在当前目录找头文件
         
         if (enableDebug)
         {
@@ -197,9 +204,55 @@ namespace RHI
         
         if (errors && errors->GetStringLength() > 0)
         {
-            std::string errorMsg = "Shader compilation failed:\n";
-            errorMsg += errors->GetStringPointer();
-            ThrowErrorMessage(errorMsg.c_str());
+            std::string errorMsg = errors->GetStringPointer();
+            
+            // 获取详细状态
+            HRESULT hr = S_OK;
+            if (result)
+            {
+                result->GetStatus(&hr);
+            }
+            
+            // 构建最终错误消息
+            std::string finalMsg = "Shader compilation failed";
+            
+            switch (hr)
+            {
+            case DXC_E_OVERLAPPING_SEMANTICS:
+                finalMsg += " (Overlapping semantics):\n";
+                break;
+            case DXC_E_MULTIPLE_DEPTH_SEMANTICS:
+                finalMsg += " (Multiple depth semantics):\n";
+                break;
+            case DXC_E_INPUT_FILE_TOO_LARGE:
+                finalMsg += " (Input file too large):\n";
+                break;
+            case DXC_E_INCORRECT_DXBC:
+                finalMsg += " (Incorrect DXBC):\n";
+                break;
+            case DXC_E_MISSING_PART:
+                finalMsg += " (Missing DXIL part):\n";
+                break;
+            case DXC_E_IR_VERIFICATION_FAILED:
+                finalMsg += " (IR verification failed - possible compiler bug):\n";
+                break;
+            case DXC_E_CONTAINER_INVALID:
+                finalMsg += " (Invalid DXIL container):\n";
+                break;
+            case DXC_E_OPTIMIZATION_FAILED:
+                finalMsg += " (Optimization failed):\n";
+                break;
+            case DXC_E_GENERAL_INTERNAL_ERROR:
+                finalMsg += " (DXC internal error):\n";
+                break;
+            default:
+                finalMsg += ":\n";
+                break;
+            }
+            
+            finalMsg += errorMsg;
+            Core::ErrorCapture::Capture(finalMsg.c_str());
+            // ThrowErrorMessage(finalMsg.c_str());   这里不要直接抛出异常，否则会导致程序崩溃
             return false;
         }
         
