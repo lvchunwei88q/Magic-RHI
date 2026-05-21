@@ -229,10 +229,10 @@ struct RHIViewport
 
 enum class RHIClearFlags : uint8_t
 {
-	None = 0,
-	Depth = 1,
-	Stencil = 2,
-	DepthStencil = 3
+    None = 0,
+    Depth = 1 << 0,      // 0b0001 (1)
+    Stencil = 1 << 1,    // 0b0010 (2)
+    DepthStencil = Depth | Stencil // 0b0011 (3)
 };
 ENUM_CLASS_FLAGS(RHIClearFlags);
 
