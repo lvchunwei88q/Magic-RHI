@@ -69,7 +69,7 @@ namespace RHI
             }
             default:
 #if RHI_ENABLE_RESOURCE_INFO
-                ThrowIfFailed("Unknown barrier type");
+                ThrowErrorMessage("Unknown barrier type");
 #endif
                 Core::ErrorCapture::Capture("Unknown barrier type");
                 continue;

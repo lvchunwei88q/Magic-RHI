@@ -18,6 +18,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${PROJECT_SOURCE_DIR}/out/lib")
 
 # add engine modules
 EngineModule(Core/Core)
+EngineModule(Core/IO)
 EngineModule(RHI/DirectX11RHI)
 EngineModule(RHI/DirectX12RHI)
 EngineModule(RHI/RHI)

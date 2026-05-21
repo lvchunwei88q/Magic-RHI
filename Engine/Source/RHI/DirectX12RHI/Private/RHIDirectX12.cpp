@@ -262,6 +262,11 @@ namespace RHI
             infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
         }
 #endif
+
+        // Init ShaderCompiler
+        ThrowIfFailed(DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler)));
+        ThrowIfFailed(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils)));
+        ThrowIfFailed(utils->CreateDefaultIncludeHandler(&includeHandler));
         return true;
     }
 

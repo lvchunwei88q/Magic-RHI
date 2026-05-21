@@ -45,6 +45,15 @@ namespace RHI
     class RHIBuffer;
     struct SamplerStateDesc;
     struct BufferDesc;
+    // forward shader type
+    struct ShaderCompileDesc;
+    class RHIVertexShader;
+    class RHIPixelShader;
+    class RHIGeometryShader;
+    class RHIHullShader;
+    class RHIDomainShader;
+    class RHIComputeShader;
+
 
     struct SwapChainDesc
     {
@@ -68,13 +77,20 @@ namespace RHI
         virtual FeatureLevel GetFeatureLevel() const = 0;
 
         virtual std::shared_ptr<RHISamplerState> CreateSamplerState(const SamplerStateDesc& desc) = 0;
-        virtual void DeleteSamplerState(std::shared_ptr<RHI::RHISamplerState>& samplerState) = 0;
+        virtual void DeleteSamplerState(std::shared_ptr<RHISamplerState>& samplerState) = 0;
 
         virtual std::shared_ptr<RHIBuffer> CreateBuffer(const BufferDesc& desc) = 0;
-        virtual void DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer) = 0;
+        virtual void DeleteBuffer(std::shared_ptr<RHIBuffer>& buffer) = 0;
 
         virtual std::shared_ptr<RHICommandList> CreateCommandList(RHICmdListType type) = 0;
         virtual std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdListType Type) const = 0;
+
+        virtual std::shared_ptr<RHIVertexShader> CompileVertexShader(const ShaderCompileDesc& desc) = 0;
+        virtual std::shared_ptr<RHIPixelShader> CompilePixelShader(const ShaderCompileDesc& desc) = 0;
+        virtual std::shared_ptr<RHIGeometryShader> CompileGeometryShader(const ShaderCompileDesc& desc) = 0;
+        virtual std::shared_ptr<RHIHullShader> CompileHullShader(const ShaderCompileDesc& desc) = 0;
+        virtual std::shared_ptr<RHIDomainShader> CompileDomainShader(const ShaderCompileDesc& desc) = 0;
+        virtual std::shared_ptr<RHIComputeShader> CompileComputeShader(const ShaderCompileDesc& desc) = 0;
     };
 
     class RHI_API SwapChain

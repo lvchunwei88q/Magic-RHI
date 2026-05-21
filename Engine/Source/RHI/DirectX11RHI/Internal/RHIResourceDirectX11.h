@@ -8,6 +8,66 @@ using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
+    class VertexShaderDirectX11 : public RHIVertexShader
+    {
+    public:
+        VertexShaderDirectX11(ID3D11VertexShader* pShader) : m_pVertexShader(pShader) {}
+        ~VertexShaderDirectX11() override = default;
+        ID3D11VertexShader* GetShader() const { return m_pVertexShader.Get(); }
+    private:
+        ComPtr<ID3D11VertexShader> m_pVertexShader;
+    };
+
+    class PixelShaderDirectX11 : public RHIPixelShader
+    {
+    public:
+        PixelShaderDirectX11(ID3D11PixelShader* pShader) : m_pPixelShader(pShader) {}
+        ~PixelShaderDirectX11() override = default;
+        ID3D11PixelShader* GetShader() const { return m_pPixelShader.Get(); }
+    private:
+        ComPtr<ID3D11PixelShader> m_pPixelShader;
+    };
+
+    class GeometryShaderDirectX11 : public RHIGeometryShader
+    {
+    public:
+        GeometryShaderDirectX11(ID3D11GeometryShader* pShader) : m_pGeometryShader(pShader) {}
+        ~GeometryShaderDirectX11() override = default;
+        ID3D11GeometryShader* GetShader() const { return m_pGeometryShader.Get(); }
+    private:
+        ComPtr<ID3D11GeometryShader> m_pGeometryShader;
+    };
+
+    class HullShaderDirectX11 : public RHIHullShader
+    {
+    public:
+        HullShaderDirectX11(ID3D11HullShader* pShader) : m_pHullShader(pShader) {}
+        ~HullShaderDirectX11() override = default;
+        ID3D11HullShader* GetShader() const { return m_pHullShader.Get(); }
+    private:
+        ComPtr<ID3D11HullShader> m_pHullShader;
+    };
+
+    class DomainShaderDirectX11 : public RHIDomainShader
+    {
+    public:
+        DomainShaderDirectX11(ID3D11DomainShader* pShader) : m_pDomainShader(pShader) {}
+        ~DomainShaderDirectX11() override = default;
+        ID3D11DomainShader* GetShader() const { return m_pDomainShader.Get(); }
+    private:
+        ComPtr<ID3D11DomainShader> m_pDomainShader;
+    };
+
+    class ComputeShaderDirectX11 : public RHIComputeShader
+    {
+    public:
+        ComputeShaderDirectX11(ID3D11ComputeShader* pShader) : m_pComputeShader(pShader) {}
+        ~ComputeShaderDirectX11() override = default;
+        ID3D11ComputeShader* GetShader() const { return m_pComputeShader.Get(); }
+    private:
+        ComPtr<ID3D11ComputeShader> m_pComputeShader;
+    };
+
     class SamplerStateDirectX11 : public RHISamplerState
     {
     public:
@@ -38,7 +98,7 @@ namespace RHI
             m_DeviceContext = InDeviceContext;
         }
 
-        void* GetResource() const override { return m_pBuffer.Get(); }
+        ID3D11Buffer* GetResource() const { return m_pBuffer.Get(); }
 
         void* Map() override
         {
@@ -53,7 +113,7 @@ namespace RHI
             }
 #if RHI_ENABLE_RESOURCE_INFO
             else if(GetHeapType() == BufferHeapType::Default) 
-                ThrowIfFailed("Failed to map default buffer");
+                ThrowErrorMessage("Failed to map default buffer");
 #endif
             return nullptr;
         }
@@ -66,7 +126,7 @@ namespace RHI
             }
 #if RHI_ENABLE_RESOURCE_INFO
             else if(GetHeapType() == BufferHeapType::Default) 
-                ThrowIfFailed("Failed to unmap default buffer");
+                ThrowErrorMessage("Failed to unmap default buffer");
 #endif
         }
 

@@ -35,6 +35,13 @@ namespace RHI
         std::shared_ptr<RHICommandList> CreateCommandList(RHICmdListType type) override;
         std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdListType Type) const override;
 
+        std::shared_ptr<RHIVertexShader> CompileVertexShader(const ShaderCompileDesc& desc) override;
+        std::shared_ptr<RHIPixelShader> CompilePixelShader(const ShaderCompileDesc& desc) override;
+        std::shared_ptr<RHIGeometryShader> CompileGeometryShader(const ShaderCompileDesc& desc) override;
+        std::shared_ptr<RHIHullShader> CompileHullShader(const ShaderCompileDesc& desc) override;
+        std::shared_ptr<RHIDomainShader> CompileDomainShader(const ShaderCompileDesc& desc) override;
+        std::shared_ptr<RHIComputeShader> CompileComputeShader(const ShaderCompileDesc& desc) override;
+
         FeatureLevel GetFeatureLevel() const override;
         ID3D11Device* GetDevice() const { return m_pDevice.Get(); }
         ID3D11DeviceContext* GetDeviceContext() const { return m_pDeviceContext.Get(); }

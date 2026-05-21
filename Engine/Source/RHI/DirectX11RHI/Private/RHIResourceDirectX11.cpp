@@ -148,7 +148,7 @@ namespace RHI
         if(bufferDesc.BindFlags == 0)
         {
 #if RHI_ENABLE_RESOURCE_INFO
-        ThrowIfFailed("Please set the type for your buffer, otherwise it will fail to be created."); // 直接抛出异常，不支持动态创建
+        ThrowErrorMessage("Please set the type for your buffer, otherwise it will fail to be created."); // 直接抛出异常，不支持动态创建
 #else
         bufferDesc.BindFlags |= D3D11_BIND_CONSTANT_BUFFER; // 选择一个常用的
 #endif
@@ -164,7 +164,7 @@ namespace RHI
         }
 #if RHI_ENABLE_RESOURCE_INFO
         else if(desc.InitialData == nullptr && desc.HeapType == RHI::BufferHeapType::Default)
-            ThrowIfFailed("Creating D3D11_HEAP_TYPE_DEFAULT requires providing heap data");
+            ThrowErrorMessage("Creating D3D11_HEAP_TYPE_DEFAULT requires providing heap data");
 #endif
         else
         {

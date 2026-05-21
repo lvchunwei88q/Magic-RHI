@@ -35,8 +35,9 @@ namespace RHI
         }
     }
 
-    inline void ThrowIfFailed(const char* message)
+    template<typename T>
+    inline void ThrowErrorMessage(T&& message)
     {
-        throw std::runtime_error(message);
+        throw std::runtime_error(std::forward<T>(message));
     }
 }

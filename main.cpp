@@ -210,6 +210,12 @@ int main(int argc, char* argv[])
                 //device->DeleteBuffer(vertexBuffer);
                 std::cout << "VertexBuffer created successfully!" << std::endl;
 
+                // 从内存编译顶点着色器
+                RHI::ShaderCompileDesc vsDesc{};
+                vsDesc.Type = RHI::ShaderType::Vertex;
+                vsDesc.SourceCode = "struct PSInput { float4 position : SV_POSITION; }; PSInput main() { PSInput o; o.position = float4(0,0,0,1); return o; }";
+                auto vertexShader = device->CompileVertexShader(vsDesc);
+
                 MSG msg = {};
                 while (GetMessage(&msg, nullptr, 0, 0))
                 {
