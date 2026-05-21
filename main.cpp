@@ -215,7 +215,7 @@ int main(int argc, char* argv[])
                 std::cout << "Shader compilation..." << std::endl;
                 // 从文件编译顶点着色器
                 std::string exePath = IO::Converter::ToNarrowString(IO::AbsolutePath::Get().GetExecutableDirectory());
-                std::string shaderPath = exePath + "\\..\\..\\Test\\test.hlsl";
+                std::string shaderPath = exePath + "\\..\\..\\Test\\test.hlsl"; // 你知道的这只是一个测试示例
                 RHI::ShaderCompileDesc vsDesc{};
                 vsDesc.Type = RHI::ShaderType::Vertex;
                 vsDesc.EnableDebugInfo = true;
