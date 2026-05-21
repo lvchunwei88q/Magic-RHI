@@ -8,6 +8,66 @@ using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
+    class VertexShaderDirectX12 : public RHIVertexShader
+    {
+    public:
+        VertexShaderDirectX12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
+        ~VertexShaderDirectX12() override = default;
+        const std::vector<uint8_t>& GetBytecode() const { return m_Bytecode; }
+    private:
+        std::vector<uint8_t> m_Bytecode;
+    };
+
+    class PixelShaderDirectX12 : public RHIPixelShader
+    {
+    public:
+        PixelShaderDirectX12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
+        ~PixelShaderDirectX12() override = default;
+        const std::vector<uint8_t>& GetBytecode() const { return m_Bytecode; }
+    private:
+        std::vector<uint8_t> m_Bytecode;
+    };
+
+    class GeometryShaderDirectX12 : public RHIGeometryShader
+    {
+    public:
+        GeometryShaderDirectX12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
+        ~GeometryShaderDirectX12() override = default;
+        const std::vector<uint8_t>& GetBytecode() const { return m_Bytecode; }
+    private:
+        std::vector<uint8_t> m_Bytecode;
+    };
+
+    class HullShaderDirectX12 : public RHIHullShader
+    {
+    public:
+        HullShaderDirectX12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
+        ~HullShaderDirectX12() override = default;
+        const std::vector<uint8_t>& GetBytecode() const { return m_Bytecode; }
+    private:
+        std::vector<uint8_t> m_Bytecode;
+    };
+
+    class DomainShaderDirectX12 : public RHIDomainShader
+    {
+    public:
+        DomainShaderDirectX12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
+        ~DomainShaderDirectX12() override = default;
+        const std::vector<uint8_t>& GetBytecode() const { return m_Bytecode; }
+    private:
+        std::vector<uint8_t> m_Bytecode;
+    };
+
+    class ComputeShaderDirectX12 : public RHIComputeShader
+    {
+    public:
+        ComputeShaderDirectX12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
+        ~ComputeShaderDirectX12() override = default;
+        const std::vector<uint8_t>& GetBytecode() const { return m_Bytecode; }
+    private:
+        std::vector<uint8_t> m_Bytecode;
+    };
+
     class SamplerStateDirectX12 : public RHISamplerState
     {
     public:
@@ -34,7 +94,7 @@ namespace RHI
 
         ~BufferDirectX12() override = default;
 
-        void* GetResource() const override { return m_pResource.Get(); }
+        ID3D12Resource* GetResource() const { return m_pResource.Get(); }
 
         void* Map() override
         {
@@ -49,7 +109,7 @@ namespace RHI
                 return pData;
             }
 #if RHI_ENABLE_RESOURCE_INFO
-            ThrowIfFailed("Failed to unmap default buffer");
+            ThrowErrorMessage("Failed to unmap default buffer");
 #endif
             return nullptr;
         }
@@ -62,7 +122,7 @@ namespace RHI
                 m_pResource->Unmap(0, &writeRange);
             }
 #if RHI_ENABLE_RESOURCE_INFO
-            ThrowIfFailed("Failed to unmap default buffer");
+            ThrowErrorMessage("Failed to unmap default buffer");
 #endif
         }
 

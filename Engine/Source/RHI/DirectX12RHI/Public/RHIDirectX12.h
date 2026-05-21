@@ -5,7 +5,11 @@
 #include "DescriptorHeapAllocator.h"
 #include <d3d12.h>
 #include <dxgi1_6.h>
+// Shader Compiler
+#include <include/d3d12shader.h>
+#include <include/dxcapi.h>
 
+#include <vector>
 #include <wrl.h> // ComPtr
 using Microsoft::WRL::ComPtr;
 
@@ -39,6 +43,13 @@ namespace RHI
         std::shared_ptr<RHICommandList> CreateCommandList(RHICmdListType type) override;
         std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdListType Type) const override;
 
+        std::shared_ptr<RHIVertexShader> CompileVertexShader(const ShaderCompileDesc& desc) override;
+        std::shared_ptr<RHIPixelShader> CompilePixelShader(const ShaderCompileDesc& desc) override;
+        std::shared_ptr<RHIGeometryShader> CompileGeometryShader(const ShaderCompileDesc& desc) override;
+        std::shared_ptr<RHIHullShader> CompileHullShader(const ShaderCompileDesc& desc) override;
+        std::shared_ptr<RHIDomainShader> CompileDomainShader(const ShaderCompileDesc& desc) override;
+        std::shared_ptr<RHIComputeShader> CompileComputeShader(const ShaderCompileDesc& desc) override;
+
         void CreateQueues();
 
         FeatureLevel GetFeatureLevel() const override;
@@ -57,6 +68,12 @@ namespace RHI
         D3D12_CPU_DESCRIPTOR_HANDLE GetRTVCPUHandle(uint32_t index) const;
         D3D12_CPU_DESCRIPTOR_HANDLE GetDSVCPUHandle(uint32_t index) const;
 
+    public:
+        std::string GetShaderTarget(const char* prefix) const;
+
+        bool CompileShaderToBytecode(const std::string& source, const std::string& entryPoint, 
+                                    const std::string& profile, bool enableDebug,
+                                    std::vector<uint8_t>& outBytecode);
     private:
         ComPtr<ID3D12Device> m_pDevice;
         std::wstring m_AdapterName;
@@ -84,5 +101,10 @@ namespace RHI
         RHIDescriptorHeapAllocator<RHI_DESCRIPTOR_HEAP_SIZE_SAMPLER> m_SamplerHeapAllocator;
         RHIDescriptorHeapAllocator<RHI_DESCRIPTOR_HEAP_SIZE_RENDER_TARGET> m_RTVHeapAllocator;
         RHIDescriptorHeapAllocator<RHI_DESCRIPTOR_HEAP_SIZE_DEPTH_STENCIL> m_DSVHeapAllocator;
+
+        // ShaderCompiler
+        ComPtr<IDxcCompiler3> compiler;
+        ComPtr<IDxcUtils> utils;
+        ComPtr<IDxcIncludeHandler> includeHandler;
     };
 }

@@ -55,7 +55,7 @@ namespace RHI
         RHIResource& operator=(const RHIResource&) = delete;
 
         RHIResourceType GetType() const { return Type; }
-        virtual void* GetResource() const { return nullptr; }
+        //virtual void* GetResource() const { return nullptr; } 这里不应该获取到资源我们要对用户隐藏起来
 
 #if RHI_ENABLE_RESOURCE_INFO
         virtual void GetInfo(RHIResourceInfo& OutInfo) const;
@@ -177,36 +177,52 @@ namespace RHI
     {
     public:
         RHIVertexShader() : RHIResource(RRT_VertexShader) {}
+        virtual ~RHIVertexShader() = default;
     };
 
     class RHI_API RHIPixelShader : public RHIResource
     {
     public:
         RHIPixelShader() : RHIResource(RRT_PixelShader) {}
+        virtual ~RHIPixelShader() = default;
     };
 
     class RHI_API RHIGeometryShader : public RHIResource
     {
     public:
         RHIGeometryShader() : RHIResource(RRT_GeometryShader) {}
+        virtual ~RHIGeometryShader() = default;
     };
 
     class RHI_API RHIHullShader : public RHIResource
     {
     public:
         RHIHullShader() : RHIResource(RRT_None) {}
+        virtual ~RHIHullShader() = default;
     };
 
     class RHI_API RHIDomainShader : public RHIResource
     {
     public:
         RHIDomainShader() : RHIResource(RRT_None) {}
+        virtual ~RHIDomainShader() = default;
     };
 
     class RHI_API RHIComputeShader : public RHIResource
     {
     public:
         RHIComputeShader() : RHIResource(RRT_ComputeShader) {}
+        virtual ~RHIComputeShader() = default;
+    };
+
+    struct ShaderCompileDesc
+    {
+        ShaderType Type;
+        const char* SourceCode = nullptr;
+        const char* EntryPoint = "main";
+        const char* Profile = nullptr; // 对于普通的Shader而言我们不希望你去指定Profile，因为在不同的平台上的Shader Model的支持程度是不同的，我们的Shader编译器会根据平台自动选择合适的Profile
+        const char* FilePath = nullptr;
+        bool EnableDebugInfo = false;
     };
 
     class RHI_API RHIRasterizerState : public RHIResource

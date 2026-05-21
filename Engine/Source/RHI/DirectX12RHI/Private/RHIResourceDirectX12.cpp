@@ -209,7 +209,7 @@ namespace RHI
         }
 #if RHI_ENABLE_RESOURCE_INFO
         else if(desc.HeapType == BufferHeapType::Default && desc.InitialData == nullptr) 
-            ThrowIfFailed("Creating D3D12_HEAP_TYPE_DEFAULT requires providing heap data");
+            ThrowErrorMessage("Creating D3D12_HEAP_TYPE_DEFAULT requires providing heap data");
 #endif
 
         if(desc.HeapType != BufferHeapType::Default && desc.InitialData != nullptr){
