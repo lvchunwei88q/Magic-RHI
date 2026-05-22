@@ -27,6 +27,8 @@ namespace RHI
             case D3D_SHADER_MODEL_6_5: return ShaderModelVersion::SM_6_5;
             case D3D_SHADER_MODEL_6_6: return ShaderModelVersion::SM_6_6;
             case D3D_SHADER_MODEL_6_7: return ShaderModelVersion::SM_6_7;
+            case D3D_SHADER_MODEL_6_8: return ShaderModelVersion::SM_6_8;
+            case D3D_SHADER_MODEL_6_9: return ShaderModelVersion::SM_6_9;
             default: return ShaderModelVersion::Unknown;
             }
         }
