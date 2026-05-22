@@ -39,9 +39,9 @@ target_link_libraries(DirectX12RHI PRIVATE IO)
 # 复制DXC的dll文件到构建目录
 add_custom_command(TARGET DirectX12RHI POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${DXC_ROOT}/bin/dxcompiler.dll
+        ${DXC_ROOT}/dll/dxcompiler.dll
         $<TARGET_FILE_DIR:DirectX12RHI>
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${DXC_ROOT}/bin/dxil.dll
+        ${DXC_ROOT}/dll/dxil.dll
         $<TARGET_FILE_DIR:DirectX12RHI>
 )
