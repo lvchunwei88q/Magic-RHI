@@ -1,4 +1,4 @@
-#include "RHIResourceDirectX12.h"
+#include "RHICommandListDirectX12.h"
 
 namespace RHI
 {
