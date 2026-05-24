@@ -2,7 +2,7 @@
 #include "d3dx12.h"
 #include <d3d12.h>
 #include "DirectXHelper.h"
-#include "RHIResource.h"
+#include <RHIResource.h>
 #include <wrl.h> // ComPtr
 using Microsoft::WRL::ComPtr;
 
