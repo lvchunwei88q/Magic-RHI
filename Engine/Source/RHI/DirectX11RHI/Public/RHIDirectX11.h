@@ -8,11 +8,11 @@
 #include <wrl.h> // ComPtr
 using Microsoft::WRL::ComPtr;
 
-// CommandQueue Forward Declaration
-class CommandQueueDirectX11;
-
 namespace RHI
 {
+    // CommandQueue Forward Declaration
+    class CommandQueueDirectX11;
+
     class DIRECTX11RHI_API RHIDirectX11 : public Device
     {
     public:
@@ -41,6 +41,9 @@ namespace RHI
         std::shared_ptr<RHIHullShader> CompileHullShader(const ShaderCompileDesc& desc) override;
         std::shared_ptr<RHIDomainShader> CompileDomainShader(const ShaderCompileDesc& desc) override;
         std::shared_ptr<RHIComputeShader> CompileComputeShader(const ShaderCompileDesc& desc) override;
+        
+        std::shared_ptr<RHIRootSignature> CreateRootSignature(const RootSignatureDesc& desc) override;
+        void DeleteRootSignature(std::shared_ptr<RHI::RHIRootSignature>& rootSignature) override;
 
         FeatureLevel GetFeatureLevel() const override;
         ID3D11Device* GetDevice() const { return m_pDevice.Get(); }

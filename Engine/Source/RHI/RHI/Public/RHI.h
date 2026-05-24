@@ -54,6 +54,8 @@ namespace RHI
     class RHIDomainShader;
     class RHIComputeShader;
 
+    class RHIRootSignature;
+    struct RootSignatureDesc;
 
     struct SwapChainDesc
     {
@@ -91,6 +93,9 @@ namespace RHI
         virtual std::shared_ptr<RHIHullShader> CompileHullShader(const ShaderCompileDesc& desc) = 0;
         virtual std::shared_ptr<RHIDomainShader> CompileDomainShader(const ShaderCompileDesc& desc) = 0;
         virtual std::shared_ptr<RHIComputeShader> CompileComputeShader(const ShaderCompileDesc& desc) = 0;
+
+        virtual std::shared_ptr<RHIRootSignature> CreateRootSignature(const RootSignatureDesc& desc) = 0;
+        virtual void DeleteRootSignature(std::shared_ptr<RHIRootSignature>& rootSignature) = 0;
     };
 
     class RHI_API SwapChain

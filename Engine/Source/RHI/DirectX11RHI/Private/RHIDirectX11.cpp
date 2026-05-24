@@ -1,6 +1,7 @@
 /*
 * 因为使用到了前向声明所以需要先引入声明定义
  */
+#include "RHIRootSignatureDirectX11.h"
 #include "RHICommandListDirectX11.h"
 #include "RHIDirectX11.h"
 #include "DirectXConfig.h"
@@ -92,5 +93,21 @@ namespace RHI
     {
         // DX 11 不支持命令队列
         return m_CommandQueue;
+    }
+
+    std::shared_ptr<RHIRootSignature> RHIDirectX11::CreateRootSignature(const RootSignatureDesc& desc)
+    {
+        auto rootSignature = std::make_shared<RHIRootSignatureDirectX11>();
+        rootSignature->Initialize(this, desc);
+        return rootSignature;
+    }
+
+    void RHIDirectX11::DeleteRootSignature(std::shared_ptr<RHIRootSignature>& rootSignature)
+    {
+        if (rootSignature)
+        {
+            rootSignature->Shutdown();
+            rootSignature.reset();
+        }
     }
 }

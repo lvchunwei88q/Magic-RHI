@@ -337,4 +337,28 @@ inline const char* ShaderModelToString(ShaderModelVersion version)
     }
 }
 
+enum class RootParameterType : uint8_t
+{
+	DescriptorTable,
+	Constants,
+	CBV,
+	SRV,
+	UAV
+};
+
+enum class RootSignatureFlags : uint32_t
+{
+	None = 0,
+	AllowInputAssemblerInputLayout = 0x1,
+	AllowStreamOutput = 0x2,
+	DenyVertexShaderRootAccess = 0x4,
+	DenyHullShaderRootAccess = 0x8,
+	DenyDomainShaderRootAccess = 0x10,
+	DenyGeometryShaderRootAccess = 0x20,
+	DenyPixelShaderRootAccess = 0x40,
+	AllowAmplificationShaderRootAccess = 0x80,
+	AllowMeshShaderRootAccess = 0x100,
+	DenyComputeShaderRootAccess = 0x200,
+};
+ENUM_CLASS_FLAGS(RootSignatureFlags);
 }

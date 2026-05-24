@@ -13,14 +13,14 @@
 #include <wrl.h> // ComPtr
 using Microsoft::WRL::ComPtr;
 
-// CommandQueue Forward Declaration
-class CommandQueueDirectX12;
-using GraphicsCommandQueueDirectX12 = CommandQueueDirectX12;
-using ComputeCommandQueueDirectX12 = CommandQueueDirectX12;
-using CopyCommandQueueDirectX12 = CommandQueueDirectX12;
-
 namespace RHI
 {
+    // CommandQueue Forward Declaration
+    class CommandQueueDirectX12;
+    using GraphicsCommandQueueDirectX12 = CommandQueueDirectX12;
+    using ComputeCommandQueueDirectX12 = CommandQueueDirectX12;
+    using CopyCommandQueueDirectX12 = CommandQueueDirectX12;
+
     class DIRECTX12RHI_API RHIDirectX12 : public Device
     {
     public:
@@ -52,6 +52,9 @@ namespace RHI
 
         void CreateQueues();
 
+        std::shared_ptr<RHIRootSignature> CreateRootSignature(const RootSignatureDesc& desc) override;
+        void DeleteRootSignature(std::shared_ptr<RHI::RHIRootSignature>& rootSignature) override;
+        
         FeatureLevel GetFeatureLevel() const override;
         ID3D12Device* GetDevice() const { return m_pDevice.Get(); }
         IDXGIAdapter1* GetAdapter() const { return m_pAdapter.Get(); }

@@ -223,13 +223,28 @@ int main(int argc, char* argv[])
 
                 auto vertexShader = device->CompileVertexShader(vsDesc);
 
-                std::cout << "VertexShader compiled successfully!" << std::endl;
-
-                MSG msg = {};
-                while (GetMessage(&msg, nullptr, 0, 0))
+                if (vertexShader)
                 {
-                    TranslateMessage(&msg);
-                    DispatchMessage(&msg);
+                    std::cout << "VertexShader compiled successfully!" << std::endl;
+                    // 创建根签名
+                    RHI::RootSignatureDesc rootDesc;
+                    rootDesc.Parameters.push_back({RHI::RootParameterType::CBV, 0, 0});
+                    rootDesc.Flags = RHI::RootSignatureFlags::AllowInputAssemblerInputLayout;
+
+                    auto rootSignature = device->CreateRootSignature(rootDesc);
+                    if (rootSignature && rootSignature->IsValid()) {
+                        // 使用根签名...
+                        std::cout << "RootSignature created successfully!" << std::endl;
+                        // 删除根签名
+                        device->DeleteRootSignature(rootSignature);
+
+                        MSG msg = {};
+                        while (GetMessage(&msg, nullptr, 0, 0))
+                        {
+                            TranslateMessage(&msg);
+                            DispatchMessage(&msg);
+                        }
+                    }
                 }
             }
             else

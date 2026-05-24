@@ -2,6 +2,7 @@
 * 因为使用到了前向声明所以需要先引入声明定义
  */
 
+#include "RHIRootSignatureDirectX12.h"
 #include "RHICommandListDirectX12.h"
 #include "RHIDirectX12.h"
 #include "DirectXConfig.h"
@@ -428,6 +429,25 @@ namespace RHI
             return m_CopyQueue;
         default:
             return nullptr;
+        }
+    }
+
+    std::shared_ptr<RHIRootSignature> RHIDirectX12::CreateRootSignature(const RootSignatureDesc& desc)
+    {
+        auto rootSignature = std::make_shared<RHIRootSignatureDirectX12>();
+        if (rootSignature->Initialize(this, desc))
+        {
+            return rootSignature;
+        }
+        return nullptr;
+    }
+
+    void RHIDirectX12::DeleteRootSignature(std::shared_ptr<RHIRootSignature>& rootSignature)
+    {
+        if (rootSignature)
+        {
+            rootSignature->Shutdown();
+            rootSignature.reset();
         }
     }
 }
