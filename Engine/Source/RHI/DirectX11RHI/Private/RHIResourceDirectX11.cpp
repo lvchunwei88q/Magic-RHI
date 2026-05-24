@@ -1,5 +1,5 @@
 #include "RHIDirectX11.h"
-#include "RHIResourceDirectX11.h"
+#include "RHICommandListDirectX11.h"
 
 namespace RHI
 {

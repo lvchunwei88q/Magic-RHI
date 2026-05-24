@@ -1,7 +1,7 @@
 /*
  * 因为使用到了前向声明所以需要先引入声明定义
  */
-#include "RHIResourceDirectX12.h"
+#include "RHICommandListDirectX12.h"
 #include "RHIDirectX12.h"
 #include "SwapChainDirectX12.h"
 #include "DirectXHelper.h"

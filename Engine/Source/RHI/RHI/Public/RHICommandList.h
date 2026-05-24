@@ -8,12 +8,11 @@
 
 namespace RHI
 {
-    class RHI_API RHICommandList : public RHIResource
+    class RHI_API RHICommandList
     {
     public:
-        RHICommandList(RHICmdListType InType)
-            : RHIResource(RRT_None), CmdListType(InType) {}
-        virtual ~RHICommandList() = default;
+        RHICommandList(RHICmdListType InType);
+        virtual ~RHICommandList();
 
         RHICmdListType GetCmdListType() const { return CmdListType; }
 
@@ -87,12 +86,11 @@ namespace RHI
         RHICmdListType CmdListType;
     };
 
-    class RHI_API RHICommandQueue : public RHIResource
+    class RHI_API RHICommandQueue
     {
     public:
-        RHICommandQueue(RHICmdListType InType)
-            : RHIResource(RRT_None), QueueType(InType) {}
-        virtual ~RHICommandQueue() = default;
+        RHICommandQueue(RHICmdListType InType);
+        virtual ~RHICommandQueue();
 
         RHICmdListType GetQueueType() const { return QueueType; }
 
