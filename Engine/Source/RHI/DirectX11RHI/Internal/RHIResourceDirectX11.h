@@ -1,7 +1,7 @@
 #pragma once
 #include <d3d11.h>
 #include "DirectXHelper.h"
-#include "RHIResource.h"
+#include <RHIResource.h>
 
 #include <wrl.h> // ComPtr
 using Microsoft::WRL::ComPtr;
