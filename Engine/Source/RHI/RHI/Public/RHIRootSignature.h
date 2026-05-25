@@ -34,13 +34,15 @@ namespace RHI
     // TODO: 根签名参数
     struct RootParameterDesc
     {
-        RootParameterType Type;
-        uint32_t ShaderRegister;
-        uint32_t RegisterSpace;
+        RootParameterType Type;  // 根参数类型
+        uint32_t ShaderRegister;  // 着色器寄存器起始号
+        uint32_t RegisterSpace;  // 寄存器空间号(space0 , space1 , space2 , ...)类似命名空间
+        ShaderVisibility Visibility = ShaderVisibility::All; // 可见性
     };
 
     struct RootSignatureDesc
     {
+        // 一个根签名可以有多个槽位，每个 RootParameterDesc 就是根签名里的一个“槽位”。
         std::vector<RootParameterDesc> Parameters;
         RootSignatureFlags Flags = RootSignatureFlags::None;
     };

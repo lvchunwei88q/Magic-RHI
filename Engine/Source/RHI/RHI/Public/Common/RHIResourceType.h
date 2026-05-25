@@ -357,17 +357,45 @@ enum class RootParameterType : uint8_t
 
 enum class RootSignatureFlags : uint32_t
 {
-	None = 0,
+	None = 0, // 无特殊标志 - 默认
+
+	// ===== 管线状态控制 =====
 	AllowInputAssemblerInputLayout = 0x1,
 	AllowStreamOutput = 0x2,
-	DenyVertexShaderRootAccess = 0x4,
-	DenyHullShaderRootAccess = 0x8,
-	DenyDomainShaderRootAccess = 0x10,
-	DenyGeometryShaderRootAccess = 0x20,
-	DenyPixelShaderRootAccess = 0x40,
-	AllowAmplificationShaderRootAccess = 0x80,
-	AllowMeshShaderRootAccess = 0x100,
-	DenyComputeShaderRootAccess = 0x200,
+
+	// ===== 按阶段拒绝访问 - 默认所有阶段都可访问 =====
+    DenyVertexShaderRootAccess       = 0x4,    // 禁止 VS 
+    DenyHullShaderRootAccess         = 0x8,    // 禁止 HS
+    DenyDomainShaderRootAccess       = 0x10,   // 禁止 DS
+    DenyGeometryShaderRootAccess     = 0x20,   // 禁止 GS
+    DenyPixelShaderRootAccess        = 0x40,   // 禁止 PS
+    DenyComputeShaderRootAccess      = 0x200,  // 禁止 CS
+
+	// ===== 新特性：Mesh Shading 管线 =====
+	AllowAmplificationShaderRootAccess  = 0x80, // 允许 AM（放大着色器）
+	AllowMeshShaderRootAccess        	= 0x100, // 允许 MS（网格着色器）
 };
 ENUM_CLASS_FLAGS(RootSignatureFlags);
+
+enum class ShaderVisibility : uint32_t
+{
+    None        = 0,
+
+    // 基础阶段位
+    VertexBit   = 1u << 0,   // 0x1  - 顶点着色器
+    HullBit     = 1u << 1,   // 0x2  - 外壳着色器
+    DomainBit   = 1u << 2,   // 0x4  - 域着色器
+    GeometryBit = 1u << 3,   // 0x8  - 几何着色器
+    PixelBit    = 1u << 4,   // 0x10 - 像素着色器
+    AmpBit      = 1u << 5,   // 0x20 - 放大着色器 / Task
+    MeshBit     = 1u << 6,   // 0x40 - 网格着色器
+    ComputeBit  = 1u << 7,   // 0x80 - 计算着色器
+
+    // 常用预设组合
+    AllGraphics = VertexBit | HullBit | DomainBit | GeometryBit | PixelBit | AmpBit | MeshBit,
+    All         = AllGraphics | ComputeBit,
+    VertexPixel = VertexBit | PixelBit,
+    VertexPixelGeometry = VertexBit | PixelBit | GeometryBit,
+};
+ENUM_CLASS_FLAGS(ShaderVisibility);
 }

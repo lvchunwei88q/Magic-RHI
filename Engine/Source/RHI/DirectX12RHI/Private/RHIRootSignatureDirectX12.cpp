@@ -5,6 +5,29 @@
 
 namespace RHI
 {
+
+    namespace
+    {
+        D3D12_SHADER_VISIBILITY Translate(ShaderVisibility vis)
+        {
+            // All → ALL
+            if (vis == ShaderVisibility::All || vis == ShaderVisibility::AllGraphics)
+                return D3D12_SHADER_VISIBILITY_ALL;
+
+            // 单个 bit → 映射
+            if (vis == ShaderVisibility::VertexBit)   return D3D12_SHADER_VISIBILITY_VERTEX;
+            if (vis == ShaderVisibility::PixelBit)    return D3D12_SHADER_VISIBILITY_PIXEL;
+            if (vis == ShaderVisibility::HullBit)     return D3D12_SHADER_VISIBILITY_HULL;
+            if (vis == ShaderVisibility::DomainBit)   return D3D12_SHADER_VISIBILITY_DOMAIN;
+            if (vis == ShaderVisibility::GeometryBit) return D3D12_SHADER_VISIBILITY_GEOMETRY;
+            if (vis == ShaderVisibility::AmpBit)      return D3D12_SHADER_VISIBILITY_AMPLIFICATION;
+            if (vis == ShaderVisibility::MeshBit)     return D3D12_SHADER_VISIBILITY_MESH;
+
+            // 组合且不是全部 → 回退 ALL
+            return D3D12_SHADER_VISIBILITY_ALL;
+        }
+    }
+
     RHIRootSignatureDirectX12::RHIRootSignatureDirectX12()
     {
     }
@@ -35,21 +58,21 @@ namespace RHI
                 rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
                 rootParam.Descriptor.ShaderRegister = paramDesc.ShaderRegister;
                 rootParam.Descriptor.RegisterSpace = paramDesc.RegisterSpace;
-                rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+                rootParam.ShaderVisibility = Translate(paramDesc.Visibility);
                 break;
 
             case RootParameterType::SRV:
                 rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
                 rootParam.Descriptor.ShaderRegister = paramDesc.ShaderRegister;
                 rootParam.Descriptor.RegisterSpace = paramDesc.RegisterSpace;
-                rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+                rootParam.ShaderVisibility = Translate(paramDesc.Visibility);
                 break;
 
             case RootParameterType::UAV:
                 rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
                 rootParam.Descriptor.ShaderRegister = paramDesc.ShaderRegister;
                 rootParam.Descriptor.RegisterSpace = paramDesc.RegisterSpace;
-                rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+                rootParam.ShaderVisibility = Translate(paramDesc.Visibility);
                 break;
 
             case RootParameterType::Constants:
@@ -57,12 +80,12 @@ namespace RHI
                 rootParam.Constants.Num32BitValues = 1;
                 rootParam.Constants.ShaderRegister = paramDesc.ShaderRegister;
                 rootParam.Constants.RegisterSpace = paramDesc.RegisterSpace;
-                rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+                rootParam.ShaderVisibility = Translate(paramDesc.Visibility);
                 break;
             case RootParameterType::DescriptorTable:
             default:
                 rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-                rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+                rootParam.ShaderVisibility = Translate(paramDesc.Visibility);
 
                 // TODO: 处理描述符表参数
                 break;

@@ -228,7 +228,7 @@ int main(int argc, char* argv[])
                     std::cout << "VertexShader compiled successfully!" << std::endl;
                     // 创建根签名
                     RHI::RootSignatureDesc rootDesc;
-                    rootDesc.Parameters.push_back({RHI::RootParameterType::CBV, 0, 0});
+                    rootDesc.Parameters.push_back({RHI::RootParameterType::CBV, 0, 0, RHI::ShaderVisibility::VertexPixel});
                     rootDesc.Flags = RHI::RootSignatureFlags::AllowInputAssemblerInputLayout;
 
                     auto rootSignature = device->CreateRootSignature(rootDesc);
