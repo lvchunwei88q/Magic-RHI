@@ -337,6 +337,15 @@ inline const char* ShaderModelToString(ShaderModelVersion version)
     }
 }
 
+/*
+* 根参数类型
+* 一般跟签名就是描述这个Shader的资源布局信息，包括描述符表、常量缓冲区、CBV、SRV、UAV等。
+* 描述符表就是一个类似的一维Range(描述符范围)数组，首先它可以有多个Range 
+*，每个Range声明了对应类型的堆的起始的X到N的所有描述符（也就是说，每个Range由一个起始地址与长度构成），
+* 多个Range也就可以有多个类型，他们构成了描述符表。
+* CBV、SRV、UAV等都是单个描述符，类型数为1，并且也只能有一个资源地址。
+* Constants（比如一个float）是直接把数据写在根签名中的。
+*/
 enum class RootParameterType : uint8_t
 {
 	DescriptorTable,
