@@ -355,6 +355,15 @@ enum class RootParameterType : uint8_t
 	UAV
 };
 
+// 描述符表类型 - 注意这里的采样器只能是在描述符表中使用
+enum class DescriptorRangeType : uint32_t
+{
+    SRV     = 0,  // 着色器资源视图（纹理、结构化缓冲区等） - 只读
+    UAV     = 1,  // 无序访问视图 - 可读写
+    CBV     = 2,  // 常量缓冲区视图
+    Sampler = 3,  // 采样器（纹理采样状态）
+};
+
 enum class RootSignatureFlags : uint32_t
 {
 	None = 0, // 无特殊标志 - 默认

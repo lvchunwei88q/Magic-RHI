@@ -26,6 +26,35 @@ namespace RHI
             // 组合且不是全部 → 回退 ALL
             return D3D12_SHADER_VISIBILITY_ALL;
         }
+
+        D3D12_DESCRIPTOR_RANGE_TYPE TranslateRangeType(DescriptorRangeType type)
+        {
+            switch (type)
+            {
+            case DescriptorRangeType::SRV:     return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+            case DescriptorRangeType::UAV:     return D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
+            case DescriptorRangeType::CBV:     return D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
+            case DescriptorRangeType::Sampler: return D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER;
+            // default → SRV
+            default:                           return D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+            }
+        }
+
+        // 将 RHI 的 DescriptorRangeDesc 数组翻译为 D3D12_DESCRIPTOR_RANGE 数组
+        D3D12_DESCRIPTOR_RANGE* TranslateRanges(const DescriptorRangeDesc* src, uint32_t count)
+        {
+            auto* ranges = new D3D12_DESCRIPTOR_RANGE[count];
+            for (uint32_t i = 0; i < count; ++i)
+            {
+                ranges[i].RangeType          = TranslateRangeType(src[i].RangeType);            // Type
+                ranges[i].NumDescriptors     = src[i].NumDescriptors;                                 // Num    
+                ranges[i].BaseShaderRegister = src[i].ShaderRegister;                          
+                ranges[i].RegisterSpace      = src[i].RegisterSpace;
+                ranges[i].OffsetInDescriptorsFromTableStart = src[i].OffsetInDescriptorsFromTableStart;     // Offset -> Append
+            }
+            return ranges;
+        }
+
     }
 
     RHIRootSignatureDirectX12::RHIRootSignatureDirectX12()
@@ -51,49 +80,48 @@ namespace RHI
         for (const auto& paramDesc : desc.Parameters)
         {
             D3D12_ROOT_PARAMETER rootParam = {};
-            
+            rootParam.ShaderVisibility = Translate(paramDesc.Visibility);
+
             switch (paramDesc.Type)
             {
             case RootParameterType::CBV:
                 rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-                rootParam.Descriptor.ShaderRegister = paramDesc.ShaderRegister;
-                rootParam.Descriptor.RegisterSpace = paramDesc.RegisterSpace;
-                rootParam.ShaderVisibility = Translate(paramDesc.Visibility);
+                rootParam.Descriptor.ShaderRegister = paramDesc.Descriptor.ShaderRegister;
+                rootParam.Descriptor.RegisterSpace  = paramDesc.Descriptor.RegisterSpace;
                 break;
 
             case RootParameterType::SRV:
                 rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
-                rootParam.Descriptor.ShaderRegister = paramDesc.ShaderRegister;
-                rootParam.Descriptor.RegisterSpace = paramDesc.RegisterSpace;
-                rootParam.ShaderVisibility = Translate(paramDesc.Visibility);
+                rootParam.Descriptor.ShaderRegister = paramDesc.Descriptor.ShaderRegister;
+                rootParam.Descriptor.RegisterSpace  = paramDesc.Descriptor.RegisterSpace;
                 break;
 
             case RootParameterType::UAV:
                 rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
-                rootParam.Descriptor.ShaderRegister = paramDesc.ShaderRegister;
-                rootParam.Descriptor.RegisterSpace = paramDesc.RegisterSpace;
-                rootParam.ShaderVisibility = Translate(paramDesc.Visibility);
+                rootParam.Descriptor.ShaderRegister = paramDesc.Descriptor.ShaderRegister;
+                rootParam.Descriptor.RegisterSpace  = paramDesc.Descriptor.RegisterSpace;
                 break;
 
             case RootParameterType::Constants:
                 rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-                rootParam.Constants.Num32BitValues = 1;
-                rootParam.Constants.ShaderRegister = paramDesc.ShaderRegister;
-                rootParam.Constants.RegisterSpace = paramDesc.RegisterSpace;
-                rootParam.ShaderVisibility = Translate(paramDesc.Visibility);
+                rootParam.Constants.ShaderRegister = paramDesc.Constants.ShaderRegister;
+                rootParam.Constants.RegisterSpace  = paramDesc.Constants.RegisterSpace;
+                rootParam.Constants.Num32BitValues = paramDesc.Constants.Num32BitValues;
                 break;
-            case RootParameterType::DescriptorTable:
-            default:
-                rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-                rootParam.ShaderVisibility = Translate(paramDesc.Visibility);
 
-                // TODO: 处理描述符表参数
+            // 一个根签名可以有多个槽位，其中DescriptorTable有可以有多个资源描述符数组，每个资源描述符数组又可以指向多个资源
+            case RootParameterType::DescriptorTable:
+                rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+                rootParam.DescriptorTable.NumDescriptorRanges = paramDesc.DescriptorTable.NumDescriptorRanges;
+                rootParam.DescriptorTable.pDescriptorRanges   = TranslateRanges(paramDesc.DescriptorTable.pDescriptorRanges, 
+                                                                                paramDesc.DescriptorTable.NumDescriptorRanges);
                 break;
             }
 
             rootParameters.push_back(rootParam);
         }
 
+        // 创建根签名描述符 可以有多个 槽位描述符
         CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(
             static_cast<UINT>(rootParameters.size()),
             rootParameters.data(),

@@ -226,16 +226,62 @@ int main(int argc, char* argv[])
                 if (vertexShader)
                 {
                     std::cout << "VertexShader compiled successfully!" << std::endl;
-                    // 创建根签名
+
+                    // 创建根签名：包含一个 DescriptorTable + 一个 Root CBV
                     RHI::RootSignatureDesc rootDesc;
-                    rootDesc.Parameters.push_back({RHI::RootParameterType::CBV, 0, 0, RHI::ShaderVisibility::VertexPixel});
+
+                    // ===== 参数 0：描述符表（含 2 个 Range）=====
+                    RHI::DescriptorRangeDesc ranges[2];
+
+                    // Range 0：SRV × 4，从 t0 开始
+                    ranges[0].RangeType      = RHI::DescriptorRangeType::SRV;
+                    ranges[0].NumDescriptors = 4;
+                    ranges[0].ShaderRegister = 0;
+                    ranges[0].RegisterSpace  = 0;
+                    // OffsetInDescriptorsFromTableStart 默认为 ~0u (APPEND)
+
+                    // Range 1：CBV × 2，从 b0 开始
+                    ranges[1].RangeType      = RHI::DescriptorRangeType::CBV;
+                    ranges[1].NumDescriptors = 2;
+                    ranges[1].ShaderRegister = 0;
+                    ranges[1].RegisterSpace  = 0;
+
+                    RHI::RootParameterDesc tableParam = {};
+                    tableParam.Type                            = RHI::RootParameterType::DescriptorTable;
+                    tableParam.Visibility                      = RHI::ShaderVisibility::VertexPixel;
+                    tableParam.DescriptorTable.NumDescriptorRanges = 2;
+                    tableParam.DescriptorTable.pDescriptorRanges   = ranges;
+
+                    // ===== 参数 1：Root CBV，绑定到 b2 =====
+                    RHI::RootParameterDesc cbvParam = {};
+                    cbvParam.Type                         = RHI::RootParameterType::CBV;
+                    cbvParam.Visibility                   = RHI::ShaderVisibility::VertexPixel;
+                    cbvParam.Descriptor.ShaderRegister    = 2;  // b2（b0~b1 已被描述符表中的 CBV Range 占用）
+                    cbvParam.Descriptor.RegisterSpace     = 0;
+
+                    // ===== 参数 2：Root Constants，4 个 32 位值，绑定到 b3 =====
+                    RHI::RootParameterDesc constParam = {};
+                    constParam.Type                       = RHI::RootParameterType::Constants;
+                    constParam.Visibility                 = RHI::ShaderVisibility::VertexPixel;
+                    constParam.Constants.ShaderRegister   = 3;  // b3（b0~b2 已被前面的 CBV Range + Root CBV 占用）
+                    constParam.Constants.RegisterSpace    = 0;
+                    constParam.Constants.Num32BitValues   = 1;  // 1 个 float
+
+                    // ===== 组装根签名 =====
+                    rootDesc.Parameters.push_back(tableParam);
+                    rootDesc.Parameters.push_back(cbvParam);
+                    rootDesc.Parameters.push_back(constParam);
                     rootDesc.Flags = RHI::RootSignatureFlags::AllowInputAssemblerInputLayout;
 
+                    // 创建根签名
                     auto rootSignature = device->CreateRootSignature(rootDesc);
-                    if (rootSignature && rootSignature->IsValid()) {
-                        // 使用根签名...
+                    if (rootSignature && rootSignature->IsValid())
+                    {
                         std::cout << "RootSignature created successfully!" << std::endl;
-                        // 删除根签名
+
+                        // 使用根签名...
+                        // ...
+
                         device->DeleteRootSignature(rootSignature);
 
                         MSG msg = {};
@@ -245,8 +291,12 @@ int main(int argc, char* argv[])
                             DispatchMessage(&msg);
                         }
                     }
+                    else
+                    {
+                        std::cout << "Failed to create RootSignature!" << std::endl;
+                    }
                 }else{
-                    std::cout << "Failed to create RootSignature!" << std::endl;
+                    std::cout << "Failed to compile VertexShader!" << std::endl;
                 }
             }
             else
