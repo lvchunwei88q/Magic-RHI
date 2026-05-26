@@ -12,7 +12,6 @@ struct SwapChainDesc;
 
 namespace RHI
 {
-
     // RHI Loader Interface
     class RHI_API IRHILoader
     {

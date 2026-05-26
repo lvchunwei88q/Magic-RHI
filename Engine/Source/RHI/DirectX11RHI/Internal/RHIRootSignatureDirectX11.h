@@ -17,6 +17,6 @@ namespace RHI
         bool IsValid() const override;
 
     private:
-        
+        // TODO: Root signature data
     };
 }
