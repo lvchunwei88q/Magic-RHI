@@ -33,7 +33,7 @@ namespace RHI
         D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(uint32_t index) const;
         D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(uint32_t index) const;
 
-        RHIDescriptorHandle Allocate() override;
+        [[nodiscard]] RHIDescriptorHandle Allocate() override;
         void Free(RHIDescriptorHandle handle) override;
 
     private:

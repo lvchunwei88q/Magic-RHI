@@ -16,6 +16,17 @@
 
 namespace RHI
 {  
+    // 对齐 Up Down
+    inline uint64_t AlignUp(uint64_t Value, uint64_t Alignment)
+    {
+        return (Value + Alignment - 1) & ~(Alignment - 1);
+    }
+
+    inline uint64_t AlignDown(uint64_t Value, uint64_t Alignment)
+    {
+        return Value & ~(Alignment - 1);
+    }
+
     struct GPUVRamAllocation
     {
         GPUVRamAllocation() = default;
@@ -111,7 +122,7 @@ namespace RHI
         uint32_t GetCapacity() const { return Capacity; }
         uint32_t GetCurrentIndex() const { return CurrentIndex; }
 
-        virtual RHIDescriptorHandle Allocate() = 0;
+        [[nodiscard]] virtual RHIDescriptorHandle Allocate() = 0;
         virtual void Free(RHIDescriptorHandle handle) = 0;
         virtual bool IsFull() const { return CurrentIndex >= Capacity; }
 
@@ -167,7 +178,6 @@ namespace RHI
         BufferBindFlag BindFlags = BufferBindFlag::None;
     };
 
-    // TODO 描述符堆句柄
     class RHI_API RHIBuffer : public RHIResource
     {
     public:
@@ -180,15 +190,20 @@ namespace RHI
         }
         virtual ~RHIBuffer() = default;
 
-        uint64_t GetSize() const { return SizeInBytes; }
-        uint32_t GetStride() const { return Stride; }
-        BufferHeapType GetHeapType() const { return HeapType; }
+        virtual uint64_t GetSize() const { return SizeInBytes; }
+        virtual uint32_t GetStride() const { return Stride; }   
+        virtual BufferHeapType GetHeapType() const { return HeapType; }
+
+        virtual void SetBindlessHandle(RHIDescriptorHandle InHandle) { Handle = InHandle; }
+        virtual RHIDescriptorHandle GetBindlessHandle() const { return Handle; }
+        virtual bool HasDescriptorHandle() const { return Handle.IsValid(); }
 
         virtual void* Map() = 0;
         virtual void Unmap() = 0;
 
     protected:
         uint64_t SizeInBytes;
+        RHIDescriptorHandle Handle;
         uint32_t Stride;
         BufferHeapType HeapType;
     };

@@ -95,7 +95,7 @@ namespace RHI
         ~BufferDirectX12() override = default;
 
         ID3D12Resource* GetResource() const { return m_pResource.Get(); }
-
+        
         void* Map() override
         {
             if (GetHeapType() != BufferHeapType::Default){

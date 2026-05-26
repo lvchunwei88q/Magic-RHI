@@ -11,7 +11,7 @@ namespace RHI
         {}
         ~DescriptorHeapDirectX11() override = default;
 
-        RHIDescriptorHandle Allocate() override;
+        [[nodiscard]] RHIDescriptorHandle Allocate() override;
         void Free(RHIDescriptorHandle handle) override;
 
         bool IsFull() const override { return false; }

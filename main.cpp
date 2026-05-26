@@ -31,10 +31,10 @@ struct Vertex
     float Color[4];     // RGBA
 };
 
-std::vector<Vertex> GenerateRandomVertices(size_t targetSizeMB)
+std::vector<Vertex> GenerateRandomVertices(size_t targetSize)
 {
     constexpr size_t vertexSize = sizeof(Vertex);  // 28 bytes
-    size_t targetVertexCount = (targetSizeMB * 1024 * 1024) / vertexSize;
+    size_t targetVertexCount = (targetSize) / vertexSize;
     
     std::vector<Vertex> vertices;
     vertices.reserve(targetVertexCount);
@@ -158,22 +158,45 @@ int main(int argc, char* argv[])
             {
                 std::cout << "SamplerState created successfully!" << std::endl;
 
-                std::vector<Vertex> vertices = GenerateRandomVertices(2);  // 2 MB
+                std::vector<Vertex> vertices = GenerateRandomVertices(2 * 1024 * 1024);  // 2 MB
+                std::vector<Vertex> cvertices = GenerateRandomVertices(2 * 1024);  // 2 KB
                 std::cout << "Vertices created successfully! Vertex Count: " << vertices.size() << std::endl;
 
-                uint64_t bufferSize = sizeof(Vertex) * vertices.size();
-                std::cout << "VertexBuffer Size: " << bufferSize << std::endl;
-
                 RHI::BufferDesc desc;
-                desc.SizeInBytes =  bufferSize; // 总字节数
+                desc.SizeInBytes =  sizeof(Vertex) * vertices.size(); // 总字节数
                 desc.Stride       = sizeof(Vertex);                    // 每个顶点的大小
                 desc.InitialData  = vertices.data();                   // 指向初始数据的指针
-                desc.HeapType     = RHI::BufferHeapType::Upload;
+                desc.HeapType     = RHI::BufferHeapType::Default;
                 desc.BindFlags    = RHI::BufferBindFlag::VertexBuffer;
                 // ========== 3. 调用 CreateBuffer 创建顶点缓冲 ==========
                 std::shared_ptr<RHI::RHIVertexBuffer> vertexBuffer = device->CreateBuffer(desc);
                 //device->DeleteBuffer(vertexBuffer);
                 std::cout << "VertexBuffer created successfully!" << std::endl;
+                
+                auto CreateBuffer = [&](RHI::BufferHeapType t,RHI::BufferBindFlag f,RHI::DescriptorRangeType rt) {
+                    RHI::BufferDesc desc;
+                    desc.SizeInBytes = sizeof(Vertex) * cvertices.size();
+                    desc.Stride = sizeof(Vertex);
+                    desc.InitialData = cvertices.data();
+                    desc.HeapType = t;
+                    desc.BindFlags = f;
+    
+                    auto buffer = device->CreateBuffer(desc);
+                    device->CreateDescriptorForBuffer(buffer.get(), rt);
+                    return buffer;
+                };
+
+                std::shared_ptr<RHI::RHIConstantBuffer> constantBuffer = CreateBuffer(RHI::BufferHeapType::Default,RHI::BufferBindFlag::UnorderedAccess,RHI::DescriptorRangeType::UAV);
+                std::cout << "UnorderedAccess created successfully!" << std::endl;
+                std::cout << "UnorderedAccess Handle: " << constantBuffer->GetBindlessHandle().GetIndex() << std::endl;
+                
+                std::shared_ptr<RHI::RHIConstantBuffer> constantBuffer1 = CreateBuffer(RHI::BufferHeapType::Default,RHI::BufferBindFlag::ConstantBuffer,RHI::DescriptorRangeType::CBV);
+                std::cout << "ConstantBuffer created successfully!" << std::endl;
+                std::cout << "ConstantBuffer Handle: " << constantBuffer1->GetBindlessHandle().GetIndex() << std::endl;
+                
+                std::shared_ptr<RHI::RHIConstantBuffer> constantBuffer2 = CreateBuffer(RHI::BufferHeapType::Upload,RHI::BufferBindFlag::ShaderResource,RHI::DescriptorRangeType::SRV);
+                std::cout << "ShaderResource created successfully!" << std::endl;
+                std::cout << "ShaderResource Handle: " << constantBuffer2->GetBindlessHandle().GetIndex() << std::endl;
 
                 std::cout << "Shader compilation..." << std::endl;
                 // 从文件编译顶点着色器

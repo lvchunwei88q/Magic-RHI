@@ -8,9 +8,10 @@
 #include <string>
 
 #ifndef RHI_SWAP_CHAIN_CLOSE_FULL_SCREEN
-#define RHI_SWAP_CHAIN_CLOSE_FULL_SCREEN 1
+#define RHI_SWAP_CHAIN_CLOSE_FULL_SCREEN true
 #endif
 
+// TODO 描述符堆大小
 #ifndef RHI_DESCRIPTOR_HEAP_SIZE_STANDARD
 #define RHI_DESCRIPTOR_HEAP_SIZE_STANDARD 1024
 #endif
@@ -41,6 +42,7 @@ namespace RHI
     class RHICommandList;
     class RHICommandQueue;
     // forward declarations
+    struct RHIDescriptorHandle;
     class RHISamplerState;
     class RHIBuffer;
     struct SamplerStateDesc;
@@ -78,23 +80,24 @@ namespace RHI
         virtual const std::wstring& GetAdapterName() const = 0;
         virtual FeatureLevel GetFeatureLevel() const = 0;
 
-        virtual std::shared_ptr<RHISamplerState> CreateSamplerState(const SamplerStateDesc& desc) = 0;
+        [[nodiscard]] virtual std::shared_ptr<RHISamplerState> CreateSamplerState(const SamplerStateDesc& desc) = 0;
         virtual void DeleteSamplerState(std::shared_ptr<RHISamplerState>& samplerState) = 0;
 
-        virtual std::shared_ptr<RHIBuffer> CreateBuffer(const BufferDesc& desc) = 0;
+        [[nodiscard]] virtual std::shared_ptr<RHIBuffer> CreateBuffer(BufferDesc& desc) = 0;
+        virtual RHIDescriptorHandle CreateDescriptorForBuffer(RHIBuffer* Buffer,DescriptorRangeType Type) = 0;
         virtual void DeleteBuffer(std::shared_ptr<RHIBuffer>& buffer) = 0;
 
-        virtual std::shared_ptr<RHICommandList> CreateCommandList(RHICmdListType type) = 0;
-        virtual std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdListType Type) const = 0;
+        [[nodiscard]] virtual std::shared_ptr<RHICommandList> CreateCommandList(RHICmdListType type) = 0;
+        [[nodiscard]] virtual std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdListType Type) const = 0;
 
-        virtual std::shared_ptr<RHIVertexShader> CompileVertexShader(const ShaderCompileDesc& desc) = 0;
-        virtual std::shared_ptr<RHIPixelShader> CompilePixelShader(const ShaderCompileDesc& desc) = 0;
-        virtual std::shared_ptr<RHIGeometryShader> CompileGeometryShader(const ShaderCompileDesc& desc) = 0;
-        virtual std::shared_ptr<RHIHullShader> CompileHullShader(const ShaderCompileDesc& desc) = 0;
-        virtual std::shared_ptr<RHIDomainShader> CompileDomainShader(const ShaderCompileDesc& desc) = 0;
-        virtual std::shared_ptr<RHIComputeShader> CompileComputeShader(const ShaderCompileDesc& desc) = 0;
+        [[nodiscard]] virtual std::shared_ptr<RHIVertexShader> CompileVertexShader(const ShaderCompileDesc& desc) = 0;
+        [[nodiscard]] virtual std::shared_ptr<RHIPixelShader> CompilePixelShader(const ShaderCompileDesc& desc) = 0;
+        [[nodiscard]] virtual std::shared_ptr<RHIGeometryShader> CompileGeometryShader(const ShaderCompileDesc& desc) = 0;
+        [[nodiscard]] virtual std::shared_ptr<RHIHullShader> CompileHullShader(const ShaderCompileDesc& desc) = 0;
+        [[nodiscard]] virtual std::shared_ptr<RHIDomainShader> CompileDomainShader(const ShaderCompileDesc& desc) = 0;
+        [[nodiscard]] virtual std::shared_ptr<RHIComputeShader> CompileComputeShader(const ShaderCompileDesc& desc) = 0;
 
-        virtual std::shared_ptr<RHIRootSignature> CreateRootSignature(const RootSignatureDesc& desc) = 0;
+        [[nodiscard]] virtual std::shared_ptr<RHIRootSignature> CreateRootSignature(const RootSignatureDesc& desc) = 0;
         virtual void DeleteRootSignature(std::shared_ptr<RHIRootSignature>& rootSignature) = 0;
     };
 

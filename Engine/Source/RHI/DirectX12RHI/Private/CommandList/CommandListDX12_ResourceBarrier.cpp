@@ -40,7 +40,7 @@ namespace RHI
                 d3d12Barrier.Flags = ConvertResourceBarrierFlags(rhiBarrier.Flags);
                 
                 // 获取 D3D12 资源指针
-                auto* buffer = static_cast<BufferDirectX12*>(rhiBarrier.Transition.pResource);
+                auto* buffer = SafeCast<BufferDirectX12>(rhiBarrier.Transition.pResource);
                 d3d12Barrier.Transition.pResource = buffer ? SafeCast<ID3D12Resource>(buffer->GetResource()) : nullptr;
                 d3d12Barrier.Transition.Subresource = rhiBarrier.Transition.Subresource;
                 d3d12Barrier.Transition.StateBefore = static_cast<D3D12_RESOURCE_STATES>(rhiBarrier.Transition.StateBefore);
@@ -52,8 +52,8 @@ namespace RHI
                 d3d12Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_ALIASING;
                 d3d12Barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
                 
-                auto* pResourceBefore = static_cast<BufferDirectX12*>(rhiBarrier.Aliasing.pResourceBefore);
-                auto* pResourceAfter = static_cast<BufferDirectX12*>(rhiBarrier.Aliasing.pResourceAfter);
+                auto* pResourceBefore = SafeCast<BufferDirectX12>(rhiBarrier.Aliasing.pResourceBefore);
+                auto* pResourceAfter = SafeCast<BufferDirectX12>(rhiBarrier.Aliasing.pResourceAfter);
                 d3d12Barrier.Aliasing.pResourceBefore = pResourceBefore ? SafeCast<ID3D12Resource>(pResourceBefore->GetResource()) : nullptr;
                 d3d12Barrier.Aliasing.pResourceAfter = pResourceAfter ? SafeCast<ID3D12Resource>(pResourceAfter->GetResource()) : nullptr;
                 break;
@@ -63,7 +63,7 @@ namespace RHI
                 d3d12Barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_UAV;
                 d3d12Barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
                 
-                auto* pResource = static_cast<BufferDirectX12*>(rhiBarrier.UAV.pResource);
+                auto* pResource = SafeCast<BufferDirectX12>(rhiBarrier.UAV.pResource);
                 d3d12Barrier.UAV.pResource = pResource ? SafeCast<ID3D12Resource>(pResource->GetResource()) : nullptr;
                 break;
             }

@@ -29,23 +29,24 @@ namespace RHI
         RHIType GetType() const override { return RHIType::DirectX11; }
         const std::wstring& GetAdapterName() const override { return m_AdapterName; }
 
-        std::shared_ptr<RHISamplerState> CreateSamplerState(const SamplerStateDesc& desc) override;
+        [[nodiscard]] std::shared_ptr<RHISamplerState> CreateSamplerState(const SamplerStateDesc& desc) override;
         void DeleteSamplerState(std::shared_ptr<RHI::RHISamplerState>& samplerState) override;
 
-        std::shared_ptr<RHIBuffer> CreateBuffer(const BufferDesc& desc) override;
+        [[nodiscard]] std::shared_ptr<RHIBuffer> CreateBuffer(BufferDesc& desc) override;
+        RHIDescriptorHandle CreateDescriptorForBuffer(RHIBuffer* Buffer,DescriptorRangeType Type) override;
         void DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer) override;
 
-        std::shared_ptr<RHICommandList> CreateCommandList(RHICmdListType type) override;
-        std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdListType Type) const override;
+        [[nodiscard]] std::shared_ptr<RHICommandList> CreateCommandList(RHICmdListType type) override;
+        [[nodiscard]] std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdListType Type) const override;
 
-        std::shared_ptr<RHIVertexShader> CompileVertexShader(const ShaderCompileDesc& desc) override;
-        std::shared_ptr<RHIPixelShader> CompilePixelShader(const ShaderCompileDesc& desc) override;
-        std::shared_ptr<RHIGeometryShader> CompileGeometryShader(const ShaderCompileDesc& desc) override;
-        std::shared_ptr<RHIHullShader> CompileHullShader(const ShaderCompileDesc& desc) override;
-        std::shared_ptr<RHIDomainShader> CompileDomainShader(const ShaderCompileDesc& desc) override;
-        std::shared_ptr<RHIComputeShader> CompileComputeShader(const ShaderCompileDesc& desc) override;
+        [[nodiscard]] std::shared_ptr<RHIVertexShader> CompileVertexShader(const ShaderCompileDesc& desc) override;
+        [[nodiscard]] std::shared_ptr<RHIPixelShader> CompilePixelShader(const ShaderCompileDesc& desc) override;
+        [[nodiscard]] std::shared_ptr<RHIGeometryShader> CompileGeometryShader(const ShaderCompileDesc& desc) override;
+        [[nodiscard]] std::shared_ptr<RHIHullShader> CompileHullShader(const ShaderCompileDesc& desc) override;
+        [[nodiscard]] std::shared_ptr<RHIDomainShader> CompileDomainShader(const ShaderCompileDesc& desc) override;
+        [[nodiscard]] std::shared_ptr<RHIComputeShader> CompileComputeShader(const ShaderCompileDesc& desc) override;
         
-        std::shared_ptr<RHIRootSignature> CreateRootSignature(const RootSignatureDesc& desc) override;
+        [[nodiscard]] std::shared_ptr<RHIRootSignature> CreateRootSignature(const RootSignatureDesc& desc) override;
         void DeleteRootSignature(std::shared_ptr<RHI::RHIRootSignature>& rootSignature) override;
 
         FeatureLevel GetFeatureLevel() const override;

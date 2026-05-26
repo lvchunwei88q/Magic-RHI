@@ -135,7 +135,7 @@ namespace RHI
         samplerState.reset();
     }
 
-    std::shared_ptr<RHIBuffer> RHIDirectX11::CreateBuffer(const BufferDesc& desc)
+    std::shared_ptr<RHIBuffer> RHIDirectX11::CreateBuffer(BufferDesc& desc)
     {
         D3D11_BUFFER_DESC bufferDesc = {};
         bufferDesc.ByteWidth = static_cast<UINT>(desc.SizeInBytes);
@@ -175,6 +175,12 @@ namespace RHI
         buffer->SetDeviceContext(m_pDeviceContext.Get());
 
         return buffer;
+    }
+
+    RHIDescriptorHandle RHIDirectX11::CreateDescriptorForBuffer(RHIBuffer* Buffer,DescriptorRangeType Type)
+    {
+        Buffer->SetBindlessHandle(RHIDescriptorHandle(RHIDescriptorHeapType::Standard,0));
+        return Buffer->GetBindlessHandle();
     }
 
     void RHIDirectX11::DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer)
