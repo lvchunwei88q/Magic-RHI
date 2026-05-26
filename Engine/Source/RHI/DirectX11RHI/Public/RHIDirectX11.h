@@ -5,6 +5,9 @@
 #include <d3d11.h>
 #include <dxgi.h>
 
+// DescriptorHeap
+#include "DescriptorHeapDirectX11.h"
+
 #include <wrl.h> // ComPtr
 using Microsoft::WRL::ComPtr;
 

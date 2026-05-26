@@ -111,8 +111,8 @@ namespace RHI
         samplerDesc.MinLOD = desc.MinLOD;
         samplerDesc.MaxLOD = desc.MaxLOD;
 
-        uint32_t index = m_SamplerHeapAllocator.Allocate();
-        D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = GetSamplerCPUHandle(index);
+        uint32_t index = m_pSamplerHeap->Allocate().GetIndex();
+        D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle = m_pSamplerHeap->GetCPUHandle(index);
 
         m_pDevice->CreateSampler(&samplerDesc, cpuHandle);
 
@@ -123,7 +123,7 @@ namespace RHI
 
     void RHIDirectX12::DeleteSamplerState(std::shared_ptr<RHI::RHISamplerState>& samplerState) 
     {
-        m_SamplerHeapAllocator.Free(samplerState->GetBindlessHandle().GetIndex());
+        m_pSamplerHeap->Free(samplerState->GetBindlessHandle());
         samplerState.reset();
     }
 

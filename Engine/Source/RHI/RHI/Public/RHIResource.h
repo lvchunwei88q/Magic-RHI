@@ -95,6 +95,32 @@ namespace RHI
         uint8_t     Type{ (uint8_t)RHIDescriptorHeapType::Invalid };
     };
 
+    /* 描述符堆 type , capacity(容量) */
+    class RHI_API RHIDescriptorHeap : public RHIResource
+    {
+    public:
+        RHIDescriptorHeap(RHIDescriptorHeapType InType, uint32_t InCapacity)
+            : RHIResource(RRT_None)
+            , HeapType(InType)
+            , Capacity(InCapacity)
+            , CurrentIndex(0)
+        {}
+        virtual ~RHIDescriptorHeap() = default;
+
+        RHIDescriptorHeapType GetHeapType() const { return HeapType; }
+        uint32_t GetCapacity() const { return Capacity; }
+        uint32_t GetCurrentIndex() const { return CurrentIndex; }
+
+        virtual RHIDescriptorHandle Allocate() = 0;
+        virtual void Free(RHIDescriptorHandle handle) = 0;
+        virtual bool IsFull() const { return CurrentIndex >= Capacity; }
+
+    protected:
+        RHIDescriptorHeapType HeapType;
+        uint32_t Capacity;
+        uint32_t CurrentIndex;
+    };
+
     //
     // State blocks
     //
@@ -141,6 +167,7 @@ namespace RHI
         BufferBindFlag BindFlags = BufferBindFlag::None;
     };
 
+    // TODO 描述符堆句柄
     class RHI_API RHIBuffer : public RHIResource
     {
     public:
