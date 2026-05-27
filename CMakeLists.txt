@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(RHIDx11AndDx12)
+project(MagicRHI)
 
 include(${PROJECT_SOURCE_DIR}/Engine/Cmake/common.cmake)
 include(${PROJECT_SOURCE_DIR}/Engine/Cmake/macro.cmake)
