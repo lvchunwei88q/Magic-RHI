@@ -28,7 +28,6 @@ target_link_libraries(DirectX12RHI
         RHI           
         d3d12.lib
         ${DXC_ROOT}/dxcompiler.lib
-        ${DXC_ROOT}/dxil.lib
         dxgi.lib
         dxguid.lib
 )
