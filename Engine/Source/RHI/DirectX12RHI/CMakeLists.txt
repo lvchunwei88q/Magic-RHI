@@ -41,7 +41,4 @@ add_custom_command(TARGET DirectX12RHI POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${DXC_ROOT}/dll/dxcompiler.dll
         $<TARGET_FILE_DIR:DirectX12RHI>
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${DXC_ROOT}/dll/dxil.dll
-        $<TARGET_FILE_DIR:DirectX12RHI>
 )
