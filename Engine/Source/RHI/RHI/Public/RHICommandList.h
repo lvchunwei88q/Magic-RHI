@@ -2,6 +2,7 @@
 
 #include "Common/RHI_API.h"
 #include "RHIResource.h"
+#include "Common/RHIDesc.h"
 #include "RHIRootSignature.h" // RootSignatureDesc
 
 #include <vector>

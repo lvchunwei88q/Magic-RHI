@@ -1,4 +1,5 @@
 #include "RHIResourceDirectX11.h"
+#include <Common/RHIDesc.h>
 #include "RHIDirectX11.h"
 #include "DirectXHelper.h"
 #include <d3dcompiler.h>

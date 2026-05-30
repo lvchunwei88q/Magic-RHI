@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Common/RHI_API.h"
-#include "Common/RHIResourceType.h"
+#include "Common/RHIType.h"
 #include <Tools/Cast.h>
 #include <string>
 #include <memory>
@@ -256,16 +256,6 @@ namespace RHI
         virtual ~RHIComputeShader() = default;
     };
 
-    struct ShaderCompileDesc
-    {
-        ShaderType Type;
-        const char* SourceCode = nullptr;
-        const char* EntryPoint = "main";
-        const char* Profile = nullptr; // 对于普通的Shader而言我们不希望你去指定Profile，因为在不同的平台上的Shader Model的支持程度是不同的，我们的Shader编译器会根据平台自动选择合适的Profile
-        const char* FilePath = nullptr;
-        bool EnableDebugInfo = false;
-    };
-
     class RHI_API RHIRasterizerState : public RHIResource
     {
     public:
@@ -301,39 +291,4 @@ namespace RHI
     public:
         RHIDepthStencilView() : RHIResource(RRT_ShaderResourceView) {}
     };
-
-    class RHIRootSignature;
-
-    struct GraphicsPipelineStateDesc
-    {
-        RHIRootSignature* pRootSignature = nullptr;
-        
-        RHIVertexShader* pVertexShader = nullptr;
-        RHIPixelShader* pPixelShader = nullptr;
-        RHIGeometryShader* pGeometryShader = nullptr;
-        RHIHullShader* pHullShader = nullptr;
-        RHIDomainShader* pDomainShader = nullptr;
-
-        RHIRasterizerState* pRasterizerState = nullptr;
-        RHIBlendState* pBlendState = nullptr;
-        RHIDepthStencilState* pDepthStencilState = nullptr;
-
-        uint32_t NumRenderTargets = 0;
-        uint32_t RenderTargetFormats[8] = {0};
-        uint32_t DepthStencilFormat = 0;
-    };
-
-    struct ComputePipelineStateDesc
-    {
-        RHIRootSignature* pRootSignature = nullptr;
-        RHIComputeShader* pComputeShader = nullptr;
-    };
-
-    class RHI_API RHIPipelineState : public RHIResource
-    {
-    public:
-        RHIPipelineState() : RHIResource(RRT_None) {}
-        virtual ~RHIPipelineState() = default;
-    };
-
 } // namespace RHI

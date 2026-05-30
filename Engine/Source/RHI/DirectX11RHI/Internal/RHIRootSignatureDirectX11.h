@@ -1,11 +1,10 @@
 #pragma once
 
-#include "Common/DIRECTX11RHI_API.h"
 #include <RHIRootSignature.h>
 
 namespace RHI
 {
-    class DIRECTX11RHI_API RHIRootSignatureDirectX11 : public RHIRootSignature
+    class RHIRootSignatureDirectX11 : public RHIRootSignature
     {
     public:
         RHIRootSignatureDirectX11();

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Common/DIRECTX12RHI_API.h"
 #include <RHIRootSignature.h>
 #include <d3d12.h>
 #include <d3dx12.h>
@@ -10,7 +9,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
-    class DIRECTX12RHI_API RHIRootSignatureDirectX12 : public RHIRootSignature
+    class RHIRootSignatureDirectX12 : public RHIRootSignature
     {
     public:
         RHIRootSignatureDirectX12();

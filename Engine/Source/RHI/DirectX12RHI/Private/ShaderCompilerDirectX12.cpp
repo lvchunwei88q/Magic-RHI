@@ -1,4 +1,5 @@
 #include "RHIResourceDirectX12.h"
+#include <Common/RHIDesc.h>
 #include "RHIDirectX12.h"
 #include "DirectXHelper.h"
 

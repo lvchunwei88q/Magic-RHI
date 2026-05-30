@@ -1,7 +1,8 @@
 #pragma once
 
 #include "Common/RHI_API.h"
-#include "Common/RHIResourceType.h"
+#include "Common/RHIType.h"
+#include "Common/RHIFeatureLevel.h"
 #include "Common/RHIPlatformDetection.h"
 
 #include <memory>

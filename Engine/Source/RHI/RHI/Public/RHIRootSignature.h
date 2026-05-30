@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Common/RHI_API.h"
-#include "Common/RHIResourceType.h"
+#include "Common/RHIType.h"
 #include <vector>
 
 namespace RHI
@@ -97,7 +97,8 @@ namespace RHI
     class RHI_API RHIRootSignature
     {
     public:
-        virtual ~RHIRootSignature() = default;
+        RHIRootSignature();
+        virtual ~RHIRootSignature();
 
         virtual bool Initialize(Device* device, const RootSignatureDesc& desc) = 0;
         virtual void Shutdown() = 0;
