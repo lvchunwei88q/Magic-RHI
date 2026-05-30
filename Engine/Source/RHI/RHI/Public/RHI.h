@@ -4,6 +4,7 @@
 #include "Common/RHIType.h"
 #include "Common/RHIFeatureLevel.h"
 #include "Common/RHIPlatformDetection.h"
+#include "Common/RHIDesc.h"
 
 #include <memory>
 #include <string>
@@ -63,14 +64,6 @@ namespace RHI
     class RHIPipelineState;
     struct GraphicsPipelineStateDesc;
     struct ComputePipelineStateDesc;
-
-    struct SwapChainDesc
-    {
-        void* WindowHandle;
-        uint32_t Width;
-        uint32_t Height;
-        bool VSync = false;
-    };
 
     class RHI_API Device
     {

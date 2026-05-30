@@ -3,6 +3,15 @@
 
 namespace RHI
 {
+// 交换链描述
+struct SwapChainDesc
+{
+    void* WindowHandle;
+    uint32_t Width;
+    uint32_t Height;
+    bool VSync = false;
+};
+
 // 资源屏障类型
 enum class ResourceBarrierType : uint8_t
 {
