@@ -33,8 +33,9 @@ namespace RHI
         void DeleteSamplerState(std::shared_ptr<RHI::RHISamplerState>& samplerState) override;
 
         [[nodiscard]] std::shared_ptr<RHIBuffer> CreateBuffer(BufferDesc& desc) override;
-        RHIDescriptorHandle CreateDescriptorForBuffer(RHIBuffer* Buffer,DescriptorRangeType Type) override;
         void DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer) override;
+        
+        RHIDescriptorHandle CreateStandardHeapDescriptorView(RHIBuffer* Buffer,DescriptorRangeType Type) override;
 
         [[nodiscard]] std::shared_ptr<RHICommandList> CreateCommandList(RHICmdListType type) override;
         [[nodiscard]] std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdListType Type) const override;
@@ -59,6 +60,7 @@ namespace RHI
 
     private:
         ComPtr<ID3D11Device> m_pDevice;
+        // CommandQueue DirectX11
         ComPtr<ID3D11DeviceContext> m_pDeviceContext;
         std::wstring m_AdapterName;
         D3D_FEATURE_LEVEL m_FeatureLevel;

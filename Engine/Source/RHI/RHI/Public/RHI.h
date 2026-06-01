@@ -13,7 +13,7 @@
 #define RHI_SWAP_CHAIN_CLOSE_FULL_SCREEN true
 #endif
 
-// TODO 描述符堆大小
+// TODO 描述符堆Num
 #ifndef RHI_DESCRIPTOR_HEAP_SIZE_STANDARD
 #define RHI_DESCRIPTOR_HEAP_SIZE_STANDARD 1024
 #endif
@@ -82,8 +82,9 @@ namespace RHI
         virtual void DeleteSamplerState(std::shared_ptr<RHISamplerState>& samplerState) = 0;
 
         [[nodiscard]] virtual std::shared_ptr<RHIBuffer> CreateBuffer(BufferDesc& desc) = 0;
-        virtual RHIDescriptorHandle CreateDescriptorForBuffer(RHIBuffer* Buffer,DescriptorRangeType Type) = 0;
         virtual void DeleteBuffer(std::shared_ptr<RHIBuffer>& buffer) = 0;
+
+        virtual RHIDescriptorHandle CreateStandardHeapDescriptorView(RHIBuffer* Buffer,DescriptorRangeType Type) = 0;
 
         [[nodiscard]] virtual std::shared_ptr<RHICommandList> CreateCommandList(RHICmdListType type) = 0;
         [[nodiscard]] virtual std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdListType Type) const = 0;

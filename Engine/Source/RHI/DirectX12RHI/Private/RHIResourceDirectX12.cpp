@@ -272,7 +272,15 @@ namespace RHI
         return buffer;
     }
 
-    RHIDescriptorHandle RHIDirectX12::CreateDescriptorForBuffer(
+    void RHIDirectX12::DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer)
+    {
+        // 只有在有描述符句柄时才需要释放
+        if(buffer->HasDescriptorHandle())
+            m_pStandardHeap->Free(buffer->GetBindlessHandle());
+        buffer.reset();
+    }
+
+    RHIDescriptorHandle RHIDirectX12::CreateStandardHeapDescriptorView(
         RHIBuffer* Buffer,
         DescriptorRangeType Type)
     {
@@ -346,14 +354,6 @@ namespace RHI
         
         Buffer->SetBindlessHandle(handle);
         return handle;
-    }
-
-    void RHIDirectX12::DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer)
-    {
-        // 只有在有描述符句柄时才需要释放
-        if(buffer->HasDescriptorHandle())
-            m_pStandardHeap->Free(buffer->GetBindlessHandle());
-        buffer.reset();
     }
 
     void CommandListDirectX12::BeginRecording()

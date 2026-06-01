@@ -40,8 +40,9 @@ namespace RHI
         void DeleteSamplerState(std::shared_ptr<RHI::RHISamplerState>& samplerState) override;
 
         [[nodiscard]] std::shared_ptr<RHIBuffer> CreateBuffer(BufferDesc& desc) override;
-        RHIDescriptorHandle CreateDescriptorForBuffer(RHIBuffer* Buffer,DescriptorRangeType Type) override;
         void DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer) override;
+
+        RHIDescriptorHandle CreateStandardHeapDescriptorView(RHIBuffer* Buffer,DescriptorRangeType Type) override;
 
         [[nodiscard]] std::shared_ptr<RHICommandList> CreateCommandList(RHICmdListType type) override;
         [[nodiscard]] std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdListType Type) const override;

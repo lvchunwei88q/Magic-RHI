@@ -183,14 +183,14 @@ namespace RHI
         return buffer;
     }
 
-    RHIDescriptorHandle RHIDirectX11::CreateDescriptorForBuffer(RHIBuffer* Buffer,DescriptorRangeType Type)
-    {
-        Buffer->SetBindlessHandle(RHIDescriptorHandle(RHIDescriptorHeapType::Standard,0));
-        return Buffer->GetBindlessHandle();
-    }
-
     void RHIDirectX11::DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer)
     {
         buffer.reset();
+    }
+
+    RHIDescriptorHandle RHIDirectX11::CreateStandardHeapDescriptorView(RHIBuffer* Buffer,DescriptorRangeType Type)
+    {
+        Buffer->SetBindlessHandle(RHIDescriptorHandle(RHIDescriptorHeapType::Standard,0));
+        return Buffer->GetBindlessHandle();
     }
 }

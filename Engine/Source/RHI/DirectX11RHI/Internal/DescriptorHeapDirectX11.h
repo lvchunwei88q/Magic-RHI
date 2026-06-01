@@ -1,5 +1,6 @@
 #pragma once
 #include <RHIResource.h>
+#include <vector>
 
 namespace RHI
 {
@@ -15,5 +16,11 @@ namespace RHI
         void Free(RHIDescriptorHandle handle) override;
 
         bool IsFull() const override { return false; }
+
+    private:
+        std::vector<uint32_t> m_pHeap;
+        uint32_t m_DescriptorSize;
+
+        std::vector<uint32_t> m_FreeList;  // 空闲的索引
     };
 }

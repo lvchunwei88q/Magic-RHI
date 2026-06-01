@@ -181,7 +181,7 @@ int main(int argc, char* argv[])
                     desc.BindFlags = f;
     
                     auto buffer = device->CreateBuffer(desc);
-                    device->CreateDescriptorForBuffer(buffer.get(), rt);
+                    device->CreateStandardHeapDescriptorView(buffer.get(), rt);
                     return buffer;
                 };
 
