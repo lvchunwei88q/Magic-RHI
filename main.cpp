@@ -200,17 +200,31 @@ int main(int argc, char* argv[])
                 std::cout << "Shader compilation..." << std::endl;
                 // 从文件编译顶点着色器
                 std::string exePath = IO::ToNarrowString(IO::AbsolutePath::Get().GetExecutableDirectory());
-                std::string shaderPath = exePath + "\\..\\..\\Test\\test.hlsl"; // 你知道的这只是一个测试示例
+                std::string vsshaderPath = exePath + "\\..\\..\\Test\\testVS.hlsl"; // 你知道的这只是一个测试示例
+                std::string psshaderPath = exePath + "\\..\\..\\Test\\testPS.hlsl";
+                std::string csshaderPath = exePath + "\\..\\..\\Test\\testCS.hlsl";
                 RHI::ShaderCompileDesc vsDesc{};
                 vsDesc.Type = RHI::ShaderType::Vertex;
                 vsDesc.EnableDebugInfo = true;
-                vsDesc.FilePath = shaderPath.c_str();
+                vsDesc.FilePath = vsshaderPath.c_str();
+
+                RHI::ShaderCompileDesc psDesc{};
+                psDesc.Type = RHI::ShaderType::Pixel;
+                psDesc.EnableDebugInfo = true;
+                psDesc.FilePath = psshaderPath.c_str();
+
+                RHI::ShaderCompileDesc csDesc{};
+                csDesc.Type = RHI::ShaderType::Compute;
+                csDesc.EnableDebugInfo = true;
+                csDesc.FilePath = csshaderPath.c_str();
 
                 auto vertexShader = device->CompileVertexShader(vsDesc);
+                auto pixelShader = device->CompilePixelShader(psDesc);
+                auto computeShader = device->CompileComputeShader(csDesc);
 
-                if (vertexShader)
+                if (vertexShader && pixelShader && computeShader)
                 {
-                    std::cout << "VertexShader compiled successfully!" << std::endl;
+                    std::cout << "VertexShader, PixelShader, ComputeShader compiled successfully!" << std::endl;
 
                     // 创建根签名：包含一个 DescriptorTable + 一个 Root CBV
                     RHI::RootSignatureDesc rootDesc;
@@ -257,23 +271,79 @@ int main(int argc, char* argv[])
                     rootDesc.Parameters.push_back(cbvParam);
                     rootDesc.Parameters.push_back(constParam);
                     rootDesc.Flags = RHI::RootSignatureFlags::AllowInputAssemblerInputLayout;
+                    
+                    RHI::RootSignatureDesc rootUavDesc;
+                    // ===== 参数 0：描述符表（含 2 个 Range）=====
+                    RHI::DescriptorRangeDesc uavranges[1];
+
+                    // Range 0：UAV × 1，从 t0 开始
+                    uavranges[0].RangeType      = RHI::DescriptorRangeType::UAV;
+                    uavranges[0].NumDescriptors = 1;
+                    uavranges[0].ShaderRegister = 0;
+                    uavranges[0].RegisterSpace  = 0;
+                    // OffsetInDescriptorsFromTableStart 默认为 ~0u (APPEND)
+
+                    RHI::RootParameterDesc uavtableParam = {};
+                    uavtableParam.Type                            = RHI::RootParameterType::DescriptorTable;
+                    uavtableParam.Visibility                      = RHI::ShaderVisibility::ComputeBit;
+                    uavtableParam.DescriptorTable.NumDescriptorRanges = 1;
+                    uavtableParam.DescriptorTable.pDescriptorRanges   = uavranges;
+                    rootUavDesc.Parameters.push_back(uavtableParam);
 
                     // 创建根签名
                     auto rootSignature = device->CreateRootSignature(rootDesc);
-                    if (rootSignature && rootSignature->IsValid())
+                    auto rootUAVSignature = device->CreateRootSignature(rootUavDesc);
+                    if (rootSignature && rootSignature->IsValid() && rootUAVSignature && rootUAVSignature->IsValid())
                     {
                         std::cout << "RootSignature created successfully!" << std::endl;
-
-                        // 使用根签名...
-                        // ...
-
-                        device->DeleteRootSignature(rootSignature);
-
-                        MSG msg = {};
-                        while (GetMessage(&msg, nullptr, 0, 0))
+                        
+                        // 定义输入布局描述
+                        RHI::InputElementDesc inputLayout[] = 
                         {
-                            TranslateMessage(&msg);
-                            DispatchMessage(&msg);
+                            { "POSITION", 0, 6, 0, RHI::InputElementDesc::APPEND_ALIGNED_ELEMENT,
+                                RHI::InputClassification::PerVertexData, 0 },
+                        };
+
+                        RHI::GraphicsPipelineStateDesc graphicsDesc = {};
+                        graphicsDesc.pRootSignature = rootSignature.get();
+                        graphicsDesc.pInputElementDesc = inputLayout;
+                        graphicsDesc.NumInputElements = sizeof(inputLayout) / sizeof(inputLayout[0]);
+                        graphicsDesc.pVertexShader = vertexShader.get();
+                        graphicsDesc.pPixelShader = pixelShader.get();
+                        graphicsDesc.NumRenderTargets = 1;
+                        graphicsDesc.RenderTargetFormats[0] = 28;
+                        graphicsDesc.DepthStencilFormat = 45;
+
+                        RHI::ComputePipelineStateDesc computeDesc = {};
+                        computeDesc.pRootSignature = rootUAVSignature.get();
+                        computeDesc.pComputeShader = computeShader.get();
+
+                        auto computePSO = device->CreateComputePipelineState(computeDesc);
+                        auto graphicsPSO = device->CreateGraphicsPipelineState(graphicsDesc);
+
+                        if (graphicsPSO && graphicsPSO->IsValid())
+                        {
+                            std::cout << "GraphicsPipelineState created successfully!" << std::endl;
+
+                            if (computePSO && computePSO->IsValid())
+                            {
+                                std::cout << "ComputePipelineState created successfully!" << std::endl;
+
+                                MSG msg = {};
+                                while (GetMessage(&msg, nullptr, 0, 0))
+                                {
+                                    TranslateMessage(&msg);
+                                    DispatchMessage(&msg);
+                                }
+                            }
+                            else
+                            {
+                                std::cout << "Failed to create ComputePipelineState!" << std::endl;
+                            }
+                        }
+                        else
+                        {
+                            std::cout << "Failed to create GraphicsPipelineState!" << std::endl;
                         }
                     }
                     else

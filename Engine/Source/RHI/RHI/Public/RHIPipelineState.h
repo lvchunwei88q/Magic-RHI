@@ -19,11 +19,16 @@ namespace RHI
     class RHIVertexShader;
     class RHIPixelShader;
     class RHIGeometryShader;
+    
+    struct InputElementDesc;
 
 
     struct GraphicsPipelineStateDesc
     {
         RHIRootSignature* pRootSignature = nullptr;
+        
+        InputElementDesc* pInputElementDesc = nullptr;
+        uint32_t NumInputElements = 0; 
         
         RHIVertexShader* pVertexShader = nullptr;
         RHIPixelShader* pPixelShader = nullptr;

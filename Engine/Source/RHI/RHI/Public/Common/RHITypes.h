@@ -171,6 +171,12 @@ enum class RHIIndexFormat : uint8_t
 	Uint16,
 	Uint32
 };
+	
+enum class InputClassification : uint8_t
+{
+	PerVertexData   = 0,  // 每顶点数据
+	PerInstanceData = 1   // 每实例数据
+};
 
 struct RHIRect
 {

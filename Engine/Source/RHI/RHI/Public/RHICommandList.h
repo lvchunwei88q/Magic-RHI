@@ -4,6 +4,7 @@
 #include "RHIResource.h"
 #include "Common/RHIDesc.h"
 #include "RHIRootSignature.h" // RootSignatureDesc
+#include "RHIPipelineState.h" // GraphicsPipelineStateDesc, ComputePipelineStateDesc
 
 #include <vector>
 #include <memory>

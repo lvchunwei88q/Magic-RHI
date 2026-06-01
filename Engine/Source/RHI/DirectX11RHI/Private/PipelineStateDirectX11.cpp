@@ -4,6 +4,74 @@
 
 namespace RHI
 {
+    namespace
+    {
+        D3D11_INPUT_CLASSIFICATION ConvertInputClassification(InputClassification classification)
+        {
+            switch (classification)
+            {
+            case InputClassification::PerVertexData:
+                return D3D11_INPUT_PER_VERTEX_DATA;
+            case InputClassification::PerInstanceData:
+                return D3D11_INPUT_PER_INSTANCE_DATA;
+            default:
+                return D3D11_INPUT_PER_VERTEX_DATA;
+            }
+        }
+        
+        D3D11_BLEND_DESC ConvertBlendState(RHIBlendState* blendState)
+        {
+            D3D11_BLEND_DESC desc = {};
+            if (blendState)
+            {
+                // TODO: Blend state data initialization
+            }
+            return desc;
+        }
+
+        D3D11_RASTERIZER_DESC ConvertRasterizerState(RHIRasterizerState* rasterizerState)
+        {
+            D3D11_RASTERIZER_DESC desc = {};
+            if (rasterizerState)
+            {
+                // TODO: Rasterizer state data initialization
+            }
+            return desc;
+        }
+
+        D3D11_DEPTH_STENCIL_DESC ConvertDepthStencilState(RHIDepthStencilState* depthStencilState)
+        {
+            D3D11_DEPTH_STENCIL_DESC desc ={};
+            if (depthStencilState)
+            {
+                // TODO: Depth stencil state data initialization
+            }
+            return desc;
+        }
+
+        DXGI_FORMAT ConvertFormat(uint32_t format)
+        {
+            if (format == 0)
+                return DXGI_FORMAT_UNKNOWN;
+
+            // TODO: Format data initialization
+            return static_cast<DXGI_FORMAT>(format);
+        }
+        
+        D3D11_INPUT_ELEMENT_DESC ConvertInputLayout(const InputElementDesc& desc)
+        {
+            D3D11_INPUT_ELEMENT_DESC d3dDesc = {};
+            d3dDesc.SemanticName = desc.SemanticName;
+            d3dDesc.SemanticIndex = desc.SemanticIndex;
+            d3dDesc.Format = ConvertFormat(desc.Format);
+            d3dDesc.InputSlot = desc.InputSlot;
+            d3dDesc.AlignedByteOffset = desc.AlignedByteOffset;
+            d3dDesc.InputSlotClass = ConvertInputClassification(desc.InputSlotClass);
+            d3dDesc.InstanceDataStepRate = desc.InstanceDataStepRate;
+            return d3dDesc;
+        }
+    }
+    
     RHIPipelineStateDirectX11::RHIPipelineStateDirectX11()
     {
     }
