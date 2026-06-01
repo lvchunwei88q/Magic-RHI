@@ -69,5 +69,14 @@ namespace RHI
         D3D_FEATURE_LEVEL m_FeatureLevel;
         // CommandQueue DirectX11
         std::shared_ptr<CommandQueueDirectX11> m_CommandQueue;
+
+        /*
+         * DescriptorHeap DirectX11 模拟
+         * 包含标准堆、采样器堆、RTV堆、DSV堆
+        */
+        std::unique_ptr<DescriptorHeapDirectX11> m_pStandardHeap;
+        std::unique_ptr<DescriptorHeapDirectX11> m_pSamplerHeap;
+        std::unique_ptr<DescriptorHeapDirectX11> m_pRTVHeap;
+        std::unique_ptr<DescriptorHeapDirectX11> m_pDSVHeap;
     };
 }

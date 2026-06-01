@@ -85,6 +85,12 @@ namespace RHI
         // 初始化命令队列
         m_CommandQueue = std::make_shared<CommandQueueDirectX11>(RHICmdListType::Graphics, m_pDeviceContext.Get());
 
+        // -------------------- Create descriptor heaps --------------------
+        m_pStandardHeap = std::make_unique<DescriptorHeapDirectX11>(RHIDescriptorHeapType::Standard, RHI_DESCRIPTOR_HEAP_SIZE_STANDARD);
+        m_pSamplerHeap = std::make_unique<DescriptorHeapDirectX11>(RHIDescriptorHeapType::Sampler, RHI_DESCRIPTOR_HEAP_SIZE_SAMPLER);
+        m_pRTVHeap = std::make_unique<DescriptorHeapDirectX11>(RHIDescriptorHeapType::RenderTarget, RHI_DESCRIPTOR_HEAP_SIZE_RENDER_TARGET);
+        m_pDSVHeap = std::make_unique<DescriptorHeapDirectX11>(RHIDescriptorHeapType::DepthStencil, RHI_DESCRIPTOR_HEAP_SIZE_DEPTH_STENCIL);
+        // -------------------- Create descriptor heaps End --------------------
         return true;
     }
 

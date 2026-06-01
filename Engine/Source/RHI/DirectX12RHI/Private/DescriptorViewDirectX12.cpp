@@ -3,9 +3,7 @@
 
 namespace RHI
 {
-    RHIDescriptorHandle RHIDirectX12::CreateStandardHeapDescriptorView(
-        RHIBuffer* Buffer,
-        DescriptorRangeType Type)
+    RHIDescriptorHandle RHIDirectX12::CreateStandardHeapDescriptorView(RHIBuffer* Buffer,DescriptorRangeType Type)
     {
         auto dx12Buffer = SafeCast<BufferDirectX12>(Buffer);
         if (!dx12Buffer || !dx12Buffer->GetResource())

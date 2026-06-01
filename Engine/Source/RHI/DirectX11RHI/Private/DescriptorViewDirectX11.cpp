@@ -5,7 +5,16 @@ namespace RHI
 {
     RHIDescriptorHandle RHIDirectX11::CreateStandardHeapDescriptorView(RHIBuffer* Buffer,DescriptorRangeType Type)
     {
-        Buffer->SetBindlessHandle(RHIDescriptorHandle(RHIDescriptorHeapType::Standard,0));
+        RHIDescriptorHandle handle = m_pStandardHeap->Allocate();
+        if (!handle.IsValid())
+        {
+#if RHI_ENABLE_RESOURCE_INFO
+            ThrowErrorMessage("Failed to allocate descriptor");
+#endif
+            return RHIDescriptorHandle();
+        }
+        
+        Buffer->SetBindlessHandle(handle);
         return Buffer->GetBindlessHandle();
     }
 
