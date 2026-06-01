@@ -5,15 +5,23 @@ if (POLICY CMP0141)
 endif()
 
 if(MSVC)
-    # 关闭警告 C4819: 无效的字符。避免中文注释被警告
-    add_compile_options(
-        "/wd4819"
-    )
-    add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
-    add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+    message(STATUS "🔧 MSVC: Applying MSVC-specific settings...")
+    add_compile_options(/wd4819)
+    add_compile_options(/wd4828) 
+    add_compile_options(/utf-8)
+
+    string(REPLACE "/showIncludes" "" CMAKE_DEPFILE_FLAGS_C "${CMAKE_DEPFILE_FLAGS_C}")
+    string(REPLACE "/showIncludes" "" CMAKE_DEPFILE_FLAGS_CXX "${CMAKE_DEPFILE_FLAGS_CXX}")
+    message(STATUS "MSVC: /utf-8 enabled")
     # 更改最大数
     add_compile_options(/bigobj)
 endif()
+
+# 定义第三方库的根目录
+set(THIRD_PARTY_DIR ${CMAKE_SOURCE_DIR}/Engine/Thirdparty)
+
+# 设置输出目录为项目根目录下的 /Binary/BUILD_TYPE
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/Binary/$<CONFIG>)
 
 # 设置 C++ 标准
 set(CMAKE_CXX_STANDARD 20)

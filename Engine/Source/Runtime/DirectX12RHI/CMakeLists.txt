@@ -1,5 +1,5 @@
 include(${PROJECT_SOURCE_DIR}/Engine/Cmake/macro.cmake)
-set(DXC_ROOT ${PROJECT_SOURCE_DIR}/Engine/ThirdParty/DirectXShaderCompiler) # DXC的根目录
+set(DXC_ROOT ${THIRD_PARTY_DIR}/DirectXShaderCompiler) # DXC的根目录
 
 add_module_sources(DirectX12RHI)
 
@@ -24,16 +24,15 @@ target_link_options(DirectX12RHI PRIVATE
 target_compile_definitions(DirectX12RHI PRIVATE DIRECTX12RHI_EXPORTS)
 
 target_link_libraries(DirectX12RHI
-    PRIVATE
-        RHI           
+    PRIVATE   
         d3d12.lib
         ${DXC_ROOT}/dxcompiler.lib
         dxgi.lib
         dxguid.lib
 )
 
+target_link_libraries(DirectX12RHI PRIVATE RHI)
 target_link_libraries(DirectX12RHI PRIVATE Core)
-target_link_libraries(DirectX12RHI PRIVATE IO)
 
 # 复制DXC的dll文件到构建目录
 add_custom_command(TARGET DirectX12RHI POST_BUILD

@@ -18,9 +18,9 @@ namespace Core
 		// api
 		virtual bool Init() = 0;
 		virtual void Uninstall() = 0;
-		virtual void Notification(const char*) {}; // Notification
+		virtual void Notification(NotificationContext) {}; // Notification
 
-		template<typename Derived, SubsystemContext::Priority Priority>
+		template<typename Derived, Priority Priority>
 		void Register(const char* tags = "NONE") {
 			// Register the subsystem in the system manager
 			const char* name = typeid(Derived).name();
@@ -39,7 +39,7 @@ namespace Core
 	class CORE_API SubsystemControl
 	{
 	public:
-		static SubsystemContext::SubsystemError Init() {
+		static SubsystemError Init() {
 			// Initialize all registered subsystems
 			SubsystemContext* Subsystemcontext = GetSubsystemContext();
 			// Subsystemcontext->Init(); // This would be an API to initialize all subsystems
@@ -64,10 +64,10 @@ namespace Core
 			return Subsystemcontext->Num();
 		}
 
-		static void NotificationSubsystem(const char* target_tags, const char* msg) {
+		static void NotificationSubsystem(const char* target_tags, NotificationContext Context) {
 			// Notification Subsystem Msg
 			SubsystemContext* Subsystemcontext = GetSubsystemContext();
-			Subsystemcontext->Notification(target_tags, msg);
+			Subsystemcontext->Notification(target_tags, Context);
 		}
 	};
 }

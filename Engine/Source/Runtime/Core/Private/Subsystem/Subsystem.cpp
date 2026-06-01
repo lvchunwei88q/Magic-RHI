@@ -26,7 +26,8 @@ namespace Core
 		Derived.push_back(std::move(ctx));
 		
 	}
-	SubsystemContextImpl::SubsystemError SubsystemContextImpl::Init()
+
+	SubsystemError SubsystemContextImpl::Init()
 	{
 		std::sort(Derived.begin(), Derived.end(),
 			[](const Context& a, const Context& b) {
@@ -58,7 +59,7 @@ namespace Core
 		}
 	}
 
-	void SubsystemContextImpl::Notification(const char* target_tags, const char* msg)
+	void SubsystemContextImpl::Notification(const char* target_tags, NotificationContext msg)
 	{
 		for (auto& Target : Derived)
 		{

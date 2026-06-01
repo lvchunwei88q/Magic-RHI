@@ -5,18 +5,34 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch DirectX11 RHI",
+            "name": "Launch DirectX11 RHI - Debug",
             "type":"lldb",
             "request": "launch",
-            "program": "${workspaceRoot}/out/bin/MagicRHI.exe",
+            "program": "${workspaceRoot}/Binary/Debug/MagicRHI.exe",
             "args": ["dx11"],
             "cwd": "${workspaceRoot}"
         },
         {
-            "name": "Launch DirectX12 RHI",
+            "name": "Launch DirectX12 RHI - Debug",
             "type":"lldb",
             "request": "launch",
-            "program": "${workspaceRoot}/out/bin/MagicRHI.exe",
+            "program": "${workspaceRoot}/Binary/Debug/MagicRHI.exe",
+            "args": ["dx12"],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "name": "Launch DirectX11 RHI - Release",
+            "type":"lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/Binary/Release/MagicRHI.exe",
+            "args": ["dx11"],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "name": "Launch DirectX12 RHI - Release",
+            "type":"lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/Binary/Release/MagicRHI.exe",
             "args": ["dx12"],
             "cwd": "${workspaceRoot}"
         }

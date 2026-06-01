@@ -22,13 +22,12 @@ target_link_options(DirectX11RHI PRIVATE
 )
 
 target_link_libraries(DirectX11RHI
-    PRIVATE
-        RHI           
+    PRIVATE   
         d3d11.lib
         dxgi.lib
         dxguid.lib
         d3dcompiler.lib # 使用默认的d3d编译器
 )
 
+target_link_libraries(DirectX11RHI PRIVATE RHI)
 target_link_libraries(DirectX11RHI PRIVATE Core)
-target_link_libraries(DirectX11RHI PRIVATE IO)

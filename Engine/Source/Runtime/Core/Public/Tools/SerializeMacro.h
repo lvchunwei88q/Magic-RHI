@@ -10,7 +10,7 @@
 const std::wstring object##_Executable = IO::AbsolutePath::Get().GetExecutableDirectory();				\
 const std::wstring object##_context_dir = object##_Executable + L"\\" + path;							\
 const std::wstring object##_context_path = object##_Executable + L"\\" + path + name;					\
-if (IO::Exists(object##_context_path)) {													\
+if (IO::Exists(object##_context_path)) {																\
 	std::ifstream file(object##_context_path);															\
     try {																								\
 		cereal::BinaryInputArchive archive(file);														\
