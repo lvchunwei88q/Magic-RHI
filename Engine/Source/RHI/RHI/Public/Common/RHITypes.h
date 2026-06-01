@@ -137,6 +137,152 @@ enum class RHICmdListType : uint8_t
 	Copy
 };
 
+// RHI 抽象层的纹理格式枚举
+enum class RHITextureFormat : uint8_t
+{
+	Unknown = 0,
+	// 8-bit per component
+	R8_UNORM,
+	R8_SNORM,
+	R8_UINT,
+	R8_SINT,
+	R8_SRGB,
+	// 16-bit per component
+	R16_UNORM,
+	R16_SNORM,
+	R16_UINT,
+	R16_SINT,
+	R16_FLOAT,
+	// 8-bit 2 components
+	R8G8_UNORM,
+	R8G8_SNORM,
+	R8G8_UINT,
+	R8G8_SINT,
+	R8G8_SRGB,
+	// 16-bit 2 components
+	R16G16_UNORM,
+	R16G16_SNORM,
+	R16G16_UINT,
+	R16G16_SINT,
+	R16G16_FLOAT,
+	// 32-bit 2 components
+	R32G32_UINT,
+	R32G32_SINT,
+	R32G32_FLOAT,
+	// 8-bit 4 components
+	R8G8B8A8_UNORM,
+	R8G8B8A8_SNORM,
+	R8G8B8A8_UINT,
+	R8G8B8A8_SINT,
+	R8G8B8A8_SRGB,
+	// 16-bit 4 components
+	R16G16B16A16_UNORM,
+	R16G16B16A16_SNORM,
+	R16G16B16A16_UINT,
+	R16G16B16A16_SINT,
+	R16G16B16A16_FLOAT,
+	// 32-bit 4 components
+	R32G32B32A32_UINT,
+	R32G32B32A32_SINT,
+	R32G32B32A32_FLOAT,
+	// 10:10:10:2 packed
+	R10G10B10A2_UNORM,
+	R10G10B10A2_UINT,
+	// 11:11:10 packed
+	R11G11B10_FLOAT,
+	// 5:6:5 packed
+	B5G6R5_UNORM,
+	// 5:5:5:1 packed
+	B5G5R5A1_UNORM,
+	// 4:4:4:4 packed
+	B4G4R4A4_UNORM,
+	// BGRA formats
+	B8G8R8A8_UNORM,
+	B8G8R8A8_SRGB,
+	B8G8R8X8_UNORM,
+	B8G8R8X8_SRGB,
+	// Depth formats
+	D16_UNORM,
+	D24_UNORM_S8_UINT,
+	D32_FLOAT,
+	D32_FLOAT_S8X24_UINT,
+	// Compressed formats (BC)
+	BC1_UNORM,
+	BC1_UNORM_SRGB,
+	BC2_UNORM,
+	BC2_UNORM_SRGB,
+	BC3_UNORM,
+	BC3_UNORM_SRGB,
+	BC4_UNORM,
+	BC4_SNORM,
+	BC5_UNORM,
+	BC5_SNORM,
+	BC6H_UF16,
+	BC6H_SF16,
+	BC7_UNORM,
+	BC7_UNORM_SRGB,
+	// Typeless (for creating views with different formats)
+	R8G8B8A8_TYPELESS,
+	R16G16B16A16_TYPELESS,
+	R32G32B32A32_TYPELESS,
+	R32_TYPELESS,
+	
+	Max
+};
+
+// 判断格式是否有深度/模板分量
+inline bool IsDepthFormat(RHITextureFormat Format)
+{
+	switch (Format)
+	{
+	case RHITextureFormat::D16_UNORM:
+	case RHITextureFormat::D24_UNORM_S8_UINT:
+	case RHITextureFormat::D32_FLOAT:
+	case RHITextureFormat::D32_FLOAT_S8X24_UINT:
+		return true;
+	default:
+		return false;
+	}
+}
+
+// 判断格式是否有模板分量
+inline bool IsStencilFormat(RHITextureFormat Format)
+{
+	switch (Format)
+	{
+	case RHITextureFormat::D24_UNORM_S8_UINT:
+	case RHITextureFormat::D32_FLOAT_S8X24_UINT:
+		return true;
+	default:
+		return false;
+	}
+}
+
+// 判断格式是否压缩
+inline bool IsCompressedFormat(RHITextureFormat Format)
+{
+	switch (Format)
+	{
+	case RHITextureFormat::BC1_UNORM:
+	case RHITextureFormat::BC1_UNORM_SRGB:
+	case RHITextureFormat::BC2_UNORM:
+	case RHITextureFormat::BC2_UNORM_SRGB:
+	case RHITextureFormat::BC3_UNORM:
+	case RHITextureFormat::BC3_UNORM_SRGB:
+	case RHITextureFormat::BC4_UNORM:
+	case RHITextureFormat::BC4_SNORM:
+	case RHITextureFormat::BC5_UNORM:
+	case RHITextureFormat::BC5_SNORM:
+	case RHITextureFormat::BC6H_UF16:
+	case RHITextureFormat::BC6H_SF16:
+	case RHITextureFormat::BC7_UNORM:
+	case RHITextureFormat::BC7_UNORM_SRGB:
+		return true;
+	default:
+		return false;
+	}
+}
+
 enum class BufferBindFlag : uint32_t
 {
 	None           = 0,			 // 无绑定标志

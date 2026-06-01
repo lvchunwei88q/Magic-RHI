@@ -5,7 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch",
+            "name": "Launch DirectX11 RHI",
+            "type":"lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/out/bin/MagicRHI.exe",
+            "args": ["dx11"],
+            "cwd": "${workspaceRoot}"
+        },
+        {
+            "name": "Launch DirectX12 RHI",
             "type":"lldb",
             "request": "launch",
             "program": "${workspaceRoot}/out/bin/MagicRHI.exe",

@@ -300,7 +300,7 @@ int main(int argc, char* argv[])
                         // 定义输入布局描述
                         RHI::InputElementDesc inputLayout[] = 
                         {
-                            { "POSITION", 0, 6, 0, RHI::InputElementDesc::APPEND_ALIGNED_ELEMENT,
+                            { "POSITION", 0, RHI::RHITextureFormat::R16_UNORM, 0, RHI::InputElementDesc::APPEND_ALIGNED_ELEMENT,
                                 RHI::InputClassification::PerVertexData, 0 },
                         };
 
@@ -311,8 +311,8 @@ int main(int argc, char* argv[])
                         graphicsDesc.pVertexShader = vertexShader.get();
                         graphicsDesc.pPixelShader = pixelShader.get();
                         graphicsDesc.NumRenderTargets = 1;
-                        graphicsDesc.RenderTargetFormats[0] = 28;
-                        graphicsDesc.DepthStencilFormat = 45;
+                        graphicsDesc.RenderTargetFormats[0] = RHI::RHITextureFormat::R32G32B32A32_FLOAT;
+                        graphicsDesc.DepthStencilFormat = RHI::RHITextureFormat::D32_FLOAT;
 
                         RHI::ComputePipelineStateDesc computeDesc = {};
                         computeDesc.pRootSignature = rootUAVSignature.get();

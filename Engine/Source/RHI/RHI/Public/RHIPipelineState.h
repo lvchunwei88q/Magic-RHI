@@ -1,5 +1,6 @@
 #pragma once
 #include "Common/RHI_API.h"
+#include "Common/RHIDesc.h"
 #include <cstdint>
 
 namespace RHI
@@ -19,9 +20,6 @@ namespace RHI
     class RHIVertexShader;
     class RHIPixelShader;
     class RHIGeometryShader;
-    
-    struct InputElementDesc;
-
 
     struct GraphicsPipelineStateDesc
     {
@@ -41,8 +39,8 @@ namespace RHI
         RHIDepthStencilState* pDepthStencilState = nullptr;
 
         uint32_t NumRenderTargets = 0;
-        uint32_t RenderTargetFormats[8] = {0};
-        uint32_t DepthStencilFormat = 0;
+        RHITextureFormat RenderTargetFormats[8] = {};
+        RHITextureFormat DepthStencilFormat = RHITextureFormat::Unknown;
     };
 
     struct ComputePipelineStateDesc

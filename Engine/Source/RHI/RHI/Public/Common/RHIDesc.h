@@ -77,13 +77,13 @@ struct ShaderCompileDesc
 // 输入元素描述符
 struct InputElementDesc
 {
-	const char* SemanticName;           // 语义名称（如 "POSITION"）
-	uint32_t SemanticIndex;              // 语义索引（如 TEXCOORD0 的索引为 0）
-	uint32_t Format;                      // 数据格式
-	uint32_t InputSlot;                  // 输入槽索引（0-15）
-	uint32_t AlignedByteOffset;          // 字节偏移量（使用 APPEND_ALIGNED_ELEMENT 自动计算）
-	InputClassification InputSlotClass;  // 输入分类（顶点数据或实例数据）
-	uint32_t InstanceDataStepRate;       // 实例数据步进率（每几个实例取一次数据）
+	const char* SemanticName;           		  // 语义名称
+	uint32_t SemanticIndex;              		  // 语义索引
+	RHITextureFormat Format;                      // 数据格式
+	uint32_t InputSlot;              			  // 输入槽索引（0-15）
+	uint32_t AlignedByteOffset;              	  // 字节偏移量（使用 APPEND_ALIGNED_ELEMENT 自动计算）
+	InputClassification InputSlotClass;           // 输入分类（顶点数据或实例数据）
+	uint32_t InstanceDataStepRate;                // 实例数据步进率（每几个实例取一次数据）
     
 	// 辅助常量
 	static constexpr uint32_t APPEND_ALIGNED_ELEMENT = 0xFFFFFFFF;
