@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <d3d11.h>
 #include "DirectXHelper.h"
 #include <RHICommandList.h>
@@ -93,21 +94,23 @@ namespace RHI
     class CommandQueueDirectX11 : public RHICommandQueue
     {
     public:
-        CommandQueueDirectX11(RHICmdType InType, ID3D11DeviceContext* pContext)
+        CommandQueueDirectX11(RHICmdType InType, ID3D11DeviceContext* pContext, ID3D11Device* pDevice)
             : RHICommandQueue(InType)
-            , m_pDeviceContext(pContext) {}
+            , m_pDeviceContext(pContext)
+            , m_pDevice(pDevice) {}
         ~CommandQueueDirectX11() override = default;
 
-        void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override {}
-        void WaitForIdle() override {}
+        void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override;
+        void WaitForGPU() override {}
 
         // 同步操作 但是 DX 11 不支持
-        uint64_t Signal() override { return 0; }
-        bool GetTimestampFrequency(uint64_t* frequency) override { return false; }
+        void Signal(uint64_t fenceValue) override {}
+        bool GetTimestampFrequency(uint64_t* frequency) override;
         bool SetEventOnCompletion(uint64_t fenceValue, void* hEvent) override { return false; }
-        uint64_t GetCompletedValue() const override { return 0; }
+        uint64_t GetFrameIndex() const override { return 0; }
 
     private:
         ID3D11DeviceContext* m_pDeviceContext;
+        ID3D11Device* m_pDevice;
     };
 }

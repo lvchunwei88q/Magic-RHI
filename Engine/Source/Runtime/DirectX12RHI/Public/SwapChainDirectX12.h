@@ -25,21 +25,21 @@ namespace RHI
         bool IsValid() const override;
         void Present() override;
         void Resize(uint32_t width, uint32_t height) override;
+        uint32_t GetFrameIndex() const override { return m_pSwapChain3->GetCurrentBackBufferIndex(); }// 获取当前帧索引
 
-        IDXGISwapChain3* GetSwapChain() const { return m_pSwapChain.Get(); }
-
-        uint32_t GetFrameIndex() const { return m_frameIndex; }
+        IDXGISwapChain3* GetSwapChain3() const { return m_pSwapChain3.Get(); }
+        IDXGISwapChain1* GetSwapChain() const { return m_pSwapChain1.Get(); }
 
     private:
         RHIDirectX12* m_pRHI;
         
         void CreateRTVs();
 
-        ComPtr<IDXGISwapChain3> m_pSwapChain;
+        ComPtr<IDXGISwapChain3> m_pSwapChain3;
+        ComPtr<IDXGISwapChain1> m_pSwapChain1;
         ComPtr<ID3D12DescriptorHeap> m_pRtvHeap;
         ComPtr<ID3D12Resource> m_pRenderTargets[RHI_MULTI_BUFFERING];
 
-        uint32_t m_frameIndex;
         SwapChainDesc m_desc;
     };
 }

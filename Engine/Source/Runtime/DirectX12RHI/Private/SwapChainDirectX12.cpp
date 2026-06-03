@@ -10,7 +10,6 @@
 namespace RHI
 {
     SwapChainDirectX12::SwapChainDirectX12()
-        : m_frameIndex(0)
     {
     }
 
@@ -60,8 +59,16 @@ namespace RHI
         ThrowIfFailed(factory->MakeWindowAssociation(static_cast<HWND>(desc.WindowHandle), DXGI_MWA_NO_ALT_ENTER));
 #endif
 
-        ThrowIfFailed(swapChain1.As(&m_pSwapChain));
-        m_frameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+        ComPtr<IDXGISwapChain3> swapChain3;
+        if (SUCCEEDED(swapChain1.As(&swapChain3))) {
+            m_pSwapChain3 = swapChain3;  // 支持现代接口
+            m_pSwapChain1 = swapChain1;  // 降级到基础接口
+        } else {
+#ifdef RHI_ENABLE_RESOURCE_DEBUG_INFO
+            ThrowErrorMessage("SwapChain3 is not supported on this device.");
+#endif
+            m_pSwapChain1 = swapChain1;  // 降级到基础接口
+        }
 
         D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
         rtvHeapDesc.NumDescriptors = RHI_MULTI_BUFFERING;
@@ -78,14 +85,14 @@ namespace RHI
     void SwapChainDirectX12::CreateRTVs()
     {
         ComPtr<ID3D12Device> dx12Device;
-        ThrowIfFailed(m_pSwapChain->GetDevice(IID_PPV_ARGS(&dx12Device)));
+        ThrowIfFailed(m_pSwapChain1->GetDevice(IID_PPV_ARGS(&dx12Device)));
         
         UINT rtvDescriptorSize = dx12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
         CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_pRtvHeap->GetCPUDescriptorHandleForHeapStart());
         
         for (UINT n = 0; n < RHI_MULTI_BUFFERING; n++)
         {
-            ThrowIfFailed(m_pSwapChain->GetBuffer(n, IID_PPV_ARGS(m_pRenderTargets[n].GetAddressOf())));
+            ThrowIfFailed(m_pSwapChain1->GetBuffer(n, IID_PPV_ARGS(m_pRenderTargets[n].GetAddressOf())));
             dx12Device->CreateRenderTargetView(m_pRenderTargets[n].Get(), nullptr, rtvHandle);
             rtvHandle.Offset(1, rtvDescriptorSize);
         }
@@ -98,18 +105,17 @@ namespace RHI
             m_pRenderTargets[n].Reset();
         }
         m_pRtvHeap.Reset();
-        m_pSwapChain.Reset();
+        m_pSwapChain1.Reset();
     }
 
     bool SwapChainDirectX12::IsValid() const
     {
-        return m_pSwapChain != nullptr;
+        return m_pSwapChain1 != nullptr || m_pSwapChain3 != nullptr;
     }
 
     void SwapChainDirectX12::Present()
     {
-        m_pSwapChain->Present(m_desc.VSync ? 1 : 0, 0);
-        m_frameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+        m_pSwapChain1->Present(m_desc.VSync ? 1 : 0, 0);
     }
 
     void SwapChainDirectX12::Resize(uint32_t width, uint32_t height)
@@ -122,7 +128,7 @@ namespace RHI
             m_pRenderTargets[n].Reset();
         }
 
-        ThrowIfFailed(m_pSwapChain->ResizeBuffers(
+        ThrowIfFailed(m_pSwapChain1->ResizeBuffers(
             RHI_MULTI_BUFFERING,
             width,
             height,
@@ -130,7 +136,6 @@ namespace RHI
             0
         ));
 
-        m_frameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
         CreateRTVs();
     }
 }

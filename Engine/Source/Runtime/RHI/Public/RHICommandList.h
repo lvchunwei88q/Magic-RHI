@@ -97,13 +97,13 @@ namespace RHI
         RHICmdType GetQueueType() const { return QueueType; }
 
         virtual void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) = 0;
-        virtual void WaitForIdle() = 0;
+        virtual void WaitForGPU() = 0;
 
         // 同步操作
-        virtual uint64_t Signal() = 0;
+        virtual void Signal(uint64_t fenceValue) = 0;
         virtual bool GetTimestampFrequency(uint64_t* frequency) = 0;
         virtual bool SetEventOnCompletion(uint64_t fenceValue, void* hEvent) = 0;
-        virtual uint64_t GetCompletedValue() const = 0;
+        virtual uint64_t GetFrameIndex() const = 0;
 
     protected:
         RHICmdType QueueType;

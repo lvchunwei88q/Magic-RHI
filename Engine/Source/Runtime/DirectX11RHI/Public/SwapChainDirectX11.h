@@ -24,6 +24,7 @@ namespace RHI
         bool IsValid() const override;
         void Present() override;
         void Resize(uint32_t width, uint32_t height) override;
+        uint32_t GetFrameIndex() const override { return 0; }
 
         IDXGISwapChain* GetSwapChain() const { return m_pSwapChain.Get(); }
 

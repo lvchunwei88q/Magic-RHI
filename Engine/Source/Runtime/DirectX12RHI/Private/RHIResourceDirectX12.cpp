@@ -255,7 +255,7 @@ namespace RHI
             
             // run command list
             m_CopyQueue.get()->ExecuteCommandLists({cmdList});
-            m_CopyQueue.get()->WaitForIdle();
+            m_CopyQueue.get()->WaitForGPU();
             
             // return buffer
             return buffer;
@@ -319,32 +319,32 @@ namespace RHI
         }
         
         m_pCommandQueue->ExecuteCommandLists((UINT)d3dCmdLists.size(), d3dCmdLists.data());
-    }
-
-    void CommandQueueDirectX12::WaitForIdle()
-    {
-        UINT64 fenceValue = ++m_FenceValue;
-        ThrowIfFailed(m_pCommandQueue->Signal(m_Fence.Get(), fenceValue));
         
-        if (m_Fence->GetCompletedValue() < fenceValue)
-        {
-            HANDLE eventHandle = CreateEventEx(nullptr, nullptr, 0, EVENT_ALL_ACCESS);
-            ThrowIfFailed(m_Fence->SetEventOnCompletion(fenceValue, eventHandle));
-            WaitForSingleObject(eventHandle, INFINITE);
-            CloseHandle(eventHandle);
+        // add index
+        UINT64 fenceValue = m_currentFrame++;
+        m_pCommandQueue->Signal(m_Fence.Get(), fenceValue);
+        
+        // Save fence value
+        m_fenceValues[m_currentFrame] = fenceValue;
+        // Advance to next frame
+        m_currentFrame = (m_currentFrame + 1) % RHI_MULTI_BUFFERING;
+    } 
+
+    void CommandQueueDirectX12::WaitForGPU()
+    {
+        for (int i = 0; i < RHI_MULTI_BUFFERING; ++i) {
+            UINT64 fenceValue = ++m_fenceValues[i];
+            if (m_Fence->GetCompletedValue() < fenceValue)
+            {
+                ThrowIfFailed(m_Fence->SetEventOnCompletion(fenceValue, m_fenceEvent));
+                WaitForSingleObject(m_fenceEvent, INFINITE);
+            }
         }
     }
 
-    uint64_t CommandQueueDirectX12::Signal()
-    {
-        if (!m_Fence)
-        {
-            ThrowIfFailed(GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)));
-        }
-        
-        UINT64 fenceValue = ++m_FenceValue;
+    void CommandQueueDirectX12::Signal(uint64_t fenceValue)
+    {   
         ThrowIfFailed(m_pCommandQueue->Signal(m_Fence.Get(), fenceValue));
-        return fenceValue;
     }
 
     bool CommandQueueDirectX12::GetTimestampFrequency(uint64_t* frequency)
@@ -354,19 +354,11 @@ namespace RHI
 
     bool CommandQueueDirectX12::SetEventOnCompletion(uint64_t fenceValue, void* hEvent)
     {
-        if (!m_Fence)
-        {
-            ThrowIfFailed(GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)));
-        }
         return SUCCEEDED(m_Fence->SetEventOnCompletion(fenceValue, (HANDLE)hEvent));
     }
 
-    uint64_t CommandQueueDirectX12::GetCompletedValue() const
+    uint64_t CommandQueueDirectX12::GetFrameIndex() const
     {
-        if (m_Fence)
-        {
-            return m_Fence->GetCompletedValue();
-        }
-        return 0;
+        return m_currentFrame;
     }
 }

@@ -347,7 +347,7 @@ int main(int argc, char* argv[])
                                         
                                         // run command list
                                         device->GetCommandQueue(RHI::RHICmdType::Graphics)->ExecuteCommandLists({cmdList});
-                                        device->GetCommandQueue(RHI::RHICmdType::Graphics)->WaitForIdle();
+                                        device->GetCommandQueue(RHI::RHICmdType::Graphics)->WaitForGPU();
                                     }
                                 }else{
                                     std::cout << "Failed to create CommandList!" << std::endl;

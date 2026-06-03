@@ -107,29 +107,39 @@ namespace RHI
         CommandQueueDirectX12(RHICmdType InType, ID3D12CommandQueue* pQueue, ID3D12Device* InDevice)
             : RHICommandQueue(InType)
             , m_pCommandQueue(pQueue)
-            , m_Device(InDevice)
-            , m_FenceValue(0) {
+            , m_Device(InDevice) {
                 ThrowIfFailed(GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)));
+                m_fenceEvent = CreateEvent(nullptr,FALSE,FALSE,nullptr);
+                if (!m_fenceEvent) {
+                    ThrowErrorMessage("Failed to create fence event");
+                }
             }
-        ~CommandQueueDirectX12() override = default;
+        ~CommandQueueDirectX12() override {
+            CloseHandle(m_fenceEvent);
+        };
 
         void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override;
-        void WaitForIdle() override;
+        void WaitForGPU() override;
 
         // 同步操作
-        uint64_t Signal() override;
-        bool GetTimestampFrequency(uint64_t* frequency) override;
+        void Signal(uint64_t fenceValue) override;
+        bool GetTimestampFrequency(uint64_t* frequency) override; // Get timestamp frequency 只需要获取一次
         bool SetEventOnCompletion(uint64_t fenceValue, void* hEvent) override;
-        uint64_t GetCompletedValue() const override;
+        uint64_t GetFrameIndex() const override;
 
         ID3D12CommandQueue* GetCommandQueue() const { return m_pCommandQueue.Get(); }
         ID3D12Device* GetDevice() const { return m_Device; }
 
     private:
         ComPtr<ID3D12CommandQueue> m_pCommandQueue;
+        
+        // Synchronization objects.
+        HANDLE m_fenceEvent;
         ComPtr<ID3D12Fence> m_Fence;
+        UINT64 m_fenceValues[RHI_MULTI_BUFFERING] = {0}; // 多缓冲区 Num
+        UINT64 m_currentFrame = 0;
+
         ID3D12Device* m_Device;
-        uint64_t m_FenceValue;
     };
 
     using GraphicsCommandQueueDirectX12 = CommandQueueDirectX12;

@@ -83,7 +83,7 @@ namespace RHI
         m_AdapterName = desc.Description;
 
         // 初始化命令队列
-        m_CommandQueue = std::make_shared<CommandQueueDirectX11>(RHICmdType::Graphics, m_pDeviceContext.Get());
+        m_CommandQueue = std::make_shared<CommandQueueDirectX11>(RHICmdType::Graphics, m_pDeviceContext.Get(), m_pDevice.Get());
 
         // -------------------- Create descriptor heaps --------------------
         m_pStandardHeap = std::make_unique<DescriptorHeapDirectX11>(RHIDescriptorHeapType::Standard, RHI_DESCRIPTOR_HEAP_SIZE_STANDARD);
