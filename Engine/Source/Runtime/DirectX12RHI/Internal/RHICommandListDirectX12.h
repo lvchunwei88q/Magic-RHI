@@ -3,7 +3,7 @@
 #include "d3dx12.h"
 #include <d3d12.h>
 
-#include <Config/RHIConfig.h> // RHI配置
+#include <Config/ConfigBase.h> // RHI配置
 
 #include "DirectXHelper.h"
 #include <RHICommandList.h>

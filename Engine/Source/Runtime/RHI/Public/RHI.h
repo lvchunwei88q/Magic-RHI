@@ -8,7 +8,7 @@
 
 #include <memory>
 #include <string>
-#include "Config/RHIConfig.h" // RHI配置
+#include "Config/ConfigBase.h" // RHI配置
 
 
 namespace RHI
