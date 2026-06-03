@@ -348,13 +348,13 @@ int main(int argc, char* argv[])
                                         TranslateMessage(&msg);
                                         DispatchMessage(&msg);
                                         
-                                        //cmdList->BeginRecording();
+                                        cmdList->BeginRecording();
                                         
-                                        //cmdList->EndRecording();
+                                        cmdList->EndRecording();
                                         
                                         // run command list
-                                        //device->GetCommandQueue(RHI::RHICmdType::Graphics)->ExecuteCommandLists({cmdList});
-                                        //device->GetCommandQueue(RHI::RHICmdType::Graphics)->WaitForGPU();
+                                        device->GetCommandQueue(RHI::RHICmdType::Graphics)->ExecuteCommandLists({cmdList});
+                                        device->GetCommandQueue(RHI::RHICmdType::Graphics)->WaitForGPU();
                                     }
                                 }else{
                                     std::cout << "Failed to create CommandList!" << std::endl;
