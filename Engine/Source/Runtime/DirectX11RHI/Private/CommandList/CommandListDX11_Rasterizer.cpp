@@ -17,7 +17,9 @@ namespace RHI
             vp.MaxDepth = pViewports[i].maxDepth;
             d3dViewports.push_back(vp);
         }
-        m_pDeviceContext->RSSetViewports(numViewports, d3dViewports.data());
+
+        CommandAllocatorDirectX11* pAllocator = SafeCast<CommandAllocatorDirectX11>(m_pAllocator);
+        pAllocator->GetDeviceContext()->RSSetViewports(numViewports, d3dViewports.data());
     }
 
     void CommandListDirectX11::RSSetScissorRects(uint32_t numRects, const RHIRect* pRects)
@@ -33,6 +35,8 @@ namespace RHI
             rect.bottom = (LONG)pRects[i].bottom;
             d3dRects.push_back(rect);
         }
-        m_pDeviceContext->RSSetScissorRects(numRects, d3dRects.data());
+
+        CommandAllocatorDirectX11* pAllocator = SafeCast<CommandAllocatorDirectX11>(m_pAllocator);
+        pAllocator->GetDeviceContext()->RSSetScissorRects(numRects, d3dRects.data());
     }
 }

@@ -219,7 +219,8 @@ namespace RHI
             InitBufferData(pUploadBuffer);
             std::shared_ptr<BufferDirectX12> uploadBuffer = std::make_shared<BufferDirectX12>(pUploadBuffer.Get(), desc, m_pDevice.Get());
             
-            auto cmdList = CreateCommandList(RHICmdListType::Copy);
+            auto cmdAllocator = CreateCommandAllocator(RHICmdType::Copy);
+            auto cmdList = CreateCommandList(cmdAllocator);
             cmdList->BeginRecording();
             
             // Default 资源初始状态是 COMMON，需要转换到 COPY_DEST
@@ -259,7 +260,7 @@ namespace RHI
             // return buffer
             return buffer;
         }
-#if RHI_ENABLE_RESOURCE_INFO
+#if RHI_ENABLE_RESOURCE_DEBUG_INFO
         else if(desc.HeapType == BufferHeapType::Default && desc.InitialData == nullptr) 
             ThrowErrorMessage("Creating D3D12_HEAP_TYPE_DEFAULT requires providing heap data");
 #endif
@@ -282,8 +283,23 @@ namespace RHI
 
     void CommandListDirectX12::BeginRecording()
     {
-        ThrowIfFailed(m_pCommandAllocator->Reset());
-        ThrowIfFailed(m_pCommandList->Reset(m_pCommandAllocator.Get(), nullptr));
+        if(m_pAllocator == nullptr){
+#ifdef RHI_ENABLE_RESOURCE_DEBUG_INFO
+            ThrowErrorMessage("CommandAllocatorDirectX12 is nullptr");
+#endif
+            return;
+        }
+        CommandAllocatorDirectX12* dx12CmdAllocator = SafeCast<CommandAllocatorDirectX12>(m_pAllocator);
+
+        if(dx12CmdAllocator == nullptr){
+#ifdef RHI_ENABLE_RESOURCE_DEBUG_INFO
+            ThrowErrorMessage("CommandAllocatorDirectX12 is nullptr");
+#endif
+            return;
+        }
+
+        ThrowIfFailed(dx12CmdAllocator->GetCommandAllocator()->Reset());
+        ThrowIfFailed(m_pCommandList->Reset(dx12CmdAllocator->GetCommandAllocator(), nullptr));
     }
 
     void CommandListDirectX12::EndRecording()

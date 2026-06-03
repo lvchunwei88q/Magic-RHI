@@ -74,13 +74,14 @@ namespace RHI
 
     void CommandListDirectX11::IASetPrimitiveTopology(RHIPrimitiveTopology topology, uint32_t controlPointCount)
     {
+        CommandAllocatorDirectX11* pAllocator = SafeCast<CommandAllocatorDirectX11>(m_pAllocator);
         if (topology == RHIPrimitiveTopology::ControlPointPatchList)
         {
-            m_pDeviceContext->IASetPrimitiveTopology(ConvertControlPointPatchList(controlPointCount));
+            pAllocator->GetDeviceContext()->IASetPrimitiveTopology(ConvertControlPointPatchList(controlPointCount));
         }
         else
         {
-            m_pDeviceContext->IASetPrimitiveTopology(ConvertPrimitiveTopology(topology));
+            pAllocator->GetDeviceContext()->IASetPrimitiveTopology(ConvertPrimitiveTopology(topology));
         }
     }
 
@@ -102,20 +103,22 @@ namespace RHI
             offsets.push_back(pOffsets ? (UINT)pOffsets[i] : 0);
         }
 
-        m_pDeviceContext->IASetVertexBuffers(startSlot, numBuffers, buffers.data(), strides.data(), offsets.data());
+        CommandAllocatorDirectX11* pAllocator = SafeCast<CommandAllocatorDirectX11>(m_pAllocator);
+        pAllocator->GetDeviceContext()->IASetVertexBuffers(startSlot, numBuffers, buffers.data(), strides.data(), offsets.data());
     }
 
     void CommandListDirectX11::IASetIndexBuffer(RHIBuffer* pIndexBuffer, RHIIndexFormat format, uint64_t offset)
     {
+        CommandAllocatorDirectX11* pAllocator = SafeCast<CommandAllocatorDirectX11>(m_pAllocator);
         if (pIndexBuffer)
         {
             BufferDirectX11* dxBuffer = static_cast<BufferDirectX11*>(pIndexBuffer);
-            m_pDeviceContext->IASetIndexBuffer(SafeCast<ID3D11Buffer>(dxBuffer->GetResource()),
+            pAllocator->GetDeviceContext()->IASetIndexBuffer(SafeCast<ID3D11Buffer>(dxBuffer->GetResource()),
              ConvertIndexFormat(format), (UINT)offset);
         }
         else
         {
-            m_pDeviceContext->IASetIndexBuffer(nullptr, DXGI_FORMAT_UNKNOWN, 0);
+            pAllocator->GetDeviceContext()->IASetIndexBuffer(nullptr, DXGI_FORMAT_UNKNOWN, 0);
         }
     }
 }

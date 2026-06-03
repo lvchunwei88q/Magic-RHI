@@ -8,31 +8,8 @@
 
 #include <memory>
 #include <string>
+#include "Config/RHIConfig.h" // RHI配置
 
-#ifndef RHI_SWAP_CHAIN_CLOSE_FULL_SCREEN
-#define RHI_SWAP_CHAIN_CLOSE_FULL_SCREEN true
-#endif
-
-// TODO 描述符堆Num
-#ifndef RHI_DESCRIPTOR_HEAP_SIZE_STANDARD
-#define RHI_DESCRIPTOR_HEAP_SIZE_STANDARD 1024
-#endif
-
-#ifndef RHI_DESCRIPTOR_HEAP_SIZE_SAMPLER
-#define RHI_DESCRIPTOR_HEAP_SIZE_SAMPLER 256
-#endif
-
-#ifndef RHI_DESCRIPTOR_HEAP_SIZE_RENDER_TARGET
-#define RHI_DESCRIPTOR_HEAP_SIZE_RENDER_TARGET 32
-#endif
-
-#ifndef RHI_DESCRIPTOR_HEAP_SIZE_DEPTH_STENCIL
-#define RHI_DESCRIPTOR_HEAP_SIZE_DEPTH_STENCIL 32
-#endif
-
-#ifndef RHI_MULTI_BUFFERING
-#define RHI_MULTI_BUFFERING 2
-#endif
 
 namespace RHI
 {
@@ -41,6 +18,7 @@ namespace RHI
      * 因为智能指针需要了解这个Type的内存布局
      */
     // CommandList & CommandQueue Forward Declaration
+    class RHICommandAllocator;
     class RHICommandList;
     class RHICommandQueue;
     // forward declarations
@@ -91,8 +69,9 @@ namespace RHI
         virtual RHIDescriptorHandle CreateRTVHeapDescriptorView(class RHIRenderTargetView* InView) = 0;
         virtual RHIDescriptorHandle CreateDSVHeapDescriptorView(class RHIDepthStencilView* InView) = 0;
 
-        [[nodiscard]] virtual std::shared_ptr<RHICommandList> CreateCommandList(RHICmdListType type) = 0;
-        [[nodiscard]] virtual std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdListType Type) const = 0;
+        [[nodiscard]] virtual std::shared_ptr<RHICommandAllocator> CreateCommandAllocator(RHICmdType type) = 0;
+        [[nodiscard]] virtual std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator) = 0;
+        [[nodiscard]] virtual std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdType Type) const = 0;
 
         [[nodiscard]] virtual std::shared_ptr<RHIVertexShader> CompileVertexShader(const ShaderCompileDesc& desc) = 0;
         [[nodiscard]] virtual std::shared_ptr<RHIPixelShader> CompilePixelShader(const ShaderCompileDesc& desc) = 0;

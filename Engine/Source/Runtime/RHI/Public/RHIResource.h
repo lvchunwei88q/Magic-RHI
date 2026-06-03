@@ -6,11 +6,11 @@
 #include <string>
 #include <memory>
 
-#ifndef RHI_ENABLE_RESOURCE_INFO // 开启调试信息
+#ifndef RHI_ENABLE_RESOURCE_DEBUG_INFO // 开启调试信息
     #ifdef _DEBUG
-        #define RHI_ENABLE_RESOURCE_INFO 1   // Debug: Run
+        #define RHI_ENABLE_RESOURCE_DEBUG_INFO 1   // Debug: Run
     #else
-        #define RHI_ENABLE_RESOURCE_INFO 0   // Release: Close
+        #define RHI_ENABLE_RESOURCE_DEBUG_INFO 0   // Release: Close
     #endif
 #endif
 
@@ -67,7 +67,7 @@ namespace RHI
         RHIResourceType GetType() const { return Type; }
         //virtual void* GetResource() const { return nullptr; } 这里不应该获取到资源我们要对用户隐藏起来
 
-#if RHI_ENABLE_RESOURCE_INFO
+#if RHI_ENABLE_RESOURCE_DEBUG_INFO
         virtual void GetInfo(RHIResourceInfo& OutInfo) const;
 #endif
 

@@ -47,7 +47,7 @@ namespace RHI
         // 只有图形队列可以绑定交换链
         ComPtr<IDXGISwapChain1> swapChain1;
         ThrowIfFailed(factory->CreateSwapChainForHwnd(
-            static_cast<GraphicsCommandQueueDirectX12*>(m_pRHI->GetCommandQueue(RHICmdListType::Graphics).get())->GetCommandQueue(),
+            SafeCast<CommandQueueDirectX12>(m_pRHI->GetCommandQueue(RHICmdType::Graphics).get())->GetCommandQueue(),
             static_cast<HWND>(desc.WindowHandle),
             &swapChainDesc,
             nullptr,

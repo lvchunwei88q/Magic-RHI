@@ -129,8 +129,8 @@ enum class BufferHeapType : uint8_t
 	Readback
 };
 
-/* Command List Type */
-enum class RHICmdListType : uint8_t
+/* Command Type */
+enum class RHICmdType : uint8_t
 {
 	Graphics,
 	Compute,

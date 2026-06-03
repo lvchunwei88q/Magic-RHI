@@ -48,8 +48,9 @@ namespace RHI
         RHIDescriptorHandle CreateRTVHeapDescriptorView(RHIRenderTargetView* InView) override;
         RHIDescriptorHandle CreateDSVHeapDescriptorView(RHIDepthStencilView* InView) override;
 
-        [[nodiscard]] std::shared_ptr<RHICommandList> CreateCommandList(RHICmdListType type) override;
-        [[nodiscard]] std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdListType Type) const override;
+        [[nodiscard]] std::shared_ptr<RHICommandAllocator> CreateCommandAllocator(RHICmdType type) override;
+        [[nodiscard]] std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator) override;
+        [[nodiscard]] std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdType Type) const override;
 
         [[nodiscard]] std::shared_ptr<RHIVertexShader> CompileVertexShader(const ShaderCompileDesc& desc) override;
         [[nodiscard]] std::shared_ptr<RHIPixelShader> CompilePixelShader(const ShaderCompileDesc& desc) override;

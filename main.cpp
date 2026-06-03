@@ -329,7 +329,8 @@ int main(int argc, char* argv[])
                             {
                                 std::cout << "ComputePipelineState created successfully!" << std::endl;
 
-                                auto cmdList = device->CreateCommandList(RHI::RHICmdListType::Graphics);
+                                auto cmdAllocator = device->CreateCommandAllocator(RHI::RHICmdType::Graphics);
+                                auto cmdList = device->CreateCommandList(cmdAllocator);
 
                                 if(cmdList && cmdList.get() != nullptr){
                                     std::cout << "CommandList created successfully!" << std::endl;

@@ -2,6 +2,9 @@
 
 #include "d3dx12.h"
 #include <d3d12.h>
+
+#include <Config/RHIConfig.h> // RHI配置
+
 #include "DirectXHelper.h"
 #include <RHICommandList.h>
 #include "RHIResourceDirectX12.h"
@@ -11,13 +14,26 @@ using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
+    class CommandAllocatorDirectX12 : public RHICommandAllocator
+    {
+        public:
+            CommandAllocatorDirectX12(RHICmdType type, ID3D12CommandAllocator* pCmdAllocator)
+                : RHICommandAllocator(type)
+                , m_pCommandAllocator(pCmdAllocator) {}
+            virtual ~CommandAllocatorDirectX12() = default;
+
+            ID3D12CommandAllocator* GetCommandAllocator() const { return m_pCommandAllocator.Get(); }
+
+        private:
+            ComPtr<ID3D12CommandAllocator> m_pCommandAllocator;
+    };
+
     class CommandListDirectX12 : public RHICommandList
     {
     public:
-        CommandListDirectX12(RHICmdListType InType, ID3D12GraphicsCommandList* pCmdList, ID3D12CommandAllocator* pAllocator)
-            : RHICommandList(InType)
-            , m_pCommandList(pCmdList)
-            , m_pCommandAllocator(pAllocator) {}
+        CommandListDirectX12(RHICommandAllocator* pCmdAllocator, ID3D12GraphicsCommandList* pCmdList)
+            : RHICommandList(pCmdAllocator)
+            , m_pCommandList(pCmdList) {}
         ~CommandListDirectX12() override = default;
 
         void BeginRecording() override;
@@ -79,7 +95,6 @@ namespace RHI
 
     private:
         ComPtr<ID3D12GraphicsCommandList> m_pCommandList;
-        ComPtr<ID3D12CommandAllocator> m_pCommandAllocator;
     };
 
     using GraphicsCommandListDirectX12 = CommandListDirectX12;
@@ -89,7 +104,7 @@ namespace RHI
     class CommandQueueDirectX12 : public RHICommandQueue
     {
     public:
-        CommandQueueDirectX12(RHICmdListType InType, ID3D12CommandQueue* pQueue, ID3D12Device* InDevice)
+        CommandQueueDirectX12(RHICmdType InType, ID3D12CommandQueue* pQueue, ID3D12Device* InDevice)
             : RHICommandQueue(InType)
             , m_pCommandQueue(pQueue)
             , m_Device(InDevice)

@@ -83,7 +83,7 @@ namespace RHI
         m_AdapterName = desc.Description;
 
         // 初始化命令队列
-        m_CommandQueue = std::make_shared<CommandQueueDirectX11>(RHICmdListType::Graphics, m_pDeviceContext.Get());
+        m_CommandQueue = std::make_shared<CommandQueueDirectX11>(RHICmdType::Graphics, m_pDeviceContext.Get());
 
         // -------------------- Create descriptor heaps --------------------
         m_pStandardHeap = std::make_unique<DescriptorHeapDirectX11>(RHIDescriptorHeapType::Standard, RHI_DESCRIPTOR_HEAP_SIZE_STANDARD);
@@ -109,13 +109,18 @@ namespace RHI
         return m_pDevice != nullptr;
     }
 
-    std::shared_ptr<RHICommandList> RHIDirectX11::CreateCommandList(RHICmdListType type)
+    std::shared_ptr<RHICommandAllocator> RHIDirectX11::CreateCommandAllocator(RHICmdType type)
     {
-        // DX 11 不支持命令列表     
-        return std::make_shared<CommandListDirectX11>(type, m_pDeviceContext.Get());
+        return std::make_shared<CommandAllocatorDirectX11>(type, m_pDeviceContext.Get());
     }
 
-    std::shared_ptr<RHICommandQueue> RHIDirectX11::GetCommandQueue(RHICmdListType Type) const
+    std::shared_ptr<RHICommandList> RHIDirectX11::CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator)
+    {
+        // DX 11 不支持命令列表     
+        return std::make_shared<CommandListDirectX11>(allocator.get());
+    }
+
+    std::shared_ptr<RHICommandQueue> RHIDirectX11::GetCommandQueue(RHICmdType Type) const
     {
         // DX 11 不支持命令队列
         return m_CommandQueue;

@@ -8,7 +8,9 @@ namespace RHI
         {
             BufferDirectX11* dstBuffer = static_cast<BufferDirectX11*>(pDstResource);
             BufferDirectX11* srcBuffer = static_cast<BufferDirectX11*>(pSrcResource);
-            m_pDeviceContext->CopyResource(SafeCast<ID3D11Buffer>(dstBuffer->GetResource()),
+
+            CommandAllocatorDirectX11* pAllocator = SafeCast<CommandAllocatorDirectX11>(m_pAllocator);
+            pAllocator->GetDeviceContext()->CopyResource(SafeCast<ID3D11Buffer>(dstBuffer->GetResource()),
              SafeCast<ID3D11Buffer>(srcBuffer->GetResource()));
         }
     }
@@ -28,7 +30,8 @@ namespace RHI
             srcBox.bottom = 1;
             srcBox.back = 1;
             
-            m_pDeviceContext->CopySubresourceRegion(
+            CommandAllocatorDirectX11* pAllocator = SafeCast<CommandAllocatorDirectX11>(m_pAllocator);
+            pAllocator->GetDeviceContext()->CopySubresourceRegion(
                 SafeCast<ID3D11Buffer>(dxDstBuffer->GetResource()), 0, (UINT)dstOffset, 0, 0,
                 SafeCast<ID3D11Buffer>(dxSrcBuffer->GetResource()), 0, &srcBox);
         }

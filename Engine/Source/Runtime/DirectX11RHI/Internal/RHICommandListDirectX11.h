@@ -10,11 +10,25 @@ using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
+    class CommandAllocatorDirectX11 : public RHICommandAllocator
+    {
+        public:
+            CommandAllocatorDirectX11(RHICmdType type, ID3D11DeviceContext* pContext)
+                : RHICommandAllocator(type)
+                , m_pDeviceContext(pContext) {}
+            virtual ~CommandAllocatorDirectX11() = default;
+
+            ID3D11DeviceContext* GetDeviceContext() const { return m_pDeviceContext; }
+        private:
+            ID3D11DeviceContext* m_pDeviceContext;
+    };
+
+
     class CommandListDirectX11 : public RHICommandList
     {
     public:
-        CommandListDirectX11(RHICmdListType InType, ID3D11DeviceContext* pContext)
-            : RHICommandList(InType), m_pDeviceContext(pContext) {}
+        CommandListDirectX11(RHICommandAllocator* pCmdAllocator)
+            : RHICommandList(pCmdAllocator) {}
         ~CommandListDirectX11() override = default;
 
         /* DX 11 不支持命令列表记录 */ 
@@ -74,16 +88,12 @@ namespace RHI
         void SetComputeRoot32BitConstant(uint32_t rootParameterIndex, uint32_t value, uint32_t destOffsetIn32BitValues) override;
         void SetComputeRoot32BitConstants(uint32_t rootParameterIndex, uint32_t num32BitValues, const void* pSrcData, uint32_t destOffsetIn32BitValues) override;
 
-        ID3D11DeviceContext* GetDeviceContext() const { return m_pDeviceContext; }
-
-    private:
-        ID3D11DeviceContext* m_pDeviceContext;
     };
 
     class CommandQueueDirectX11 : public RHICommandQueue
     {
     public:
-        CommandQueueDirectX11(RHICmdListType InType, ID3D11DeviceContext* pContext)
+        CommandQueueDirectX11(RHICmdType InType, ID3D11DeviceContext* pContext)
             : RHICommandQueue(InType)
             , m_pDeviceContext(pContext) {}
         ~CommandQueueDirectX11() override = default;

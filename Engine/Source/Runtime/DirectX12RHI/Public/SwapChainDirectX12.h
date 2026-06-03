@@ -28,6 +28,8 @@ namespace RHI
 
         IDXGISwapChain3* GetSwapChain() const { return m_pSwapChain.Get(); }
 
+        uint32_t GetFrameIndex() const { return m_frameIndex; }
+
     private:
         RHIDirectX12* m_pRHI;
         

@@ -185,6 +185,25 @@ namespace RHI
                 return FeatureLevel::Level_11_0;  // 默认值
             }
         }
+
+        D3D12_COMMAND_LIST_TYPE ConvertRHICmdTypeToD3D12(RHICmdType type)
+        {
+            switch (type)
+            {
+            case RHICmdType::Graphics:
+                return D3D12_COMMAND_LIST_TYPE_DIRECT;
+            case RHICmdType::Compute:
+                return D3D12_COMMAND_LIST_TYPE_COMPUTE;
+            case RHICmdType::Copy:
+                return D3D12_COMMAND_LIST_TYPE_COPY;
+            default:
+#ifdef _DEBUG
+                // 调试模式下，抛出异常
+                ThrowErrorMessage("Invalid RHICmdType");
+#endif
+                return static_cast<D3D12_COMMAND_LIST_TYPE>(-1);
+            }
+        }
     }
     RHIDirectX12::RHIDirectX12()
     {
@@ -349,17 +368,17 @@ namespace RHI
         ThrowIfFailed(m_pDevice->CreateCommandQueue(&copyQueueDesc, IID_PPV_ARGS(&pCopyQueue)));
 
         m_GraphicsQueue = std::make_shared<GraphicsCommandQueueDirectX12>(
-            RHICmdListType::Graphics, 
+            RHICmdType::Graphics, 
             pGraphicsQueue.Get(),
             m_pDevice.Get()
         );
         m_ComputeQueue = std::make_shared<ComputeCommandQueueDirectX12>(
-            RHICmdListType::Compute, 
+            RHICmdType::Compute, 
             pComputeQueue.Get(),
             m_pDevice.Get()
         );
         m_CopyQueue = std::make_shared<CopyCommandQueueDirectX12>(
-            RHICmdListType::Copy, 
+            RHICmdType::Copy, 
             pCopyQueue.Get(),
             m_pDevice.Get()
         );
@@ -369,35 +388,32 @@ namespace RHI
     {
         return m_pDevice != nullptr;
     }
-    
-    std::shared_ptr<RHICommandList> RHIDirectX12::CreateCommandList(RHICmdListType type)
-    {
 
-        D3D12_COMMAND_LIST_TYPE d3dType;
-        switch (type)
-        {
-        case RHICmdListType::Graphics:
-            d3dType = D3D12_COMMAND_LIST_TYPE_DIRECT;
-            break;
-        case RHICmdListType::Compute:
-            d3dType = D3D12_COMMAND_LIST_TYPE_COMPUTE;
-            break;
-        case RHICmdListType::Copy:
-            d3dType = D3D12_COMMAND_LIST_TYPE_COPY;
-            break;
-        default:
-            return nullptr;
-        }
-    
+    std::shared_ptr<RHICommandAllocator> RHIDirectX12::CreateCommandAllocator(RHICmdType type)
+    {
+        D3D12_COMMAND_LIST_TYPE d3dType = ConvertRHICmdTypeToD3D12(type);
+
         // Create command allocator 这是唯一的Com接口没有 1，2，3 等版本的接口
         ComPtr<ID3D12CommandAllocator> pAllocator;
         ThrowIfFailed(m_pDevice->CreateCommandAllocator(d3dType, IID_PPV_ARGS(&pAllocator)));
+        return std::make_shared<CommandAllocatorDirectX12>(type, pAllocator.Get());
+    }
+    
+    std::shared_ptr<RHICommandList> RHIDirectX12::CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator)
+    {
+        CommandAllocatorDirectX12* pAllocator = SafeCast<CommandAllocatorDirectX12>(allocator.get());
+        if (pAllocator == nullptr) {
+            ThrowErrorMessage("CommandAllocatorDirectX12 is nullptr");
+            return nullptr;
+        }
+        RHICmdType type = pAllocator->GetCmdType();
+        D3D12_COMMAND_LIST_TYPE d3dType = ConvertRHICmdTypeToD3D12(type);
     
         // Create command list
         ComPtr<ID3D12GraphicsCommandList> pCmdList = CreateLevelCommandList(
             m_pDevice.Get(),
             d3dType,
-            pAllocator.Get(),
+            pAllocator->GetCommandAllocator(),
             GetFeatureLevel()
         );
 
@@ -405,18 +421,18 @@ namespace RHI
         ThrowIfFailed(pCmdList->Close());
     
         // Create RHI wrapper object
-        return std::make_shared<CommandListDirectX12>(type, pCmdList.Get(), pAllocator.Get());
+        return std::make_shared<CommandListDirectX12>(pAllocator, pCmdList.Get());
     }
     
-    std::shared_ptr<RHICommandQueue> RHIDirectX12::GetCommandQueue(RHICmdListType Type) const
+    std::shared_ptr<RHICommandQueue> RHIDirectX12::GetCommandQueue(RHICmdType Type) const
     {
         switch (Type)
         {
-        case RHICmdListType::Graphics:
+        case RHICmdType::Graphics:
             return m_GraphicsQueue;
-        case RHICmdListType::Compute:
+        case RHICmdType::Compute:
             return m_ComputeQueue;
-        case RHICmdListType::Copy:
+        case RHICmdType::Copy:
             return m_CopyQueue;
         default:
             return nullptr;

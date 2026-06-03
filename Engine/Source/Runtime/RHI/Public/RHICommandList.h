@@ -11,13 +11,22 @@
 
 namespace RHI
 {
+    class RHI_API RHICommandAllocator
+    {
+        public:
+            RHICommandAllocator(RHICmdType InType);
+            virtual ~RHICommandAllocator();
+
+            RHICmdType GetCmdType() const { return CmdType; }
+        private:
+            RHICmdType CmdType;
+    };
+
     class RHI_API RHICommandList
     {
     public:
-        RHICommandList(RHICmdListType InType);
+        RHICommandList(RHICommandAllocator* pCmdAllocator);
         virtual ~RHICommandList();
-
-        RHICmdListType GetCmdListType() const { return CmdListType; }
 
         virtual void BeginRecording() = 0;
         virtual void EndRecording() = 0;
@@ -26,7 +35,7 @@ namespace RHI
         virtual void IASetPrimitiveTopology(RHIPrimitiveTopology topology, uint32_t controlPointCount = 1) = 0;
         virtual void IASetVertexBuffers(uint32_t startSlot, uint32_t numBuffers, RHIBuffer* const* ppBuffers, const uint64_t* pOffsets = nullptr) = 0;
         virtual void IASetIndexBuffer(RHIBuffer* pIndexBuffer, RHIIndexFormat format, uint64_t offset = 0) = 0;
-        
+
         // 光栅器
         virtual void RSSetViewports(uint32_t numViewports, const RHIViewport* pViewports) = 0;
         virtual void RSSetScissorRects(uint32_t numRects, const RHIRect* pRects) = 0;
@@ -76,16 +85,16 @@ namespace RHI
         virtual void SetComputeRoot32BitConstants(uint32_t rootParameterIndex, uint32_t num32BitValues, const void* pSrcData, uint32_t destOffsetIn32BitValues) = 0;
 
     protected:
-        RHICmdListType CmdListType;
+        RHICommandAllocator* m_pAllocator; // 命令分配器 占时引用
     };
 
     class RHI_API RHICommandQueue
     {
     public:
-        RHICommandQueue(RHICmdListType InType);
+        RHICommandQueue(RHICmdType InType);
         virtual ~RHICommandQueue();
 
-        RHICmdListType GetQueueType() const { return QueueType; }
+        RHICmdType GetQueueType() const { return QueueType; }
 
         virtual void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) = 0;
         virtual void WaitForIdle() = 0;
@@ -97,6 +106,6 @@ namespace RHI
         virtual uint64_t GetCompletedValue() const = 0;
 
     protected:
-        RHICmdListType QueueType;
+        RHICmdType QueueType;
     };
 } // namespace RHI
