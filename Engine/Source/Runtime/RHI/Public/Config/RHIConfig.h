@@ -21,6 +21,10 @@
 #define RHI_DESCRIPTOR_HEAP_SIZE_DEPTH_STENCIL 32
 #endif
 
+/*
+* 对于现代API来说我们需要手动的去配置多缓冲区，所以你可以根据需要改变这里的值，
+* 注意这里还会创建对应数量的的必要资源，所以值不是越大越好
+*/
 #ifndef RHI_MULTI_BUFFERING
 #define RHI_MULTI_BUFFERING 2
 #endif

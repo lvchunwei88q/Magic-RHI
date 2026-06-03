@@ -86,10 +86,6 @@ namespace RHI
         [[nodiscard]] virtual std::shared_ptr<RHIPipelineState> CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc) = 0;
         [[nodiscard]] virtual std::shared_ptr<RHIPipelineState> CreateComputePipelineState(const ComputePipelineStateDesc& desc) = 0;
         virtual void DeletePipelineState(std::shared_ptr<RHIPipelineState>& pipelineState) = 0;
-
-        [[nodiscard]] virtual std::shared_ptr<RHICommandQueue> GetGraphicsQueue() const = 0;
-        [[nodiscard]] virtual std::shared_ptr<RHICommandQueue> GetComputeQueue() const = 0;
-        [[nodiscard]] virtual std::shared_ptr<RHICommandQueue> GetCopyQueue() const = 0;
     };
 
     class RHI_API SwapChain

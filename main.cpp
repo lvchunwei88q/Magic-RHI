@@ -340,15 +340,14 @@ int main(int argc, char* argv[])
                                     {
                                         TranslateMessage(&msg);
                                         DispatchMessage(&msg);
-
                                         
                                         cmdList->BeginRecording();
                                         
                                         cmdList->EndRecording();
                                         
                                         // run command list
-                                        device->GetGraphicsQueue()->ExecuteCommandLists({cmdList});
-                                        device->GetGraphicsQueue()->WaitForIdle();
+                                        device->GetCommandQueue(RHI::RHICmdType::Graphics)->ExecuteCommandLists({cmdList});
+                                        device->GetCommandQueue(RHI::RHICmdType::Graphics)->WaitForIdle();
                                     }
                                 }else{
                                     std::cout << "Failed to create CommandList!" << std::endl;
