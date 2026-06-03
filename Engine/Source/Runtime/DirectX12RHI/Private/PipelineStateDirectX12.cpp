@@ -209,30 +209,25 @@ namespace RHI
         D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
         psoDesc.pRootSignature = rootSig->GetRootSignature();
         psoDesc.InputLayout = {d3d12Elements.data(),static_cast<UINT>(d3d12Elements.size()) };
-        psoDesc.VS.pShaderBytecode = vsShader->GetBytecode().data();
-        psoDesc.VS.BytecodeLength = static_cast<UINT>(vsShader->GetBytecode().size());
-        psoDesc.PS.pShaderBytecode = psShader->GetBytecode().data();
-        psoDesc.PS.BytecodeLength = static_cast<UINT>(psShader->GetBytecode().size());
+        psoDesc.VS = CD3DX12_SHADER_BYTECODE(vsShader->GetBytecode().data(), static_cast<UINT>(vsShader->GetBytecode().size()));
+        psoDesc.PS = CD3DX12_SHADER_BYTECODE(psShader->GetBytecode().data(), static_cast<UINT>(psShader->GetBytecode().size()));
 
         if (desc.pGeometryShader)
         {
             auto gsShader = static_cast<GeometryShaderDirectX12*>(desc.pGeometryShader);
-            psoDesc.GS.pShaderBytecode = gsShader->GetBytecode().data();
-            psoDesc.GS.BytecodeLength = static_cast<UINT>(gsShader->GetBytecode().size());
+            psoDesc.GS = CD3DX12_SHADER_BYTECODE(gsShader->GetBytecode().data(), static_cast<UINT>(gsShader->GetBytecode().size()));
         }
 
         if (desc.pHullShader)
         {
             auto hsShader = static_cast<HullShaderDirectX12*>(desc.pHullShader);
-            psoDesc.HS.pShaderBytecode = hsShader->GetBytecode().data();
-            psoDesc.HS.BytecodeLength = static_cast<UINT>(hsShader->GetBytecode().size());
+            psoDesc.HS = CD3DX12_SHADER_BYTECODE(hsShader->GetBytecode().data(), static_cast<UINT>(hsShader->GetBytecode().size()));
         }
 
         if (desc.pDomainShader)
         {
             auto dsShader = static_cast<DomainShaderDirectX12*>(desc.pDomainShader);
-            psoDesc.DS.pShaderBytecode = dsShader->GetBytecode().data();
-            psoDesc.DS.BytecodeLength = static_cast<UINT>(dsShader->GetBytecode().size());
+            psoDesc.DS = CD3DX12_SHADER_BYTECODE(dsShader->GetBytecode().data(), static_cast<UINT>(dsShader->GetBytecode().size()));
         }
 
         psoDesc.BlendState = ConvertBlendState(desc.pBlendState);
