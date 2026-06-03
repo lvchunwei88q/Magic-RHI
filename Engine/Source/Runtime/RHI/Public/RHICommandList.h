@@ -26,41 +26,10 @@ namespace RHI
         virtual void IASetPrimitiveTopology(RHIPrimitiveTopology topology, uint32_t controlPointCount = 1) = 0;
         virtual void IASetVertexBuffers(uint32_t startSlot, uint32_t numBuffers, RHIBuffer* const* ppBuffers, const uint64_t* pOffsets = nullptr) = 0;
         virtual void IASetIndexBuffer(RHIBuffer* pIndexBuffer, RHIIndexFormat format, uint64_t offset = 0) = 0;
-
-        // 着色器
-        virtual void VSSetShader(class RHIVertexShader* pShader) = 0;
-        virtual void PSSetShader(class RHIPixelShader* pShader) = 0;
-        virtual void GSSetShader(class RHIGeometryShader* pShader) = 0;
-        virtual void HSSetShader(class RHIHullShader* pShader) = 0;
-        virtual void DSSetShader(class RHIDomainShader* pShader) = 0;
-        virtual void CSSetShader(class RHIComputeShader* pShader) = 0;
-
-        // 着色器资源
-        virtual void VSSetConstantBuffers(uint32_t startSlot, uint32_t numBuffers, RHIBuffer* const* ppBuffers) = 0;
-        virtual void PSSetConstantBuffers(uint32_t startSlot, uint32_t numBuffers, RHIBuffer* const* ppBuffers) = 0;
-        virtual void GSSetConstantBuffers(uint32_t startSlot, uint32_t numBuffers, RHIBuffer* const* ppBuffers) = 0;
-        virtual void HSSetConstantBuffers(uint32_t startSlot, uint32_t numBuffers, RHIBuffer* const* ppBuffers) = 0;
-        virtual void DSSetConstantBuffers(uint32_t startSlot, uint32_t numBuffers, RHIBuffer* const* ppBuffers) = 0;
-        virtual void CSSetConstantBuffers(uint32_t startSlot, uint32_t numBuffers, RHIBuffer* const* ppBuffers) = 0;
-
-        virtual void VSSetShaderResources(uint32_t startSlot, uint32_t numViews, class RHIShaderResourceView* const* ppViews) = 0;
-        virtual void PSSetShaderResources(uint32_t startSlot, uint32_t numViews, class RHIShaderResourceView* const* ppViews) = 0;
-        virtual void GSSetShaderResources(uint32_t startSlot, uint32_t numViews, class RHIShaderResourceView* const* ppViews) = 0;
-        virtual void HSSetShaderResources(uint32_t startSlot, uint32_t numViews, class RHIShaderResourceView* const* ppViews) = 0;
-        virtual void DSSetShaderResources(uint32_t startSlot, uint32_t numViews, class RHIShaderResourceView* const* ppViews) = 0;
-        virtual void CSSetShaderResources(uint32_t startSlot, uint32_t numViews, class RHIShaderResourceView* const* ppViews) = 0;
-
-        virtual void VSSetSamplers(uint32_t startSlot, uint32_t numSamplers, RHISamplerState* const* ppSamplers) = 0;
-        virtual void PSSetSamplers(uint32_t startSlot, uint32_t numSamplers, RHISamplerState* const* ppSamplers) = 0;
-        virtual void GSSetSamplers(uint32_t startSlot, uint32_t numSamplers, RHISamplerState* const* ppSamplers) = 0;
-        virtual void HSSetSamplers(uint32_t startSlot, uint32_t numSamplers, RHISamplerState* const* ppSamplers) = 0;
-        virtual void DSSetSamplers(uint32_t startSlot, uint32_t numSamplers, RHISamplerState* const* ppSamplers) = 0;
-        virtual void CSSetSamplers(uint32_t startSlot, uint32_t numSamplers, RHISamplerState* const* ppSamplers) = 0;
-
+        
         // 光栅器
         virtual void RSSetViewports(uint32_t numViewports, const RHIViewport* pViewports) = 0;
         virtual void RSSetScissorRects(uint32_t numRects, const RHIRect* pRects) = 0;
-        virtual void RSSetState(class RHIRasterizerState* pState) = 0;
 
         // 输出合并器
         virtual void OMSetRenderTargets(uint32_t numRenderTargets, class RHIRenderTargetView* const* ppViews, class RHIDepthStencilView* pDepthStencilView = nullptr) = 0;

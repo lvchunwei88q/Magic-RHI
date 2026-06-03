@@ -35,9 +35,4 @@ namespace RHI
         }
         m_pDeviceContext->RSSetScissorRects(numRects, d3dRects.data());
     }
-
-    void CommandListDirectX11::RSSetState(RHIRasterizerState* pState)
-    {
-        // TODO: 实现光栅器状态设置
-    }
 }
