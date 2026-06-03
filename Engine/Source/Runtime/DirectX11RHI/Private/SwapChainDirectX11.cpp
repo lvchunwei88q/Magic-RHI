@@ -48,7 +48,7 @@ namespace RHI
         swapChainDesc.SampleDesc.Count = 1;
         swapChainDesc.SampleDesc.Quality = 0;
         swapChainDesc.Windowed = TRUE;
-        swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+        swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
         swapChainDesc.Flags = 0;
 
         ThrowIfFailed(factory->CreateSwapChain(

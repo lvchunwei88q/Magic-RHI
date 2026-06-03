@@ -3,11 +3,22 @@
 
 namespace RHI
 {
+    AUTO_REGISTER(RHILoader);
+    
     IRHILoader* GetLoader(){
         return &RHILoader::Get();
     }
 
     RHILoader::~RHILoader()
+    {
+    }
+
+    bool RHILoader::Init()
+    {
+        return true;
+    }
+
+    void RHILoader::Uninstall()
     {
         Unload();
     }

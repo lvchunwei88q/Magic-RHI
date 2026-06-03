@@ -137,7 +137,8 @@ namespace RHI
         HANDLE m_fenceEvent;
         ComPtr<ID3D12Fence> m_Fence;
         UINT64 m_fenceValues[RHI_MULTI_BUFFERING] = {0}; // 多缓冲区 Num
-        UINT64 m_currentFrame = 0;
+        UINT64 m_nextFenceValue = 1;
+        UINT m_currentFrame = 0;  
 
         ID3D12Device* m_Device;
     };

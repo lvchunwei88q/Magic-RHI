@@ -96,6 +96,19 @@ namespace RHI
 
     void RHIDirectX11::Shutdown()
     {
+        if (m_pDeviceContext) {
+            m_pDeviceContext->ClearState();
+            m_pDeviceContext->Flush();  // 刷新所有待执行的命令
+        }
+        
+#ifdef _DEBUG
+        ID3D11Debug* debug = nullptr;
+        m_pDevice->QueryInterface(__uuidof(ID3D11Debug), (void**)&debug);
+        if (debug) {
+            debug->ReportLiveDeviceObjects(D3D11_RLDO_DETAIL | D3D11_RLDO_IGNORE_INTERNAL);
+            debug->Release();
+        }
+#endif
         m_pDeviceContext.Reset();
         m_pDevice.Reset();
     }

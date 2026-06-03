@@ -193,26 +193,14 @@ namespace RHI
     }
 
     bool CommandQueueDirectX11::GetTimestampFrequency(uint64_t* frequency) {
-        // 创建查询
-        static ComPtr<ID3D11Query> pTimestampStart, pTimestampEnd, pDisjoint;
-        static bool bInit = false;
-        if (!bInit) {
-            D3D11_QUERY_DESC desc = {};
-            desc.Query = D3D11_QUERY_TIMESTAMP;
-            m_pDevice->CreateQuery(&desc, &pTimestampStart);
-            m_pDevice->CreateQuery(&desc, &pTimestampEnd);
-            desc.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
-            m_pDevice->CreateQuery(&desc, &pDisjoint);
-            bInit = true;
-        }
-        
+
         // 开始测量
-        m_pDeviceContext->Begin(pDisjoint.Get());
-        m_pDeviceContext->End(pDisjoint.Get());
+        m_pDeviceContext->Begin(m_pDisjoint.Get());
+        m_pDeviceContext->End(m_pDisjoint.Get());
         
         // 等待数据就绪
         D3D11_QUERY_DATA_TIMESTAMP_DISJOINT disjointData;
-        while (S_OK != m_pDeviceContext->GetData(pDisjoint.Get(), &disjointData, sizeof(disjointData), 0));
+        while (S_OK != m_pDeviceContext->GetData(m_pDisjoint.Get(), &disjointData, sizeof(disjointData), 0));
         
         if (disjointData.Disjoint == FALSE) {
             *frequency = disjointData.Frequency;

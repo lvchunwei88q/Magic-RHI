@@ -97,7 +97,14 @@ namespace RHI
         CommandQueueDirectX11(RHICmdType InType, ID3D11DeviceContext* pContext, ID3D11Device* pDevice)
             : RHICommandQueue(InType)
             , m_pDeviceContext(pContext)
-            , m_pDevice(pDevice) {}
+            , m_pDevice(pDevice) {
+                D3D11_QUERY_DESC desc = {};
+                desc.Query = D3D11_QUERY_TIMESTAMP;
+                m_pDevice->CreateQuery(&desc, &m_pTimestampStart);
+                m_pDevice->CreateQuery(&desc, &m_pTimestampEnd);
+                desc.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
+                m_pDevice->CreateQuery(&desc, &m_pDisjoint);
+            }
         ~CommandQueueDirectX11() override = default;
 
         void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override;
@@ -112,5 +119,10 @@ namespace RHI
     private:
         ID3D11DeviceContext* m_pDeviceContext;
         ID3D11Device* m_pDevice;
+
+        // GPU 测量
+        ComPtr<ID3D11Query> m_pTimestampStart;
+        ComPtr<ID3D11Query> m_pTimestampEnd;
+        ComPtr<ID3D11Query> m_pDisjoint;
     };
 }

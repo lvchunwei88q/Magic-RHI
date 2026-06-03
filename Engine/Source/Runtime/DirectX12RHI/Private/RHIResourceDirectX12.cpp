@@ -321,7 +321,7 @@ namespace RHI
         m_pCommandQueue->ExecuteCommandLists((UINT)d3dCmdLists.size(), d3dCmdLists.data());
         
         // add index
-        UINT64 fenceValue = m_currentFrame++;
+        UINT64 fenceValue = m_nextFenceValue++;
         m_pCommandQueue->Signal(m_Fence.Get(), fenceValue);
         
         // Save fence value
@@ -333,7 +333,7 @@ namespace RHI
     void CommandQueueDirectX12::WaitForGPU()
     {
         for (int i = 0; i < RHI_MULTI_BUFFERING; ++i) {
-            UINT64 fenceValue = ++m_fenceValues[i];
+            UINT64 fenceValue = m_fenceValues[i];
             if (m_Fence->GetCompletedValue() < fenceValue)
             {
                 ThrowIfFailed(m_Fence->SetEventOnCompletion(fenceValue, m_fenceEvent));

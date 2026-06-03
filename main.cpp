@@ -145,6 +145,10 @@ int main(int argc, char* argv[])
         {
             std::cout << "SwapChain created successfully!" << std::endl;
 
+            uint64_t frequency = 0;
+            device->GetCommandQueue(RHI::RHICmdType::Graphics)->GetTimestampFrequency(&frequency);
+            std::cout << "Timestamp Frequency: " << frequency << std::endl;
+            
             // 现在测试创建采样器
             RHI::SamplerStateDesc desc{};
             desc.Filter = RHI::SamplerFilter::Trilinear;
@@ -196,7 +200,7 @@ int main(int argc, char* argv[])
                 std::shared_ptr<RHI::RHIConstantBuffer> constantBuffer2 = CreateBuffer(RHI::BufferHeapType::Upload,RHI::BufferBindFlag::ShaderResource,RHI::DescriptorRangeType::SRV);
                 std::cout << "ShaderResource created successfully!" << std::endl;
                 std::cout << "ShaderResource Handle: " << constantBuffer2->GetBindlessHandle().GetIndex() << std::endl;
-
+                
                 std::cout << "Shader compilation..." << std::endl;
                 // 从文件编译顶点着色器
                 std::string exePath = IO::ToNarrowString(IO::AbsolutePath::Get().GetExecutableDirectory());
@@ -338,16 +342,19 @@ int main(int argc, char* argv[])
                                     MSG msg = {};
                                     while (GetMessage(&msg, nullptr, 0, 0))
                                     {
+                                        if (msg.message == WM_QUIT){
+                                            break;
+                                        }
                                         TranslateMessage(&msg);
                                         DispatchMessage(&msg);
                                         
-                                        cmdList->BeginRecording();
+                                        //cmdList->BeginRecording();
                                         
-                                        cmdList->EndRecording();
+                                        //cmdList->EndRecording();
                                         
                                         // run command list
-                                        device->GetCommandQueue(RHI::RHICmdType::Graphics)->ExecuteCommandLists({cmdList});
-                                        device->GetCommandQueue(RHI::RHICmdType::Graphics)->WaitForGPU();
+                                        //device->GetCommandQueue(RHI::RHICmdType::Graphics)->ExecuteCommandLists({cmdList});
+                                        //device->GetCommandQueue(RHI::RHICmdType::Graphics)->WaitForGPU();
                                     }
                                 }else{
                                     std::cout << "Failed to create CommandList!" << std::endl;
@@ -385,6 +392,8 @@ int main(int argc, char* argv[])
     {
         std::cout << "Failed to initialize Device!" << std::endl;
     }
+    
+    device.reset(); 
     
     Core::SubsystemControl::Uninstall();
     return 0;

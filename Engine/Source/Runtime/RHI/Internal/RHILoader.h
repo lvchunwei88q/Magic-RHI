@@ -2,19 +2,22 @@
 
 #include <memory>
 #include <windows.h>
-#include <Tools/Singleton.h>
+#include <Subsystem/SubsystemTemplate.h>
 #include "RHIDynamicLoader.h"
 #include "RHI.h"
 #include "IRHILoader.h"
 
 namespace RHI
 {
-    class RHILoader : public Singleton<RHILoader> , public IRHILoader
+    class RHILoader : public SubsystemTemplate<RHILoader,Core::Priority::Core> , public IRHILoader
     {
     public:
         RHILoader() = default;
         ~RHILoader();
 
+        bool Init() override;
+        void Uninstall() override;
+        
         bool Load(RHIType type) override;
         void Unload() override;
         
