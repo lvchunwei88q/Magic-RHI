@@ -329,11 +329,28 @@ int main(int argc, char* argv[])
                             {
                                 std::cout << "ComputePipelineState created successfully!" << std::endl;
 
-                                MSG msg = {};
-                                while (GetMessage(&msg, nullptr, 0, 0))
-                                {
-                                    TranslateMessage(&msg);
-                                    DispatchMessage(&msg);
+                                auto cmdList = device->CreateCommandList(RHI::RHICmdListType::Graphics);
+
+                                if(cmdList && cmdList.get() != nullptr){
+                                    std::cout << "CommandList created successfully!" << std::endl;
+
+                                    MSG msg = {};
+                                    while (GetMessage(&msg, nullptr, 0, 0))
+                                    {
+                                        TranslateMessage(&msg);
+                                        DispatchMessage(&msg);
+
+                                        
+                                        cmdList->BeginRecording();
+                                        
+                                        cmdList->EndRecording();
+                                        
+                                        // run command list
+                                        device->GetGraphicsQueue()->ExecuteCommandLists({cmdList});
+                                        device->GetGraphicsQueue()->WaitForIdle();
+                                    }
+                                }else{
+                                    std::cout << "Failed to create CommandList!" << std::endl;
                                 }
                             }
                             else

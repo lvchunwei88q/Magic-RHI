@@ -136,4 +136,20 @@ namespace RHI
             rootSignature.reset();
         }
     }
+
+    /*
+    * 获取图形命令队列 因为DX11 不支持多个命令队列，所以返回的是同一个队列
+    */
+    std::shared_ptr<RHICommandQueue> RHIDirectX11::GetGraphicsQueue() const
+    {
+        return m_CommandQueue;
+    }
+    std::shared_ptr<RHICommandQueue> RHIDirectX11::GetComputeQueue() const
+    {
+        return m_CommandQueue;
+    }
+    std::shared_ptr<RHICommandQueue> RHIDirectX11::GetCopyQueue() const
+    {
+        return m_CommandQueue;
+    }
 }

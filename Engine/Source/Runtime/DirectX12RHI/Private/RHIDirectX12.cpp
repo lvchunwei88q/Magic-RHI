@@ -441,4 +441,20 @@ namespace RHI
             rootSignature.reset();
         }
     }
+
+    /*
+    * 获取图形命令队列
+    */
+    std::shared_ptr<RHICommandQueue> RHIDirectX12::GetGraphicsQueue() const
+    {
+        return m_GraphicsQueue;
+    }
+        std::shared_ptr<RHICommandQueue> RHIDirectX12::GetComputeQueue() const
+    {
+        return m_ComputeQueue;
+    }
+        std::shared_ptr<RHICommandQueue> RHIDirectX12::GetCopyQueue() const
+    {
+        return m_CopyQueue;
+    }
 }

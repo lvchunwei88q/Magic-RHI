@@ -66,6 +66,10 @@ namespace RHI
         [[nodiscard]] std::shared_ptr<RHIPipelineState> CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc) override;
         [[nodiscard]] std::shared_ptr<RHIPipelineState> CreateComputePipelineState(const ComputePipelineStateDesc& desc) override;
         void DeletePipelineState(std::shared_ptr<RHIPipelineState>& pipelineState) override;
+
+        [[nodiscard]] std::shared_ptr<RHICommandQueue> GetGraphicsQueue() const override;
+        [[nodiscard]] std::shared_ptr<RHICommandQueue> GetComputeQueue() const override;
+        [[nodiscard]] std::shared_ptr<RHICommandQueue> GetCopyQueue() const override;
         
         FeatureLevel GetFeatureLevel() const override;
         ID3D12Device* GetDevice() const { return m_pDevice.Get(); }
