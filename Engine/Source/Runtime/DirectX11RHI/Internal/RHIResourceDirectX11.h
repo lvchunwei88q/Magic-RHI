@@ -8,6 +8,116 @@ using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
+    class RasterizerStateDirectX11 : public RHIRasterizerState
+    {
+    public:
+        RasterizerStateDirectX11(ID3D11RasterizerState* pRasterizerState)
+            : m_pRasterizerState(pRasterizerState) {}
+        ~RasterizerStateDirectX11() override = default;
+
+        ID3D11RasterizerState* GetRasterizerState() const { return m_pRasterizerState.Get(); }
+
+    private:
+        ComPtr<ID3D11RasterizerState> m_pRasterizerState;
+    };
+
+    class BlendStateDirectX11 : public RHIBlendState
+    {
+    public:
+        BlendStateDirectX11(ID3D11BlendState* pBlendState)
+            : m_pBlendState(pBlendState) {}
+        ~BlendStateDirectX11() override = default;
+
+        ID3D11BlendState* GetBlendState() const { return m_pBlendState.Get(); }
+
+    private:
+        ComPtr<ID3D11BlendState> m_pBlendState;
+    };
+
+    class DepthStencilStateDirectX11 : public RHIDepthStencilState
+    {
+    public:
+        DepthStencilStateDirectX11(ID3D11DepthStencilState* pDepthStencilState)
+            : m_pDepthStencilState(pDepthStencilState) {}
+        ~DepthStencilStateDirectX11() override = default;
+
+        ID3D11DepthStencilState* GetDepthStencilState() const { return m_pDepthStencilState.Get(); }
+
+    private:
+        ComPtr<ID3D11DepthStencilState> m_pDepthStencilState;
+    };
+
+    class TextureDirectX11 : public RHITexture
+    {
+    public:
+        TextureDirectX11(ID3D11Texture2D* pTexture)
+            : m_pTexture(pTexture) {}
+        ~TextureDirectX11() override = default;
+
+        uint64_t GetSize() const override;
+        uint32_t GetWidth() const override;
+        uint32_t GetHeight() const override;
+
+        ID3D11Texture2D* GetTexture() const { return m_pTexture.Get(); }
+
+    private:
+        void GetDesc(D3D11_TEXTURE2D_DESC& desc) const;
+
+        ComPtr<ID3D11Texture2D> m_pTexture;
+    };
+
+    class ShaderResourceViewDirectX11 : public RHIShaderResourceView
+    {
+    public:
+        ShaderResourceViewDirectX11(ID3D11ShaderResourceView* pSRV)
+            : m_pSRV(pSRV) {}
+        ~ShaderResourceViewDirectX11() override = default;
+
+        ID3D11ShaderResourceView* GetSRV() const { return m_pSRV.Get(); }
+
+    private:
+        ComPtr<ID3D11ShaderResourceView> m_pSRV;
+    };
+
+    class UnorderedAccessViewDirectX11 : public RHIUnorderedAccessView
+    {
+    public:
+        UnorderedAccessViewDirectX11(ID3D11UnorderedAccessView* pUAV)
+            : m_pUAV(pUAV) {}
+        ~UnorderedAccessViewDirectX11() override = default;
+
+        ID3D11UnorderedAccessView* GetUAV() const { return m_pUAV.Get(); }
+
+    private:
+        ComPtr<ID3D11UnorderedAccessView> m_pUAV;
+    };
+
+    class RenderTargetViewDirectX11 : public RHIRenderTargetView
+    {
+    public:
+        RenderTargetViewDirectX11(ID3D11RenderTargetView* pRTV)
+            : m_pRTV(pRTV) {}
+        ~RenderTargetViewDirectX11() override = default;
+
+        ID3D11RenderTargetView* GetRTV() const { return m_pRTV.Get(); }
+
+    private:
+        ComPtr<ID3D11RenderTargetView> m_pRTV;
+    };
+
+    class DepthStencilViewDirectX11 : public RHIDepthStencilView
+    {
+    public:
+        DepthStencilViewDirectX11(ID3D11DepthStencilView* pDSV)
+            : m_pDSV(pDSV) {}
+        ~DepthStencilViewDirectX11() override = default;
+
+        ID3D11DepthStencilView* GetDSV() const { return m_pDSV.Get(); }
+
+    private:
+        ComPtr<ID3D11DepthStencilView> m_pDSV;
+    };
+
     class VertexShaderDirectX11 : public RHIVertexShader
     {
     public:

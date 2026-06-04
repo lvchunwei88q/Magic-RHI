@@ -290,52 +290,23 @@ namespace RHI
     {
     public:
         RHIShaderResourceView() : RHIResource(RRT_ShaderResourceView) {}
-
-        RHITexture* GetTexture() const { return pTexture; }
-        RHIBuffer* GetBuffer() const { return pBuffer; }
-
-        // 判断是纹理视图还是缓冲区视图
-        bool IsTextureView() const { return pTexture != nullptr; }
-        bool IsBufferView() const { return pBuffer != nullptr; }
-    private:
-        RHITexture* pTexture = nullptr;      // 关联的纹理
-        RHIBuffer* pBuffer = nullptr;        // 关联的缓冲区
     };
 
     class RHI_API RHIUnorderedAccessView : public RHIResource
     {
     public:
         RHIUnorderedAccessView() : RHIResource(RRT_UnorderedAccessView) {}
-
-        RHITexture* GetTexture() const { return pTexture; }
-        RHIBuffer* GetBuffer() const { return pBuffer; }
-        
-        // 判断是纹理视图还是缓冲区视图
-        bool IsTextureView() const { return pTexture != nullptr; }
-        bool IsBufferView() const { return pBuffer != nullptr; }
-        
-    private:
-        RHITexture* pTexture = nullptr;      // 关联的纹理
-        RHIBuffer* pBuffer = nullptr;        // 关联的缓冲区
     };
 
     class RHI_API RHIRenderTargetView : public RHIResource
     {
     public:
         RHIRenderTargetView() : RHIResource(RRT_RenderTargetView) {}
-        
-        RHITexture* GetTexture() const { return pTexture; }
-    private:
-        RHITexture* pTexture = nullptr;      // 关联的纹理
     };
 
     class RHI_API RHIDepthStencilView : public RHIResource
     {
     public:
         RHIDepthStencilView() : RHIResource(RRT_DepthStencilView) {}
-
-        RHITexture* GetTexture() const { return pTexture; }
-    private:
-        RHITexture* pTexture = nullptr;      // 关联的纹理
     };
 } // namespace RHI

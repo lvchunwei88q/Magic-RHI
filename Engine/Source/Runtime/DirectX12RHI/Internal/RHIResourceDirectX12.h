@@ -8,6 +8,97 @@ using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
+    class RasterizerStateDirectX12 : public RHIRasterizerState
+    {
+    public:
+        RasterizerStateDirectX12(ID3D12RootSignature* /*pRootSignature*/) {}
+        ~RasterizerStateDirectX12() override = default;
+    };
+
+    class BlendStateDirectX12 : public RHIBlendState
+    
+    {
+    public:
+        BlendStateDirectX12(ID3D12RootSignature* /*pRootSignature*/) {}
+        ~BlendStateDirectX12() override = default;
+    };
+
+    class DepthStencilStateDirectX12 : public RHIDepthStencilState
+    {
+    public:
+        DepthStencilStateDirectX12(ID3D12RootSignature* /*pRootSignature*/) {}
+        ~DepthStencilStateDirectX12() override = default;
+    };
+
+    class TextureDirectX12 : public RHITexture
+    {
+    public:
+        TextureDirectX12(ID3D12Resource* pResource)
+            : m_pResource(pResource) {}
+        ~TextureDirectX12() override = default;
+
+        uint64_t GetSize() const override { return 0; }
+        uint32_t GetWidth() const override { return 0; }
+        uint32_t GetHeight() const override { return 0; }
+
+        ID3D12Resource* GetResource() const { return m_pResource.Get(); }
+
+    private:
+        ComPtr<ID3D12Resource> m_pResource;
+    };
+
+    class ShaderResourceViewDirectX12 : public RHIShaderResourceView
+    {
+    public:
+        ShaderResourceViewDirectX12(RHIDescriptorHandle handle)
+            : m_Handle(handle) {}
+        ~ShaderResourceViewDirectX12() override = default;
+
+        const RHIDescriptorHandle& GetHandle() const { return m_Handle; }
+
+    private:
+        RHIDescriptorHandle m_Handle;
+    };
+
+    class UnorderedAccessViewDirectX12 : public RHIUnorderedAccessView
+    {
+    public:
+        UnorderedAccessViewDirectX12(RHIDescriptorHandle handle)
+            : m_Handle(handle) {}
+        ~UnorderedAccessViewDirectX12() override = default;
+
+        const RHIDescriptorHandle& GetHandle() const { return m_Handle; }
+
+    private:
+        RHIDescriptorHandle m_Handle;
+    };
+
+    class RenderTargetViewDirectX12 : public RHIRenderTargetView
+    {
+    public:
+        RenderTargetViewDirectX12(RHIDescriptorHandle handle)
+            : m_Handle(handle) {}
+        ~RenderTargetViewDirectX12() override = default;
+
+        const RHIDescriptorHandle& GetHandle() const { return m_Handle; }
+
+    private:
+        RHIDescriptorHandle m_Handle;
+    };
+
+    class DepthStencilViewDirectX12 : public RHIDepthStencilView
+    {
+    public:
+        DepthStencilViewDirectX12(RHIDescriptorHandle handle)
+            : m_Handle(handle) {}
+        ~DepthStencilViewDirectX12() override = default;
+
+        const RHIDescriptorHandle& GetHandle() const { return m_Handle; }
+
+    private:
+        RHIDescriptorHandle m_Handle;
+    };
+
     class VertexShaderDirectX12 : public RHIVertexShader
     {
     public:

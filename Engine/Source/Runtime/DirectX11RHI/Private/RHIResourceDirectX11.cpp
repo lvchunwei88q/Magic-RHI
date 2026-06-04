@@ -107,6 +107,40 @@ namespace RHI
         }
     }
 
+    void TextureDirectX11::GetDesc(D3D11_TEXTURE2D_DESC& desc) const
+    {
+        if (m_pTexture)
+        {
+            m_pTexture->GetDesc(&desc);
+        }
+        else
+        {
+            memset(&desc, 0, sizeof(desc));
+        }
+    }
+
+    uint32_t TextureDirectX11::GetWidth() const
+    {
+        D3D11_TEXTURE2D_DESC desc;
+        GetDesc(desc);
+        return desc.Width;
+    }
+
+    uint32_t TextureDirectX11::GetHeight() const
+    {
+        D3D11_TEXTURE2D_DESC desc;
+        GetDesc(desc);
+        return desc.Height;
+    }
+
+    uint64_t TextureDirectX11::GetSize() const
+    {
+        D3D11_TEXTURE2D_DESC desc;
+        GetDesc(desc);
+        // TODO: 4 bytes per pixel
+        return desc.Width * desc.Height * desc.MipLevels * desc.ArraySize * 4;
+    }
+
     std::shared_ptr<RHISamplerState> RHIDirectX11::CreateSamplerState(const SamplerStateDesc& desc)
     {
         D3D11_SAMPLER_DESC samplerDesc = {};
