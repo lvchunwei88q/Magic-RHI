@@ -43,7 +43,7 @@ namespace RHI
 
         [[nodiscard]] std::shared_ptr<RHICommandAllocator> CreateCommandAllocator(RHICmdType type) override;
         [[nodiscard]] std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator) override;
-        [[nodiscard]] std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdType Type) const override;
+        [[nodiscard]] RHICommandQueue* GetCommandQueue(RHICmdType Type) const override;
 
         [[nodiscard]] std::shared_ptr<RHIVertexShader> CompileVertexShader(const ShaderCompileDesc& desc) override;
         [[nodiscard]] std::shared_ptr<RHIPixelShader> CompilePixelShader(const ShaderCompileDesc& desc) override;
@@ -59,6 +59,8 @@ namespace RHI
         [[nodiscard]] std::shared_ptr<RHIPipelineState> CreateComputePipelineState(const ComputePipelineStateDesc& desc) override;
         void DeletePipelineState(std::shared_ptr<RHIPipelineState>& pipelineState) override;
 
+        [[nodiscard]] RHIDescriptorHeap* GetDescriptorHeap(RHIDescriptorHeapType type) override;
+
         FeatureLevel GetFeatureLevel() const override;
         ID3D11Device* GetDevice() const { return m_pDevice.Get(); }
         ID3D11DeviceContext* GetDeviceContext() const { return m_pDeviceContext.Get(); }
@@ -69,7 +71,7 @@ namespace RHI
         std::wstring m_AdapterName;
         D3D_FEATURE_LEVEL m_FeatureLevel;
         // CommandQueue DirectX11
-        std::shared_ptr<CommandQueueDirectX11> m_CommandQueue;
+        std::unique_ptr<CommandQueueDirectX11> m_CommandQueue;
 
         /*
          * DescriptorHeap DirectX11 模拟

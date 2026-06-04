@@ -367,17 +367,17 @@ namespace RHI
         copyQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
         ThrowIfFailed(m_pDevice->CreateCommandQueue(&copyQueueDesc, IID_PPV_ARGS(&pCopyQueue)));
 
-        m_GraphicsQueue = std::make_shared<GraphicsCommandQueueDirectX12>(
+        m_GraphicsQueue = std::make_unique<GraphicsCommandQueueDirectX12>(
             RHICmdType::Graphics, 
             pGraphicsQueue.Get(),
             m_pDevice.Get()
         );
-        m_ComputeQueue = std::make_shared<ComputeCommandQueueDirectX12>(
+        m_ComputeQueue = std::make_unique<ComputeCommandQueueDirectX12>(
             RHICmdType::Compute, 
             pComputeQueue.Get(),
             m_pDevice.Get()
         );
-        m_CopyQueue = std::make_shared<CopyCommandQueueDirectX12>(
+        m_CopyQueue = std::make_unique<CopyCommandQueueDirectX12>(
             RHICmdType::Copy, 
             pCopyQueue.Get(),
             m_pDevice.Get()
@@ -427,16 +427,16 @@ namespace RHI
     /*
     * 获取图形命令队列
     */
-    std::shared_ptr<RHICommandQueue> RHIDirectX12::GetCommandQueue(RHICmdType Type) const
+    RHICommandQueue* RHIDirectX12::GetCommandQueue(RHICmdType Type) const
     {
         switch (Type)
         {
         case RHICmdType::Graphics:
-            return m_GraphicsQueue;
+            return m_GraphicsQueue.get();
         case RHICmdType::Compute:
-            return m_ComputeQueue;
+            return m_ComputeQueue.get();
         case RHICmdType::Copy:
-            return m_CopyQueue;
+            return m_CopyQueue.get();
         default:
             return nullptr;
         }
@@ -458,6 +458,22 @@ namespace RHI
         {
             rootSignature->Shutdown();
             rootSignature.reset();
+        }
+    }
+
+    RHIDescriptorHeap* RHIDirectX12::GetDescriptorHeap(RHIDescriptorHeapType type){
+        switch (type)
+        {
+        case RHIDescriptorHeapType::Standard:
+            return m_pStandardHeap.get();
+        case RHIDescriptorHeapType::Sampler:
+            return m_pSamplerHeap.get();
+        case RHIDescriptorHeapType::RenderTarget:
+            return m_pRTVHeap.get();
+        case RHIDescriptorHeapType::DepthStencil:
+            return m_pDSVHeap.get();
+        default:
+            return nullptr;
         }
     }
 }

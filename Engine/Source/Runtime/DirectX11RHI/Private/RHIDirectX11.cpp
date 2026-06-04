@@ -83,7 +83,7 @@ namespace RHI
         m_AdapterName = desc.Description;
 
         // 初始化命令队列
-        m_CommandQueue = std::make_shared<CommandQueueDirectX11>(RHICmdType::Graphics, m_pDeviceContext.Get(), m_pDevice.Get());
+        m_CommandQueue = std::make_unique<CommandQueueDirectX11>(RHICmdType::Graphics, m_pDeviceContext.Get(), m_pDevice.Get());
 
         // -------------------- Create descriptor heaps --------------------
         m_pStandardHeap = std::make_unique<DescriptorHeapDirectX11>(RHIDescriptorHeapType::Standard, RHI_DESCRIPTOR_HEAP_SIZE_STANDARD);
@@ -136,9 +136,9 @@ namespace RHI
     /*
     * 获取图形命令队列 因为DX11 不支持多个命令队列，所以返回的是同一个队列
     */
-    std::shared_ptr<RHICommandQueue> RHIDirectX11::GetCommandQueue(RHICmdType Type) const
+    RHICommandQueue* RHIDirectX11::GetCommandQueue(RHICmdType Type) const
     {
-        return m_CommandQueue;
+        return m_CommandQueue.get();
     }
 
     std::shared_ptr<RHIRootSignature> RHIDirectX11::CreateRootSignature(const RootSignatureDesc& desc)
@@ -154,6 +154,22 @@ namespace RHI
         {
             rootSignature->Shutdown();
             rootSignature.reset();
+        }
+    }
+
+    RHIDescriptorHeap* RHIDirectX11::GetDescriptorHeap(RHIDescriptorHeapType type){
+        switch (type)
+        {
+        case RHIDescriptorHeapType::Standard:
+            return m_pStandardHeap.get();
+        case RHIDescriptorHeapType::Sampler:
+            return m_pSamplerHeap.get();
+        case RHIDescriptorHeapType::RenderTarget:
+            return m_pRTVHeap.get();
+        case RHIDescriptorHeapType::DepthStencil:
+            return m_pDSVHeap.get();
+        default:
+            return nullptr;
         }
     }
 }

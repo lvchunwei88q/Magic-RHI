@@ -339,6 +339,12 @@ int main(int argc, char* argv[])
                                 if(cmdList && cmdList.get() != nullptr){
                                     std::cout << "CommandList created successfully!" << std::endl;
 
+                                    // 获取描述符堆
+                                    auto descriptorHeap = device->GetDescriptorHeap(RHI::RHIDescriptorHeapType::Standard);
+                                    auto descriptorSamplerHeap = device->GetDescriptorHeap(RHI::RHIDescriptorHeapType::Sampler);
+
+                                    std::cout << "DescriptorHeaps Get successfully!" << std::endl;
+
                                     MSG msg = {};
                                     while (GetMessage(&msg, nullptr, 0, 0))
                                     {
@@ -349,6 +355,11 @@ int main(int argc, char* argv[])
                                         DispatchMessage(&msg);
                                         
                                         cmdList->BeginRecording();
+
+                                        cmdList->SetGraphicsRootSignature(rootSignature.get());
+
+                                        RHI::RHIDescriptorHeap* heaps[] = {descriptorHeap, descriptorSamplerHeap};
+                                        cmdList->SetDescriptorHeaps(2, heaps);
                                         
                                         cmdList->EndRecording();
                                         

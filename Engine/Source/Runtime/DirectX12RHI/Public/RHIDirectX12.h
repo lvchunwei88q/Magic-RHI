@@ -50,7 +50,7 @@ namespace RHI
 
         [[nodiscard]] std::shared_ptr<RHICommandAllocator> CreateCommandAllocator(RHICmdType type) override;
         [[nodiscard]] std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator) override;
-        [[nodiscard]] std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdType Type) const override;
+        [[nodiscard]] RHICommandQueue* GetCommandQueue(RHICmdType Type) const override;
 
         [[nodiscard]] std::shared_ptr<RHIVertexShader> CompileVertexShader(const ShaderCompileDesc& desc) override;
         [[nodiscard]] std::shared_ptr<RHIPixelShader> CompilePixelShader(const ShaderCompileDesc& desc) override;
@@ -67,6 +67,8 @@ namespace RHI
         [[nodiscard]] std::shared_ptr<RHIPipelineState> CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc) override;
         [[nodiscard]] std::shared_ptr<RHIPipelineState> CreateComputePipelineState(const ComputePipelineStateDesc& desc) override;
         void DeletePipelineState(std::shared_ptr<RHIPipelineState>& pipelineState) override;
+
+        [[nodiscard]] RHIDescriptorHeap* GetDescriptorHeap(RHIDescriptorHeapType type) override;
         
         FeatureLevel GetFeatureLevel() const override;
         ID3D12Device* GetDevice() const { return m_pDevice.Get(); }
@@ -86,9 +88,9 @@ namespace RHI
         ComPtr<IDXGIAdapter1> m_pAdapter; // GPU
 
         // CommandQueue
-        std::shared_ptr<GraphicsCommandQueueDirectX12> m_GraphicsQueue;
-        std::shared_ptr<ComputeCommandQueueDirectX12> m_ComputeQueue;
-        std::shared_ptr<CopyCommandQueueDirectX12> m_CopyQueue;
+        std::unique_ptr<GraphicsCommandQueueDirectX12> m_GraphicsQueue;
+        std::unique_ptr<ComputeCommandQueueDirectX12> m_ComputeQueue;
+        std::unique_ptr<CopyCommandQueueDirectX12> m_CopyQueue;
 
         std::unique_ptr<DescriptorHeapDirectX12> m_pStandardHeap;
         std::unique_ptr<DescriptorHeapDirectX12> m_pSamplerHeap;

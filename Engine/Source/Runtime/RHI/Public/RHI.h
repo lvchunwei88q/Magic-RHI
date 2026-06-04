@@ -23,6 +23,7 @@ namespace RHI
     class RHICommandQueue;
     // forward declarations
     struct RHIDescriptorHandle;
+    class RHIDescriptorHeap;
     class RHISamplerState;
     class RHIBuffer;
     class RHITexture;
@@ -71,7 +72,7 @@ namespace RHI
 
         [[nodiscard]] virtual std::shared_ptr<RHICommandAllocator> CreateCommandAllocator(RHICmdType type) = 0;
         [[nodiscard]] virtual std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator) = 0;
-        [[nodiscard]] virtual std::shared_ptr<RHICommandQueue> GetCommandQueue(RHICmdType Type) const = 0;
+        [[nodiscard]] virtual RHICommandQueue* GetCommandQueue(RHICmdType Type) const = 0;
 
         [[nodiscard]] virtual std::shared_ptr<RHIVertexShader> CompileVertexShader(const ShaderCompileDesc& desc) = 0;
         [[nodiscard]] virtual std::shared_ptr<RHIPixelShader> CompilePixelShader(const ShaderCompileDesc& desc) = 0;
@@ -86,6 +87,8 @@ namespace RHI
         [[nodiscard]] virtual std::shared_ptr<RHIPipelineState> CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc) = 0;
         [[nodiscard]] virtual std::shared_ptr<RHIPipelineState> CreateComputePipelineState(const ComputePipelineStateDesc& desc) = 0;
         virtual void DeletePipelineState(std::shared_ptr<RHIPipelineState>& pipelineState) = 0;
+
+        [[nodiscard]] virtual RHIDescriptorHeap* GetDescriptorHeap(RHIDescriptorHeapType type) = 0;
     };
 
     class RHI_API SwapChain
