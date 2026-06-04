@@ -113,9 +113,9 @@ namespace RHI
         return m_pSwapChain1 != nullptr || m_pSwapChain3 != nullptr;
     }
 
-    void SwapChainDirectX12::Present()
+    void SwapChainDirectX12::Present(uint32_t syncInterval, uint32_t presentFlags)
     {
-        m_pSwapChain1->Present(m_desc.VSync ? 1 : 0, 0);
+        m_pSwapChain1->Present(syncInterval, presentFlags);
     }
 
     void SwapChainDirectX12::Resize(uint32_t width, uint32_t height)

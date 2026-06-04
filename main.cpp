@@ -367,10 +367,13 @@ int main(int argc, char* argv[])
                                         cmdList->SetGraphicsRootConstantBufferView(1, constantBuffer1->GetGPUVirtualAddress());
                                         cmdList->SetGraphicsRoot32BitConstant(2, PI, 0);
                                         
+                                        // 设置拓扑类型
+                                        cmdList->IASetPrimitiveTopology(RHI::RHIPrimitiveTopology::TriangleList);
                                         cmdList->EndRecording();
                                         
                                         // run command list
                                         device->GetCommandQueue(RHI::RHICmdType::Graphics)->ExecuteCommandLists({cmdList});
+                                        //swapChain->Present();
                                         device->GetCommandQueue(RHI::RHICmdType::Graphics)->WaitForGPU();
                                     }
                                 }else{

@@ -23,7 +23,7 @@ namespace RHI
         void Shutdown() override;
 
         bool IsValid() const override;
-        void Present() override;
+        void Present(uint32_t syncInterval, uint32_t presentFlags) override;
         void Resize(uint32_t width, uint32_t height) override;
         uint32_t GetFrameIndex() const override { return m_pSwapChain3->GetCurrentBackBufferIndex(); }// 获取当前帧索引
 
