@@ -177,8 +177,7 @@ namespace RHI
             ThrowIfFailed(m_pDevice->CreateBuffer(&bufferDesc, nullptr, pBuffer.GetAddressOf()));
         }
 
-        auto buffer = std::make_shared<BufferDirectX11>(pBuffer.Get(), desc);
-        buffer->SetDeviceContext(m_pDeviceContext.Get());
+        auto buffer = std::make_shared<BufferDirectX11>(pBuffer.Get(), desc, m_pDeviceContext.Get());
 
         return buffer;
     }

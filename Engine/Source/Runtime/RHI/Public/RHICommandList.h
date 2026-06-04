@@ -68,6 +68,9 @@ namespace RHI
         virtual void SetComputeRootSignature(RHIRootSignature* pRootSignature) = 0;
         virtual void SetDescriptorHeaps(uint32_t numHeaps, RHIDescriptorHeap* const* ppHeaps) = 0;
 
+        // PSO设置
+        virtual void SetPipelineState(RHIPipelineState* pPipelineState, PipelineStateType stateType) = 0;
+
         // 图形管线绑定
         virtual void SetGraphicsRootDescriptorTable(uint32_t rootParameterIndex, RHIDescriptorHeap* pDescriptorHeap, uint32_t offsetInDescriptorsFromTableStart) = 0;
         virtual void SetGraphicsRootConstantBufferView(uint32_t rootParameterIndex, uint64_t gpuVirtualAddress) = 0;

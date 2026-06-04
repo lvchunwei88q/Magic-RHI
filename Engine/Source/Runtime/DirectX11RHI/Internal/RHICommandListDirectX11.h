@@ -73,6 +73,9 @@ namespace RHI
         void SetComputeRootSignature(RHIRootSignature* pRootSignature) override;
         void SetDescriptorHeaps(uint32_t numHeaps, RHIDescriptorHeap* const* ppHeaps) override;
 
+        // PSO设置
+        void SetPipelineState(RHIPipelineState* pPipelineState, PipelineStateType stateType) override;
+
         // 图形管线绑定
         void SetGraphicsRootDescriptorTable(uint32_t rootParameterIndex, RHIDescriptorHeap* pDescriptorHeap, uint32_t offsetInDescriptorsFromTableStart) override;
         void SetGraphicsRootConstantBufferView(uint32_t rootParameterIndex, uint64_t gpuVirtualAddress) override;

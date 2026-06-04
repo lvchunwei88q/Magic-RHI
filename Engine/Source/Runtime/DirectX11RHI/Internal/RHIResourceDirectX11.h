@@ -84,19 +84,17 @@ namespace RHI
     class BufferDirectX11 : public RHIBuffer
     {
     public:
-        BufferDirectX11(ID3D11Buffer* pBuffer, const BufferDesc& InDesc)
+        BufferDirectX11(ID3D11Buffer* pBuffer, const BufferDesc& InDesc, ID3D11DeviceContext* InDeviceContext)
             : RHIBuffer(InDesc, RRT_Buffer)
             , m_pBuffer(pBuffer)
-            , m_DeviceContext(nullptr)
+            , m_DeviceContext(InDeviceContext)
         {
         }
 
         ~BufferDirectX11() override = default;
 
-        void SetDeviceContext(ID3D11DeviceContext* InDeviceContext)
-        {
-            m_DeviceContext = InDeviceContext;
-        }
+        // DirectX 11 Buffer 地址是 Buffer 的指针，不是 GPU 虚拟地址，所以这里返回 Buffer 的指针
+        uint64_t GetGPUVirtualAddress() const override{return (uint64_t)m_pBuffer.Get();}
 
         ID3D11Buffer* GetResource() const { return m_pBuffer.Get(); }
 

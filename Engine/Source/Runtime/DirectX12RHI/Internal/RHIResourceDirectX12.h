@@ -94,6 +94,8 @@ namespace RHI
 
         ~BufferDirectX12() override = default;
 
+        uint64_t GetGPUVirtualAddress() const override{return m_pResource->GetGPUVirtualAddress();}
+
         ID3D12Resource* GetResource() const { return m_pResource.Get(); }
         
         void* Map() override

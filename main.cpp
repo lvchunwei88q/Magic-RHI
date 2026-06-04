@@ -8,6 +8,7 @@
 #include <RHI.hpp>
 #include <IO.h>
 
+#define PI 3.1415926f
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -357,9 +358,14 @@ int main(int argc, char* argv[])
                                         cmdList->BeginRecording();
 
                                         cmdList->SetGraphicsRootSignature(rootSignature.get());
-
+                                        cmdList->SetPipelineState(graphicsPSO.get(), RHI::PipelineStateType::Graphics);
+                                        
                                         RHI::RHIDescriptorHeap* heaps[] = {descriptorHeap, descriptorSamplerHeap};
                                         cmdList->SetDescriptorHeaps(2, heaps);
+
+                                        cmdList->SetGraphicsRootDescriptorTable(0, descriptorHeap, 0);
+                                        cmdList->SetGraphicsRootConstantBufferView(1, constantBuffer1->GetGPUVirtualAddress());
+                                        cmdList->SetGraphicsRoot32BitConstant(2, PI, 0);
                                         
                                         cmdList->EndRecording();
                                         

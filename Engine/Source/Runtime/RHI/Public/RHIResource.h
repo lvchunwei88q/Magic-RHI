@@ -193,6 +193,7 @@ namespace RHI
         virtual uint64_t GetSize() const { return SizeInBytes; }
         virtual uint32_t GetStride() const { return Stride; }   
         virtual BufferHeapType GetHeapType() const { return HeapType; }
+        virtual uint64_t GetGPUVirtualAddress() const = 0;
 
         virtual void SetBindlessHandle(RHIDescriptorHandle InHandle) { Handle = InHandle; }
         virtual RHIDescriptorHandle GetBindlessHandle() const { return Handle; }
