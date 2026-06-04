@@ -64,4 +64,12 @@ namespace RHI
     {
         throw std::runtime_error(std::forward<T>(message));
     }
+
+    inline void ThrowIf(bool condition, const std::string& message)
+    {
+        if (condition)
+        {
+            throw std::runtime_error(message);
+        }
+    }
 }

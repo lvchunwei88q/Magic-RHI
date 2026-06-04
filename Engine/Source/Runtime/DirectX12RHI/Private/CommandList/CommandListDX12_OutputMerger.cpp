@@ -5,6 +5,9 @@ namespace RHI
 {
     void CommandListDirectX12::OMSetRenderTargets(uint32_t numRenderTargets, RHIRenderTargetView* const* ppViews, bool RTsSingleHandleToDescriptorRange, RHIDepthStencilView* pDepthStencilView)
     {
+        #define MAX_RENDER_TARGETS 8 // 最大渲染目标数量
+        ThrowIf(numRenderTargets > MAX_RENDER_TARGETS, "numRenderTargets must be less than or equal to 8");
+        
         std::vector<RenderTargetViewDirectX12*> pRTViews(numRenderTargets);
         for (uint32_t i = 0; i < numRenderTargets; ++i)
         {
