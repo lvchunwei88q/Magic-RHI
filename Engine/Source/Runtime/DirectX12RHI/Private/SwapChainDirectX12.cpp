@@ -94,7 +94,10 @@ namespace RHI
         {
             ThrowIfFailed(m_pSwapChain1->GetBuffer(n, IID_PPV_ARGS(m_pRenderTargets[n].GetAddressOf())));
             dx12Device->CreateRenderTargetView(m_pRenderTargets[n].Get(), nullptr, rtvHandle);
+            std::unique_ptr<RenderTargetViewDirectX12> pDerived = std::make_unique<RenderTargetViewDirectX12>(RHIDescriptorHandle{RHIDescriptorHeapType::RenderTarget,n},rtvHandle);
             rtvHandle.Offset(1, rtvDescriptorSize);
+
+            m_pRenderTargetViews[n] = std::move(pDerived);
         }
     }
 

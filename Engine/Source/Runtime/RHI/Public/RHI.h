@@ -24,11 +24,13 @@ namespace RHI
     // forward declarations
     struct RHIDescriptorHandle;
     class RHIDescriptorHeap;
+    struct SamplerStateDesc;
+    struct BufferDesc;
     class RHISamplerState;
     class RHIBuffer;
     class RHITexture;
-    struct SamplerStateDesc;
-    struct BufferDesc;
+    class RHIRenderTargetView;
+    class RHIDepthStencilView;
     // forward shader type
     struct ShaderCompileDesc;
     class RHIVertexShader;
@@ -106,5 +108,7 @@ namespace RHI
 
         virtual uint32_t GetWidth() const = 0;
         virtual uint32_t GetHeight() const = 0;
+
+        virtual RHIRenderTargetView* GetRenderTargetView(uint32_t index) const = 0;
     };
 }

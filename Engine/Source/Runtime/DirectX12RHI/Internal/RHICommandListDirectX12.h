@@ -48,7 +48,7 @@ namespace RHI
         void RSSetViewports(uint32_t numViewports, const RHIViewport* pViewports) override;
         void RSSetScissorRects(uint32_t numRects, const RHIRect* pRects) override;
         // 输出合并器
-        void OMSetRenderTargets(uint32_t numRenderTargets, RHIRenderTargetView* const* ppViews, RHIDepthStencilView* pDepthStencilView = nullptr) override;
+        void OMSetRenderTargets(uint32_t numRenderTargets, RHIRenderTargetView* const* ppViews, bool RTsSingleHandleToDescriptorRange, RHIDepthStencilView* pDepthStencilView = nullptr) override;
         void OMSetBlendState(RHIBlendState* pState, const float* blendFactor = nullptr, uint32_t sampleMask = 0xFFFFFFFF) override;
         void OMSetDepthStencilState(RHIDepthStencilState* pState, uint32_t stencilRef = 0) override;
 

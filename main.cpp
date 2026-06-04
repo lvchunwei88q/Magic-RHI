@@ -320,7 +320,7 @@ int main(int argc, char* argv[])
                         graphicsDesc.pVertexShader = vertexShader.get();
                         graphicsDesc.pPixelShader = pixelShader.get();
                         graphicsDesc.NumRenderTargets = 1;
-                        graphicsDesc.RenderTargetFormats[0] = RHI::RHITextureFormat::R32G32B32A32_FLOAT;
+                        graphicsDesc.RenderTargetFormats[0] = RHI::RHITextureFormat::R8G8B8A8_UNORM;
 						graphicsDesc.DepthStencilFormat = RHI::RHITextureFormat::Unknown;       // 绘制三角形不使用深度测试，所以这里设置为 Unknown
 
                         RHI::ComputePipelineStateDesc computeDesc = {};
@@ -361,6 +361,10 @@ int main(int argc, char* argv[])
                                         
                                         cmdList->BeginRecording();
 
+                                        // 设置渲染目标视图
+                                        //RHI::RHIRenderTargetView* pRTV = swapChain->GetRenderTargetView(0);
+                                        //cmdList->OMSetRenderTargets(1, &pRTV, false, nullptr);
+
                                         cmdList->SetGraphicsRootSignature(rootSignature.get());
                                         cmdList->SetPipelineState(graphicsPSO.get(), RHI::PipelineStateType::Graphics);
                                         
@@ -387,7 +391,7 @@ int main(int argc, char* argv[])
                                         cmdList->RSSetScissorRects(1, &scissorRect);
 
                                         // 绘制三角形
-                                        cmdList->Draw(3, 0);            // TODO DX 11 处理
+                                        cmdList->Draw(3, 0);            // TODO DX 11 处理 设置资源 VB
                                         cmdList->EndRecording();
                                         
                                         // run command list

@@ -1,10 +1,29 @@
 #include "RHICommandListDirectX12.h"
+#include "SwapChainDirectX12.h"
 
 namespace RHI
 {
-    void CommandListDirectX12::OMSetRenderTargets(uint32_t numRenderTargets, RHIRenderTargetView* const* ppViews, RHIDepthStencilView* pDepthStencilView)
+    void CommandListDirectX12::OMSetRenderTargets(uint32_t numRenderTargets, RHIRenderTargetView* const* ppViews, bool RTsSingleHandleToDescriptorRange, RHIDepthStencilView* pDepthStencilView)
     {
-        // TODO: 实现渲染目标设置
+        std::vector<RenderTargetViewDirectX12*> pRTViews(numRenderTargets);
+        for (uint32_t i = 0; i < numRenderTargets; ++i)
+        {
+            RenderTargetViewDirectX12* pRTView = SafeCast<RenderTargetViewDirectX12>(ppViews[i]);
+            pRTViews[i] = pRTView;
+        }
+
+        std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> pRTHandles(numRenderTargets);
+        for (uint32_t i = 0; i < numRenderTargets; ++i)
+        {
+            pRTHandles[i] = *pRTViews[i]->GetCPUDescriptorHandle();
+        }
+
+        DepthStencilViewDirectX12* pDepthStencilViewDx12 = SafeCast<DepthStencilViewDirectX12>(pDepthStencilView);
+        const D3D12_CPU_DESCRIPTOR_HANDLE* pDSVHandle = nullptr;
+        if(pDepthStencilViewDx12!=nullptr)
+            pDSVHandle = pDepthStencilViewDx12->GetCPUDescriptorHandle(); // 获取深度模板视图的 CPU 描述符句柄
+        
+        m_pCommandList->OMSetRenderTargets(numRenderTargets, pRTHandles.data(), RTsSingleHandleToDescriptorRange, pDSVHandle);
     }
 
     void CommandListDirectX12::OMSetBlendState(RHIBlendState* pState, const float* blendFactor, uint32_t sampleMask)

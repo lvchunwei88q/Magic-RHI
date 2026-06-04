@@ -4,6 +4,7 @@
  #include <Common/RHIException.h>
 #include "SwapChainDirectX11.h"
 #include "RHIDirectX11.h"
+#include "RHICommandListDirectX11.h"
 #include "DirectXConfig.h"
 
 namespace RHI
@@ -71,17 +72,7 @@ namespace RHI
             m_pRenderTargetView.GetAddressOf()
         ));
 
-        m_pRHI->GetDeviceContext()->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(), nullptr);
-
-        D3D11_VIEWPORT viewport = {};
-        viewport.Width = static_cast<float>(desc.Width);
-        viewport.Height = static_cast<float>(desc.Height);
-        viewport.MinDepth = 0.0f;
-        viewport.MaxDepth = 1.0f;
-        viewport.TopLeftX = 0;
-        viewport.TopLeftY = 0;
-        m_pRHI->GetDeviceContext()->RSSetViewports(1, &viewport);
-
+        m_pRenderTargetViews = std::make_unique<RenderTargetViewDirectX11>(m_pRenderTargetView.Get());
         return true;
     }
 

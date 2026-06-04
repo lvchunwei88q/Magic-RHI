@@ -129,8 +129,8 @@ namespace RHI
 
     std::shared_ptr<RHICommandList> RHIDirectX11::CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator)
     {
-        // DX 11 不支持命令列表     
-        return std::make_shared<CommandListDirectX11>(allocator.get());
+        // DX 11 没有列表，使用DeviceContext提交命令
+        return std::make_shared<CommandListDirectX11>(allocator.get(), m_pDeviceContext.Get());
     }
 
     /*

@@ -16,7 +16,7 @@ namespace RHI
     };
 
     class BlendStateDirectX12 : public RHIBlendState
-    
+
     {
     public:
         BlendStateDirectX12(ID3D12RootSignature* /*pRootSignature*/) {}
@@ -47,6 +47,7 @@ namespace RHI
         ComPtr<ID3D12Resource> m_pResource;
     };
 
+    // TODO 加入View 构造参数
     class ShaderResourceViewDirectX12 : public RHIShaderResourceView
     {
     public:
@@ -55,8 +56,10 @@ namespace RHI
         ~ShaderResourceViewDirectX12() override = default;
 
         const RHIDescriptorHandle& GetHandle() const { return m_Handle; }
+        const D3D12_CPU_DESCRIPTOR_HANDLE* GetCPUDescriptorHandle() const { return &m_CPUHandle; }
 
     private:
+        D3D12_CPU_DESCRIPTOR_HANDLE m_CPUHandle;
         RHIDescriptorHandle m_Handle;
     };
 
@@ -68,21 +71,26 @@ namespace RHI
         ~UnorderedAccessViewDirectX12() override = default;
 
         const RHIDescriptorHandle& GetHandle() const { return m_Handle; }
+        const D3D12_CPU_DESCRIPTOR_HANDLE* GetCPUDescriptorHandle() const { return &m_CPUHandle; }
 
     private:
+        D3D12_CPU_DESCRIPTOR_HANDLE m_CPUHandle;
         RHIDescriptorHandle m_Handle;
     };
 
     class RenderTargetViewDirectX12 : public RHIRenderTargetView
     {
     public:
-        RenderTargetViewDirectX12(RHIDescriptorHandle handle)
-            : m_Handle(handle) {}
+        RenderTargetViewDirectX12(RHIDescriptorHandle handle, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle)
+            : m_CPUHandle(cpuHandle)
+            , m_Handle(handle) {}
         ~RenderTargetViewDirectX12() override = default;
 
         const RHIDescriptorHandle& GetHandle() const { return m_Handle; }
+        const D3D12_CPU_DESCRIPTOR_HANDLE* GetCPUDescriptorHandle() const { return &m_CPUHandle; }
 
     private:
+        D3D12_CPU_DESCRIPTOR_HANDLE m_CPUHandle;
         RHIDescriptorHandle m_Handle;
     };
 
@@ -94,8 +102,10 @@ namespace RHI
         ~DepthStencilViewDirectX12() override = default;
 
         const RHIDescriptorHandle& GetHandle() const { return m_Handle; }
+        const D3D12_CPU_DESCRIPTOR_HANDLE* GetCPUDescriptorHandle() const { return &m_CPUHandle; }
 
     private:
+        D3D12_CPU_DESCRIPTOR_HANDLE m_CPUHandle;
         RHIDescriptorHandle m_Handle;
     };
 

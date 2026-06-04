@@ -41,7 +41,7 @@ namespace RHI
         virtual void RSSetScissorRects(uint32_t numRects, const RHIRect* pRects) = 0;
 
         // 输出合并器
-        virtual void OMSetRenderTargets(uint32_t numRenderTargets, class RHIRenderTargetView* const* ppViews, class RHIDepthStencilView* pDepthStencilView = nullptr) = 0;
+        virtual void OMSetRenderTargets(uint32_t numRenderTargets, class RHIRenderTargetView* const* ppViews, bool RTsSingleHandleToDescriptorRange, class RHIDepthStencilView* pDepthStencilView = nullptr) = 0;
         virtual void OMSetBlendState(class RHIBlendState* pState, const float* blendFactor = nullptr, uint32_t sampleMask = 0xFFFFFFFF) = 0;
         virtual void OMSetDepthStencilState(class RHIDepthStencilState* pState, uint32_t stencilRef = 0) = 0;
 

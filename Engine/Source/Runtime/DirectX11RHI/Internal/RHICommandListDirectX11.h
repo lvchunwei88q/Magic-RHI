@@ -28,8 +28,8 @@ namespace RHI
     class CommandListDirectX11 : public RHICommandList
     {
     public:
-        CommandListDirectX11(RHICommandAllocator* pCmdAllocator)
-            : RHICommandList(pCmdAllocator) {}
+        CommandListDirectX11(RHICommandAllocator* pCmdAllocator, ID3D11DeviceContext* pDeviceContext)
+            : RHICommandList(pCmdAllocator), m_pDeviceContext(pDeviceContext) {}
         ~CommandListDirectX11() override = default;
 
         /* DX 11 不支持命令列表记录 */ 
@@ -46,7 +46,7 @@ namespace RHI
         void RSSetScissorRects(uint32_t numRects, const RHIRect* pRects) override;
 
         // 输出合并器
-        void OMSetRenderTargets(uint32_t numRenderTargets, RHIRenderTargetView* const* ppViews, RHIDepthStencilView* pDepthStencilView = nullptr) override;
+        void OMSetRenderTargets(uint32_t numRenderTargets, RHIRenderTargetView* const* ppViews, bool RTsSingleHandleToDescriptorRange, RHIDepthStencilView* pDepthStencilView = nullptr) override;
         void OMSetBlendState(RHIBlendState* pState, const float* blendFactor = nullptr, uint32_t sampleMask = 0xFFFFFFFF) override;
         void OMSetDepthStencilState(RHIDepthStencilState* pState, uint32_t stencilRef = 0) override;
 
@@ -92,6 +92,8 @@ namespace RHI
         void SetComputeRoot32BitConstant(uint32_t rootParameterIndex, uint32_t value, uint32_t destOffsetIn32BitValues) override;
         void SetComputeRoot32BitConstants(uint32_t rootParameterIndex, uint32_t num32BitValues, const void* pSrcData, uint32_t destOffsetIn32BitValues) override;
 
+    private:
+        ID3D11DeviceContext* m_pDeviceContext;
     };
 
     class CommandQueueDirectX11 : public RHICommandQueue

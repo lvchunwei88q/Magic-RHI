@@ -2,6 +2,7 @@
 
 #include "Common/DIRECTX11RHI_API.h"
 #include <RHI.h>
+#include <RHIResource.h>
 #include <d3d11.h>
 #include <dxgi.h>
 
@@ -28,6 +29,8 @@ namespace RHI
 
         uint32_t GetWidth() const override { return m_desc.Width; }
         uint32_t GetHeight() const override { return m_desc.Height; }
+        // Get render target view
+        RHIRenderTargetView* GetRenderTargetView(uint32_t index) const override { return m_pRenderTargetViews.get(); }
 
         IDXGISwapChain* GetSwapChain() const { return m_pSwapChain.Get(); }
 
@@ -36,6 +39,7 @@ namespace RHI
         
         ComPtr<IDXGISwapChain> m_pSwapChain;
         ComPtr<ID3D11RenderTargetView> m_pRenderTargetView;
+        std::unique_ptr<RHIRenderTargetView> m_pRenderTargetViews;
         SwapChainDesc m_desc;
     };
 }
