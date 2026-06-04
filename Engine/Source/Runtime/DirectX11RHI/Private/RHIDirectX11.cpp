@@ -157,7 +157,8 @@ namespace RHI
         }
     }
 
-    RHIDescriptorHeap* RHIDirectX11::GetDescriptorHeap(RHIDescriptorHeapType type){
+    RHIDescriptorHeap* RHIDirectX11::GetDescriptorHeap(RHIDescriptorHeapType type) const
+    {
         switch (type)
         {
         case RHIDescriptorHeapType::Standard:

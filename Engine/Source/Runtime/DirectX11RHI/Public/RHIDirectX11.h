@@ -59,7 +59,7 @@ namespace RHI
         [[nodiscard]] std::shared_ptr<RHIPipelineState> CreateComputePipelineState(const ComputePipelineStateDesc& desc) override;
         void DeletePipelineState(std::shared_ptr<RHIPipelineState>& pipelineState) override;
 
-        [[nodiscard]] RHIDescriptorHeap* GetDescriptorHeap(RHIDescriptorHeapType type) override;
+        [[nodiscard]] RHIDescriptorHeap* GetDescriptorHeap(RHIDescriptorHeapType type) const override;
 
         FeatureLevel GetFeatureLevel() const override;
         ID3D11Device* GetDevice() const { return m_pDevice.Get(); }

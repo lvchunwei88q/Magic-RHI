@@ -88,7 +88,7 @@ namespace RHI
         [[nodiscard]] virtual std::shared_ptr<RHIPipelineState> CreateComputePipelineState(const ComputePipelineStateDesc& desc) = 0;
         virtual void DeletePipelineState(std::shared_ptr<RHIPipelineState>& pipelineState) = 0;
 
-        [[nodiscard]] virtual RHIDescriptorHeap* GetDescriptorHeap(RHIDescriptorHeapType type) = 0;
+        [[nodiscard]] virtual RHIDescriptorHeap* GetDescriptorHeap(RHIDescriptorHeapType type) const = 0;
     };
 
     class RHI_API SwapChain
