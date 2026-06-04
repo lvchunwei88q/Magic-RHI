@@ -14,6 +14,17 @@ namespace RHI
         // More RHI types
     };
 
+    inline const char* ToString(RHIType type)
+    {
+        switch (type)
+        {
+            case RHIType::Unknown:      return "Unknown";
+            case RHIType::DirectX11:    return "DirectX11";
+            case RHIType::DirectX12:    return "DirectX12";
+            default:                    return "Invalid";
+        }
+    }
+
     RHIType RHI_API GetBestAvailableRHI();
     
     inline bool IsMultiThreadingSupported(RHIType type) {

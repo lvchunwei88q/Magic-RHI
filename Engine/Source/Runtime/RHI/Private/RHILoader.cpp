@@ -1,5 +1,5 @@
 #include "RHILoader.h"
-#include "RHIConfig.h"
+#include <RHI.Modules.generated.h>
 
 namespace RHI
 {
@@ -40,10 +40,13 @@ namespace RHI
         }
         
         // load dll
+        CoreLog("Loading RHI DLL: " + std::string(dllName), CoreLogType::Info);
         m_hModule = LoadLibraryA(dllName);
         if (!m_hModule) {
             DWORD error = GetLastError();
             
+            CoreLog("Failed to load RHI DLL: " + std::string(dllName) 
+                      + " with error code: " + std::to_string(error), CoreLogType::Error);
             return false;
         }
         
@@ -54,14 +57,18 @@ namespace RHI
         
         if (!m_CreateDevice || !m_CreateSwapChain || !m_GetRHIType) {
             Unload();
+            CoreLog("Failed to get RHI function pointers", CoreLogType::Error);
             return false;
         }
         
         // verify type match
         if (m_GetRHIType() != type) {
             Unload();
+            CoreLog("RHI type mismatch: " + std::string(ToString(type)), CoreLogType::Error);
             return false;
         }
+        
+        CoreLog("RHI type match: " + std::string(ToString(type)), CoreLogType::Info);
         
         m_loadedType = type;
         return true;

@@ -1,9 +1,9 @@
 /*
  * 因为使用到了前向声明所以需要先引入声明定义
  */
+ #include <Common/RHIException.h>
 #include "RHICommandListDirectX12.h"
 #include "RHIDirectX12.h"
-#include "DirectXHelper.h"
 
 namespace RHI
 {

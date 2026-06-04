@@ -3,6 +3,7 @@
 #include <memory>
 #include <windows.h>
 #include <Subsystem/SubsystemTemplate.h>
+#include "Common/RHIException.h"
 #include "RHIDynamicLoader.h"
 #include "RHI.h"
 #include "IRHILoader.h"

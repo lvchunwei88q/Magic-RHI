@@ -3,9 +3,9 @@
 #include "d3dx12.h"
 #include <d3d12.h>
 
+#include <Common/RHIException.h>
 #include <Config/ConfigBase.h> // RHI配置
 
-#include "DirectXHelper.h"
 #include <RHICommandList.h>
 #include "RHIResourceDirectX12.h"
 #include <wrl.h>

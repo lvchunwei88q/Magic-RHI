@@ -1,7 +1,7 @@
 
+#include <Common/RHIException.h>
 #include "RHIDirectX12.h"
 #include "RHIRootSignatureDirectX12.h"
-#include "DirectXHelper.h"
 
 namespace RHI
 {

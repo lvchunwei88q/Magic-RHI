@@ -11,6 +11,13 @@ using UINT = unsigned int;
 
 namespace RHI
 {
+    enum class CoreLogType
+    {
+        Error,
+        Warning,
+        Info,
+    };
+
     inline std::string HrToString(HRESULT hr)
     {
         char s_str[64] = {};
@@ -32,6 +39,23 @@ namespace RHI
         if (FAILED(hr))
         {
             throw HrException(hr);
+        }
+    }
+
+    inline void CoreLog(const std::string& message, CoreLogType type = CoreLogType::Info){
+        switch (type)
+        {
+        case CoreLogType::Error:
+            Core::ErrorCapture::Capture(message);
+            break;
+        case CoreLogType::Warning:
+            Core::WarningCapture::Capture(message);
+            break;
+        case CoreLogType::Info:
+            Core::InfoCapture::Capture(message);
+            break;
+        default:
+            break;
         }
     }
 

@@ -1,6 +1,6 @@
+#include <Common/RHIException.h>
 #include "DescriptorHeapDirectX12.h"
 #include "RHIDirectX12.h"
-#include "DirectXHelper.h"
 
 namespace RHI
 {

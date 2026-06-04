@@ -179,17 +179,37 @@ namespace RHI
         Shutdown();
     }
 
-    bool RHIPipelineStateDirectX11::Initialize(Device* /*device*/, const GraphicsPipelineStateDesc& /*desc*/)
+    bool RHIPipelineStateDirectX11::Initialize(Device* /*device*/, const GraphicsPipelineStateDesc& desc)
     {
         Type = PipelineStateType::Graphics;
         // TODO: Pipeline state data initialization
+        //GraphicsDesc.pRootSignature = desc.pRootSignature;
+        GraphicsDesc.pInputElementDesc = desc.pInputElementDesc;
+        GraphicsDesc.NumInputElements = desc.NumInputElements;
+        GraphicsDesc.pVertexShader = desc.pVertexShader;
+        GraphicsDesc.pPixelShader = desc.pPixelShader;
+        GraphicsDesc.pGeometryShader = desc.pGeometryShader;
+        GraphicsDesc.pHullShader = desc.pHullShader;
+        GraphicsDesc.pDomainShader = desc.pDomainShader;
+        GraphicsDesc.pRasterizerState = desc.pRasterizerState;
+        GraphicsDesc.pBlendState = desc.pBlendState;
+        GraphicsDesc.pDepthStencilState = desc.pDepthStencilState;
+        GraphicsDesc.NumRenderTargets = desc.NumRenderTargets;
+        // 复制数组
+        for (uint32_t i = 0; i < 8; ++i)
+        {
+            GraphicsDesc.RenderTargetFormats[i] = ToDXGIFormat(desc.RenderTargetFormats[i]);
+        }
+        GraphicsDesc.DepthStencilFormat = ToDXGIFormat(desc.DepthStencilFormat);
         return true;
     }
 
-    bool RHIPipelineStateDirectX11::Initialize(Device* /*device*/, const ComputePipelineStateDesc& /*desc*/)
+    bool RHIPipelineStateDirectX11::Initialize(Device* /*device*/, const ComputePipelineStateDesc& desc)
     {
         Type = PipelineStateType::Compute;
         // TODO: Pipeline state data initialization
+        //ComputeDesc.pRootSignature = desc.pRootSignature;
+        ComputeDesc.pComputeShader = desc.pComputeShader;
         return true;
     }
 

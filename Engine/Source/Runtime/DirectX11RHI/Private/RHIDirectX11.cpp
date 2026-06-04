@@ -2,11 +2,11 @@
 * 因为使用到了前向声明所以需要先引入声明定义
  */
 #include <Common/RHIFeatureLevel.h>
+#include <Common/RHIException.h>
 #include "RHIRootSignatureDirectX11.h"
 #include "RHICommandListDirectX11.h"
 #include "RHIDirectX11.h"
 #include "DirectXConfig.h"
-#include "DirectXHelper.h"
 
 namespace RHI
 {
