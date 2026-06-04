@@ -103,6 +103,11 @@ namespace RHI
             case RHITextureFormat::R16G16B16A16_UINT:   return DXGI_FORMAT_R16G16B16A16_UINT;
             case RHITextureFormat::R16G16B16A16_SINT:   return DXGI_FORMAT_R16G16B16A16_SINT;
             case RHITextureFormat::R16G16B16A16_FLOAT:  return DXGI_FORMAT_R16G16B16A16_FLOAT;
+
+            // 32-bit 3 components
+            case RHITextureFormat::R32G32B32_UINT:     return DXGI_FORMAT_R32G32B32_UINT;
+            case RHITextureFormat::R32G32B32_SINT:     return DXGI_FORMAT_R32G32B32_SINT;
+            case RHITextureFormat::R32G32B32_FLOAT:    return DXGI_FORMAT_R32G32B32_FLOAT;
                 
             // 32-bit 4 components
             case RHITextureFormat::R32G32B32A32_UINT:   return DXGI_FORMAT_R32G32B32A32_UINT;

@@ -27,6 +27,9 @@ namespace RHI
         void Resize(uint32_t width, uint32_t height) override;
         uint32_t GetFrameIndex() const override { return m_pSwapChain3->GetCurrentBackBufferIndex(); }// 获取当前帧索引
 
+        uint32_t GetWidth() const override { return m_desc.Width; }
+        uint32_t GetHeight() const override { return m_desc.Height; }
+
         IDXGISwapChain3* GetSwapChain3() const { return m_pSwapChain3.Get(); }
         IDXGISwapChain1* GetSwapChain() const { return m_pSwapChain1.Get(); }
 

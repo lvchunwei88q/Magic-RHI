@@ -162,20 +162,13 @@ int main(int argc, char* argv[])
             {
                 std::cout << "SamplerState created successfully!" << std::endl;
 
-                std::vector<Vertex> vertices = GenerateRandomVertices(2 * 1024 * 1024);  // 2 MB
-                std::vector<Vertex> cvertices = GenerateRandomVertices(2 * 1024);  // 2 KB
-                std::cout << "Vertices created successfully! Vertex Count: " << vertices.size() << std::endl;
+                Vertex tvertices[] = {
+                    { { 0.0f,  0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },  // 顶点0: 顶部，红色
+                    { { 0.5f, -0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },  // 顶点1: 右下，绿色
+                    { {-0.5f, -0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }   // 顶点2: 左下，蓝色
+                };
 
-                RHI::BufferDesc desc;
-                desc.SizeInBytes =  sizeof(Vertex) * vertices.size(); // 总字节数
-                desc.Stride       = sizeof(Vertex);                    // 每个顶点的大小
-                desc.InitialData  = vertices.data();                   // 指向初始数据的指针
-                desc.HeapType     = RHI::BufferHeapType::Default;
-                desc.BindFlags    = RHI::BufferBindFlag::VertexBuffer;
-                // ========== 3. 调用 CreateBuffer 创建顶点缓冲 ==========
-                std::shared_ptr<RHI::RHIVertexBuffer> vertexBuffer = device->CreateBuffer(desc);
-                //device->DeleteBuffer(vertexBuffer);
-                std::cout << "VertexBuffer created successfully!" << std::endl;
+                std::vector<Vertex> cvertices = GenerateRandomVertices(2 * 1024);  // 2 KB
                 
                 auto CreateBuffer = [&](RHI::BufferHeapType t,RHI::BufferBindFlag f,RHI::DescriptorRangeType rt) {
                     RHI::BufferDesc desc;
@@ -201,6 +194,15 @@ int main(int argc, char* argv[])
                 std::shared_ptr<RHI::RHIConstantBuffer> constantBuffer2 = CreateBuffer(RHI::BufferHeapType::Upload,RHI::BufferBindFlag::ShaderResource,RHI::DescriptorRangeType::SRV);
                 std::cout << "ShaderResource created successfully!" << std::endl;
                 std::cout << "ShaderResource Handle: " << constantBuffer2->GetBindlessHandle().GetIndex() << std::endl;
+
+                RHI::BufferDesc vbdesc;
+                vbdesc.SizeInBytes = sizeof(Vertex) * 3;
+                vbdesc.Stride = sizeof(Vertex);
+                vbdesc.InitialData = tvertices;
+                vbdesc.HeapType = RHI::BufferHeapType::Default;
+                vbdesc.BindFlags = RHI::BufferBindFlag::VertexBuffer;
+                std::shared_ptr<RHI::RHIVertexBuffer> vertexBuffer = device->CreateBuffer(vbdesc);
+                std::cout << "VertexBuffer created successfully!" << std::endl;
                 
                 std::cout << "Shader compilation..." << std::endl;
                 // 从文件编译顶点着色器
@@ -305,7 +307,9 @@ int main(int argc, char* argv[])
                         // 定义输入布局描述
                         RHI::InputElementDesc inputLayout[] = 
                         {
-                            { "POSITION", 0, RHI::RHITextureFormat::R16_UNORM, 0, RHI::InputElementDesc::APPEND_ALIGNED_ELEMENT,
+                            { "POSITION", 0, RHI::RHITextureFormat::R32G32B32_FLOAT, 0, RHI::InputElementDesc::APPEND_ALIGNED_ELEMENT,
+                                RHI::InputClassification::PerVertexData, 0 },
+                                { "COLOR", 0, RHI::RHITextureFormat::R32G32B32A32_FLOAT, 0, RHI::InputElementDesc::APPEND_ALIGNED_ELEMENT,
                                 RHI::InputClassification::PerVertexData, 0 },
                         };
 
@@ -317,7 +321,7 @@ int main(int argc, char* argv[])
                         graphicsDesc.pPixelShader = pixelShader.get();
                         graphicsDesc.NumRenderTargets = 1;
                         graphicsDesc.RenderTargetFormats[0] = RHI::RHITextureFormat::R32G32B32A32_FLOAT;
-                        graphicsDesc.DepthStencilFormat = RHI::RHITextureFormat::D32_FLOAT;
+						graphicsDesc.DepthStencilFormat = RHI::RHITextureFormat::Unknown;       // 绘制三角形不使用深度测试，所以这里设置为 Unknown
 
                         RHI::ComputePipelineStateDesc computeDesc = {};
                         computeDesc.pRootSignature = rootUAVSignature.get();
@@ -369,6 +373,21 @@ int main(int argc, char* argv[])
                                         
                                         // 设置拓扑类型
                                         cmdList->IASetPrimitiveTopology(RHI::RHIPrimitiveTopology::TriangleList);
+                                        // 设置顶点缓冲区
+                                        RHI::RHIVertexBuffer* pRawBuffers[] = {vertexBuffer.get()};
+                                        cmdList->IASetVertexBuffers(0, 1, pRawBuffers,0);
+
+                                        uint32_t width = swapChain->GetWidth();
+                                        uint32_t height = swapChain->GetHeight();
+
+                                        RHI::RHIViewport viewport = {0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f};
+                                        cmdList->RSSetViewports(1, &viewport);
+
+                                        RHI::RHIRect scissorRect = {0, 0, (float)width, (float)height};
+                                        cmdList->RSSetScissorRects(1, &scissorRect);
+
+                                        // 绘制三角形
+                                        cmdList->Draw(3, 0);            // TODO DX 11 处理
                                         cmdList->EndRecording();
                                         
                                         // run command list

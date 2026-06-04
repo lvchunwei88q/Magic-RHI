@@ -10,7 +10,8 @@
             "request": "launch",
             "program": "${workspaceRoot}/Binary/Debug/MagicRHI.exe",
             "args": ["dx11"],
-            "cwd": "${workspaceRoot}"
+            "cwd": "${workspaceRoot}",
+            "console": "externalTerminal", 
         },
         {
             "name": "Launch DirectX12 RHI - Debug",
@@ -18,7 +19,8 @@
             "request": "launch",
             "program": "${workspaceRoot}/Binary/Debug/MagicRHI.exe",
             "args": ["dx12"],
-            "cwd": "${workspaceRoot}"
+            "cwd": "${workspaceRoot}",
+            "console": "externalTerminal", 
         },
         {
             "name": "Launch DirectX11 RHI - Release",

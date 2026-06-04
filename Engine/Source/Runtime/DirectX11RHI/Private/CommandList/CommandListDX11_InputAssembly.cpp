@@ -85,7 +85,7 @@ namespace RHI
         }
     }
 
-    void CommandListDirectX11::IASetVertexBuffers(uint32_t startSlot, uint32_t numBuffers, RHIBuffer* const* ppBuffers, const uint64_t* pOffsets)
+    void CommandListDirectX11::IASetVertexBuffers(uint32_t startSlot, uint32_t numBuffers, RHIVertexBuffer* const* ppBuffers, const uint64_t* pOffsets)
     {
         std::vector<ID3D11Buffer*> buffers;
         std::vector<UINT> strides;
@@ -107,7 +107,7 @@ namespace RHI
         pAllocator->GetDeviceContext()->IASetVertexBuffers(startSlot, numBuffers, buffers.data(), strides.data(), offsets.data());
     }
 
-    void CommandListDirectX11::IASetIndexBuffer(RHIBuffer* pIndexBuffer, RHIIndexFormat format, uint64_t offset)
+    void CommandListDirectX11::IASetIndexBuffer(RHIIndexBuffer* pIndexBuffer, RHIIndexFormat format, uint64_t offset)
     {
         CommandAllocatorDirectX11* pAllocator = SafeCast<CommandAllocatorDirectX11>(m_pAllocator);
         if (pIndexBuffer)

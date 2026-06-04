@@ -85,7 +85,7 @@ namespace RHI
         }
     }
 
-    void CommandListDirectX12::IASetVertexBuffers(uint32_t startSlot, uint32_t numBuffers, RHIBuffer* const* ppBuffers, const uint64_t* pOffsets)
+    void CommandListDirectX12::IASetVertexBuffers(uint32_t startSlot, uint32_t numBuffers, RHIVertexBuffer* const* ppBuffers, const uint64_t* pOffsets)
     {
         std::vector<D3D12_VERTEX_BUFFER_VIEW> vertexBufferViews;
         vertexBufferViews.reserve(numBuffers);
@@ -103,7 +103,7 @@ namespace RHI
         m_pCommandList->IASetVertexBuffers(startSlot, numBuffers, vertexBufferViews.data());
     }
 
-    void CommandListDirectX12::IASetIndexBuffer(RHIBuffer* pIndexBuffer, RHIIndexFormat format, uint64_t offset)
+    void CommandListDirectX12::IASetIndexBuffer(RHIIndexBuffer* pIndexBuffer, RHIIndexFormat format, uint64_t offset)
     {
         if (pIndexBuffer)
         {
