@@ -66,19 +66,24 @@ namespace RHI
         ComPtr<ID3D11Texture2D> backBuffer;
         ThrowIfFailed(m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer)));
 
+        ComPtr<ID3D11RenderTargetView> RenderTargetView;
         ThrowIfFailed(m_pRHI->GetDevice()->CreateRenderTargetView(
             backBuffer.Get(),
             nullptr,
-            m_pRenderTargetView.GetAddressOf()
+            RenderTargetView.GetAddressOf()
         ));
 
-        m_pRenderTargetViews = std::make_unique<RenderTargetViewDirectX11>(m_pRenderTargetView.Get());
+        // Create back buffer and render target view
+        TextureDesc back_desc   = { RHI_RTV_FORMAT, m_desc.Width, m_desc.Height, 1, 1, 1, 0 };
+        m_pBackBuffer           = std::make_unique<TextureDirectX11>(backBuffer.Get(),back_desc);
+        m_pRenderTargetView     = std::make_unique<RenderTargetViewDirectX11>(RenderTargetView.Get());
         return true;
     }
 
     void SwapChainDirectX11::Shutdown()
     {
-        m_pRenderTargetView.Reset();
+        m_pBackBuffer.reset();
+        m_pRenderTargetView.reset();
         m_pSwapChain.Reset();
     }
 
@@ -97,7 +102,8 @@ namespace RHI
         m_desc.Width = width;
         m_desc.Height = height;
 
-        m_pRenderTargetView.Reset();
+        m_pBackBuffer.reset();
+        m_pRenderTargetView.reset();
 
         ThrowIfFailed(m_pSwapChain->ResizeBuffers(
             0,          // 0: Remain unchanged
@@ -113,14 +119,21 @@ namespace RHI
         ComPtr<ID3D11Device> dx11Device;
         ThrowIfFailed(m_pSwapChain->GetDevice(IID_PPV_ARGS(&dx11Device)));
 
+        ComPtr<ID3D11RenderTargetView> RenderTargetView;
         ThrowIfFailed(dx11Device.Get()->CreateRenderTargetView(
             backBuffer.Get(),
             nullptr,
-            m_pRenderTargetView.GetAddressOf()
+            RenderTargetView.GetAddressOf()
         ));
 
+        // Create back buffer and render target view
+        TextureDesc back_desc   = { RHI_RTV_FORMAT, m_desc.Width, m_desc.Height, 1, 1, 1, 0 };
+        m_pBackBuffer           = std::make_unique<TextureDirectX11>(backBuffer.Get(),back_desc);
+        m_pRenderTargetView     = std::make_unique<RenderTargetViewDirectX11>(RenderTargetView.Get());
+
+        // Set viewport
         ID3D11DeviceContext* pContext = m_pRHI->GetDeviceContext();
-        pContext->OMSetRenderTargets(1, m_pRenderTargetView.GetAddressOf(), nullptr);
+        pContext->OMSetRenderTargets(1, RenderTargetView.GetAddressOf(), nullptr);
 
         D3D11_VIEWPORT viewport = {};
         viewport.Width = static_cast<float>(width);
@@ -130,5 +143,15 @@ namespace RHI
         viewport.TopLeftX = 0;
         viewport.TopLeftY = 0;
         pContext->RSSetViewports(1, &viewport);
+    }
+
+    RHIRenderTargetView* SwapChainDirectX11::GetRenderTargetView(uint32_t index) const 
+    { 
+        return m_pRenderTargetView.get();
+    }
+
+    RHITexture*  SwapChainDirectX11::GetBackBuffer() const
+    {
+        return m_pBackBuffer.get();
     }
 }

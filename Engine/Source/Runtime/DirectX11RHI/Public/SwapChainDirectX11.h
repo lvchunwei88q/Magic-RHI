@@ -30,16 +30,18 @@ namespace RHI
         uint32_t GetWidth() const override { return m_desc.Width; }
         uint32_t GetHeight() const override { return m_desc.Height; }
         // Get render target view
-        RHIRenderTargetView* GetRenderTargetView(uint32_t index) const override { return m_pRenderTargetViews.get(); }
-
+        RHIRenderTargetView* GetRenderTargetView(uint32_t index) const override;
+        // Get back buffer
+        RHITexture* GetBackBuffer() const override;
+        // Get swap chain
         IDXGISwapChain* GetSwapChain() const { return m_pSwapChain.Get(); }
 
     private:
         RHIDirectX11* m_pRHI;
         
         ComPtr<IDXGISwapChain> m_pSwapChain;
-        ComPtr<ID3D11RenderTargetView> m_pRenderTargetView;
-        std::unique_ptr<RHIRenderTargetView> m_pRenderTargetViews;
+        std::unique_ptr<RHITexture> m_pBackBuffer;
+        std::unique_ptr<RHIRenderTargetView> m_pRenderTargetView;
         SwapChainDesc m_desc;
     };
 }

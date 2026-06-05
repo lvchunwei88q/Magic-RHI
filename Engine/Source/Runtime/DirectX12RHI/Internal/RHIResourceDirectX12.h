@@ -33,13 +33,12 @@ namespace RHI
     class TextureDirectX12 : public RHITexture
     {
     public:
-        TextureDirectX12(ID3D12Resource* pResource)
-            : m_pResource(pResource) {}
+        TextureDirectX12(ID3D12Resource* pResource, const TextureDesc& desc)
+            : m_pResource(pResource)
+            , RHITexture(desc) {}
         ~TextureDirectX12() override = default;
 
         uint64_t GetSize() const override { return 0; }
-        uint32_t GetWidth() const override { return 0; }
-        uint32_t GetHeight() const override { return 0; }
 
         ID3D12Resource* GetResource() const { return m_pResource.Get(); }
 

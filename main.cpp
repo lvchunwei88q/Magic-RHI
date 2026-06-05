@@ -360,7 +360,6 @@ int main(int argc, char* argv[])
                                         DispatchMessage(&msg);
                                         
                                         cmdList->BeginRecording();
-
                                         // 设置渲染目标视图
                                         //RHI::RHIRenderTargetView* pRTV = swapChain->GetRenderTargetView(0);
                                         //cmdList->OMSetRenderTargets(1, &pRTV, false, nullptr);

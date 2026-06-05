@@ -64,6 +64,19 @@ struct BarrierDesc
 	};
 };
 
+struct TextureDesc
+{
+    RHITextureFormat Format;
+    uint32_t Width;
+    uint32_t Height;
+    uint32_t Depth;
+    uint32_t MipLevels;
+    uint32_t ArrayLayers;
+    uint32_t SampleCount;
+    uint32_t SampleQuality;
+    uint32_t Flags;
+};
+
 struct ShaderCompileDesc
 {
     ShaderType Type;

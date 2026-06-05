@@ -92,12 +92,19 @@ namespace RHI
         
         for (UINT n = 0; n < RHI_MULTI_BUFFERING; n++)
         {
-            ThrowIfFailed(m_pSwapChain1->GetBuffer(n, IID_PPV_ARGS(m_pRenderTargets[n].GetAddressOf())));
-            dx12Device->CreateRenderTargetView(m_pRenderTargets[n].Get(), nullptr, rtvHandle);
+            ComPtr<ID3D12Resource> pResource;
+            ThrowIfFailed(m_pSwapChain1->GetBuffer(n, IID_PPV_ARGS(&pResource)));
+            dx12Device->CreateRenderTargetView(pResource.Get(), nullptr, rtvHandle);
+            
+            TextureDesc back_desc                               = { RHI_RTV_FORMAT, m_desc.Width, m_desc.Height, 1, 1, 1, 0 };
             std::unique_ptr<RenderTargetViewDirectX12> pDerived = std::make_unique<RenderTargetViewDirectX12>(RHIDescriptorHandle{RHIDescriptorHeapType::RenderTarget,n},rtvHandle);
+            std::unique_ptr<RHITexture> pBackBuffer             = std::make_unique<TextureDirectX12>(pResource.Get(),back_desc);
+            // Set descriptor handle offset
             rtvHandle.Offset(1, rtvDescriptorSize);
-
+            
+            // Store the render target view and back buffer
             m_pRenderTargetViews[n] = std::move(pDerived);
+            m_pBackBuffers[n] = std::move(pBackBuffer);
         }
     }
 
@@ -105,7 +112,8 @@ namespace RHI
     {
         for (UINT n = 0; n < RHI_MULTI_BUFFERING; n++)
         {
-            m_pRenderTargets[n].Reset();
+            m_pBackBuffers[n].reset();
+            m_pRenderTargetViews[n].reset();
         }
         m_pRtvHeap.Reset();
         m_pSwapChain1.Reset();
@@ -128,7 +136,8 @@ namespace RHI
 
         for (UINT n = 0; n < RHI_MULTI_BUFFERING; n++)
         {
-            m_pRenderTargets[n].Reset();
+            m_pBackBuffers[n].reset();
+            m_pRenderTargetViews[n].reset();
         }
 
         ThrowIfFailed(m_pSwapChain1->ResizeBuffers(
@@ -140,5 +149,15 @@ namespace RHI
         ));
 
         CreateRTVs();
+    }
+
+    RHIRenderTargetView* SwapChainDirectX12::GetRenderTargetView(uint32_t index) const
+    {
+        return m_pRenderTargetViews[index].get();
+    }
+
+    RHITexture*  SwapChainDirectX12::GetBackBuffer() const
+    {
+        return nullptr;
     }
 }

@@ -32,7 +32,9 @@ namespace RHI
         uint32_t GetWidth() const override { return m_desc.Width; }
         uint32_t GetHeight() const override { return m_desc.Height; }
         // Get render target view
-        RHIRenderTargetView* GetRenderTargetView(uint32_t index) const override { return m_pRenderTargetViews[index].get(); }
+        RHIRenderTargetView* GetRenderTargetView(uint32_t index) const override;
+        // Get back buffer
+        RHITexture* GetBackBuffer() const override;
 
         IDXGISwapChain3* GetSwapChain3() const { return m_pSwapChain3.Get(); }
         IDXGISwapChain1* GetSwapChain() const { return m_pSwapChain1.Get(); }
@@ -45,7 +47,7 @@ namespace RHI
         ComPtr<IDXGISwapChain3> m_pSwapChain3;
         ComPtr<IDXGISwapChain1> m_pSwapChain1;
         ComPtr<ID3D12DescriptorHeap> m_pRtvHeap;
-        ComPtr<ID3D12Resource> m_pRenderTargets[RHI_MULTI_BUFFERING];
+        std::unique_ptr<RHITexture> m_pBackBuffers[RHI_MULTI_BUFFERING];
         std::unique_ptr<RHIRenderTargetView> m_pRenderTargetViews[RHI_MULTI_BUFFERING];
 
         SwapChainDesc m_desc;

@@ -2,6 +2,7 @@
 
 #include "Common/RHI_API.h"
 #include "Common/RHITypes.h"
+#include "Common/RHIDesc.h"
 #include <Tools/Cast.h>
 #include <string>
 #include <memory>
@@ -278,12 +279,23 @@ namespace RHI
     class RHI_API RHITexture : public RHIResource
     {
     public:
-        RHITexture() : RHIResource(RRT_Texture) {}
+        RHITexture(const TextureDesc& InDesc) : RHIResource(RRT_Texture), m_Desc(InDesc) {}
         virtual ~RHITexture() = default;
 
-        virtual uint64_t GetSize()      const = 0;
-        virtual uint32_t GetWidth()     const = 0;       // 纹理特有
-        virtual uint32_t GetHeight()    const = 0;
+        virtual uint64_t GetSize()              const = 0;
+        virtual uint32_t GetWidth()             const { return m_Desc.Width;        }
+        virtual uint32_t GetHeight()            const { return m_Desc.Height;       }
+        virtual uint32_t GetDepth()             const { return m_Desc.Depth;        }
+        virtual uint32_t GetMipLevels()         const { return m_Desc.MipLevels;    }
+        virtual uint32_t GetArrayLayers()       const { return m_Desc.ArrayLayers;  }
+        virtual uint32_t GetSampleCount()       const { return m_Desc.SampleCount;  }
+        virtual uint32_t GetSampleQuality()     const { return m_Desc.SampleQuality;}
+        virtual RHITextureFormat GetFormat()    const { return m_Desc.Format;       }
+        virtual uint32_t GetFlags()             const { return m_Desc.Flags;        }
+        virtual TextureDesc GetDesc()           const { return m_Desc;              }
+
+    private:
+        TextureDesc m_Desc;
     };
 
     class RHI_API RHIShaderResourceView : public RHIResource

@@ -50,8 +50,9 @@ namespace RHI
     class TextureDirectX11 : public RHITexture
     {
     public:
-        TextureDirectX11(ID3D11Texture2D* pTexture)
-            : m_pTexture(pTexture) {}
+        TextureDirectX11(ID3D11Texture2D* pTexture, const TextureDesc& desc)
+            : m_pTexture(pTexture)
+            , RHITexture(desc) {}
         ~TextureDirectX11() override = default;
 
         uint64_t GetSize() const override;
