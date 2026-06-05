@@ -395,6 +395,9 @@ int main(int argc, char* argv[])
                                         // 设置渲染目标视图
                                         RHI::RHIRenderTargetView* pRTV = swapChain->GetRenderTargetView(currentIndex);
                                         cmdList->OMSetRenderTargets(1, &pRTV, false, nullptr);
+                                        // 清除渲染目标视图
+                                        float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+                                        cmdList->ClearRenderTargetView(pRTV, clearColor);
 
                                         cmdList->SetGraphicsRootSignature(rootSignature.get());
                                         cmdList->SetPipelineState(graphicsPSO.get(), RHI::PipelineStateType::Graphics);

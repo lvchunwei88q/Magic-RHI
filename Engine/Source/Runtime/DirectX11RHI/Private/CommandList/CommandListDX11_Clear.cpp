@@ -4,7 +4,11 @@ namespace RHI
 {
     void CommandListDirectX11::ClearRenderTargetView(RHIRenderTargetView* pView, const float* colorRGBA)
     {
-        // TODO: 实现渲染目标清除
+        RenderTargetViewDirectX11* pRTView = SafeCast<RenderTargetViewDirectX11>(pView);
+        ThrowIf(pRTView == nullptr, "Render target view is null");
+        
+        ID3D11RenderTargetView* pRTV = pRTView->GetRTV();
+        m_pDeviceContext->ClearRenderTargetView(pRTV, colorRGBA);
     }
 
     void CommandListDirectX11::ClearDepthStencilView(RHIDepthStencilView* pView, RHIClearFlags clearFlags, float depth, uint8_t stencil)
