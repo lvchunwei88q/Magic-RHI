@@ -150,7 +150,7 @@ namespace RHI
         return m_pRenderTargetView.get();
     }
 
-    RHITexture*  SwapChainDirectX11::GetBackBuffer() const
+    RHITexture*  SwapChainDirectX11::GetBackBuffer(uint32_t index) const
     {
         return m_pBackBuffer.get();
     }

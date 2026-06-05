@@ -32,7 +32,7 @@ namespace RHI
         // Get render target view
         RHIRenderTargetView* GetRenderTargetView(uint32_t index) const override;
         // Get back buffer
-        RHITexture* GetBackBuffer() const override;
+        RHITexture* GetBackBuffer(uint32_t index) const override;
         // Get swap chain
         IDXGISwapChain* GetSwapChain() const { return m_pSwapChain.Get(); }
 
