@@ -7,8 +7,6 @@
 
 namespace RHI
 {
-/* forward declaration */
-class RHIResource;
 
 /** An enumeration of the different RHI reference types. */
 enum RHIResourceType : uint8_t
@@ -286,6 +284,43 @@ inline bool IsCompressedFormat(RHITextureFormat Format)
 		return false;
 	}
 }
+
+enum class RHIResourceState : uint64_t
+{
+	// 基础状态
+    Common                      	= 0,
+    VertexBuffer                	= 0x1,
+    IndexBuffer                		= 0x2,
+    RenderTarget                	= 0x4,
+    UnorderedAccess             	= 0x8,
+    DepthWrite                  	= 0x10,
+    DepthRead                   	= 0x20,
+    NonPixelShaderResource      	= 0x40,
+    PixelShaderResource         	= 0x80,
+    StreamOut                   	= 0x100,
+    IndirectArgument            	= 0x200,
+    CopyDest                    	= 0x400,
+    CopySource                  	= 0x800,
+    ResolveDest                 	= 0x1000,
+    ResolveSource               	= 0x2000,
+    // 视频相关	
+    VideoDecodeRead             	= 0x10000,
+    VideoDecodeWrite            	= 0x20000,
+    VideoProcessRead            	= 0x40000,
+    VideoProcessWrite           	= 0x80000,
+    VideoEncodeRead             	= 0x200000,
+    VideoEncodeWrite            	= 0x800000,
+    // 光线追踪
+    RaytracingAccelerationStructure = 0x400000,
+    // 着色率
+    ShadingRateSource             	= 0x1000000,
+    // 组合状态
+    Present                     	= 0,
+    GenericRead                 	= VertexBuffer | IndexBuffer | NonPixelShaderResource | 
+                  						PixelShaderResource | IndirectArgument | CopySource | ResolveSource,
+    AllShaderResource           	= NonPixelShaderResource | PixelShaderResource,
+};
+ENUM_CLASS_FLAGS(RHIResourceState);
 
 enum class BufferBindFlag : uint32_t
 {

@@ -225,12 +225,13 @@ namespace RHI
             
             // Default 资源初始状态是 COMMON，需要转换到 COPY_DEST
             RHI::BarrierDesc barrier = {};
-            barrier.Type = RHI::ResourceBarrierType::Transition;
-            barrier.Flags = RHI::ResourceBarrierFlags::None;
-            barrier.Transition.pResource = buffer.get();
-            barrier.Transition.Subresource = ~0u;  // 所有子资源
-            barrier.Transition.StateBefore = static_cast<uint64_t>(D3D12_RESOURCE_STATE_COMMON);
-            barrier.Transition.StateAfter = static_cast<uint64_t>(D3D12_RESOURCE_STATE_COPY_DEST);
+            barrier.Type                        = RHI::ResourceBarrierType::Transition;
+            barrier.ResourceType                = ResourceType::Buffer;
+            barrier.Flags                       = RHI::ResourceBarrierFlags::None;
+            barrier.Transition.pResource        = buffer.get();
+            barrier.Transition.Subresource      = ~0u;  // 所有子资源
+            barrier.Transition.StateBefore      = RHIResourceState::Common;
+            barrier.Transition.StateAfter       = RHIResourceState::CopyDest;
 
             cmdList->ResourceBarrier(1, &barrier);
             
@@ -243,12 +244,13 @@ namespace RHI
             );
 
             RHI::BarrierDesc finalBarrier = {};
-            finalBarrier.Type = RHI::ResourceBarrierType::Transition;
-            finalBarrier.Flags = RHI::ResourceBarrierFlags::None;
-            finalBarrier.Transition.pResource = buffer.get();
-            finalBarrier.Transition.Subresource = ~0u;
-            finalBarrier.Transition.StateBefore = static_cast<uint64_t>(D3D12_RESOURCE_STATE_COPY_DEST);
-            finalBarrier.Transition.StateAfter = static_cast<uint64_t>(D3D12_RESOURCE_STATE_COMMON);
+            finalBarrier.Type                        = RHI::ResourceBarrierType::Transition;
+            finalBarrier.ResourceType                = ResourceType::Buffer;
+            finalBarrier.Flags                       = RHI::ResourceBarrierFlags::None;
+            finalBarrier.Transition.pResource        = buffer.get();
+            finalBarrier.Transition.Subresource      = ~0u;
+            finalBarrier.Transition.StateBefore      = RHIResourceState::CopyDest;
+            finalBarrier.Transition.StateAfter       = RHIResourceState::Common;
             cmdList->ResourceBarrier(1, &finalBarrier);
             
             cmdList->EndRecording();
@@ -322,7 +324,7 @@ namespace RHI
         
         // add index
         UINT64 fenceValue = m_nextFenceValue++;
-        m_pCommandQueue->Signal(m_Fence.Get(), fenceValue);
+        ThrowIfFailed(m_pCommandQueue->Signal(m_Fence.Get(), fenceValue));
         
         // Save fence value
         m_fenceValues[m_currentFrame] = fenceValue;

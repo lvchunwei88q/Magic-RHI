@@ -1,6 +1,6 @@
 /*
 * 因为使用到了前向声明所以需要先引入声明定义
- */
+*/
 
 #include <Common/RHIException.h>
 #include <Common/RHIFeatureLevel.h>
@@ -254,6 +254,7 @@ namespace RHI
             D3D_FEATURE_LEVEL_11_0
         };
         
+        OutputDebugStringA("We use different levels to create devices, so if your physical device or system does not support the latest device creation, you may receive a device creation error. However, you don't need to worry because we will create them step by step.");
         for (auto level : featureLevels) {
             if (SUCCEEDED(D3D12CreateDevice(m_pAdapter.Get(), level, 
                                              IID_PPV_ARGS(&m_pDevice)))) {
@@ -261,6 +262,7 @@ namespace RHI
                 break;
             }
         }
+        OutputDebugStringA("The device has been created. You can now find errors through the subsequent output debug information.");
         
         CreateQueues(); // 创建队列
 

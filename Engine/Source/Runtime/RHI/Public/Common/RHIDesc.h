@@ -20,6 +20,13 @@ enum class ResourceBarrierType : uint8_t
 	UAV          // UAV屏障
 };
 
+// 资源类型
+enum class ResourceType : uint8_t
+{
+	Texture, // 纹理
+	Buffer  // 缓冲区
+};
+
 // 资源屏障标志
 enum class ResourceBarrierFlags : uint8_t
 {
@@ -32,10 +39,10 @@ ENUM_CLASS_FLAGS(ResourceBarrierFlags);
 // 过渡屏障描述
 struct ResourceTransitionBarrier
 {
-	class RHIResource* pResource;     // 资源指针
-	uint32_t           Subresource;   // 子资源索引（-1表示所有）
-	uint64_t           StateBefore;   // 转换前状态（平台相关）
-	uint64_t           StateAfter;    // 转换后状态（平台相关）
+	class RHIResource* 			pResource;     // 资源指针
+	uint32_t           			Subresource;   // 子资源索引（-1表示所有）
+	RHIResourceState            StateBefore;   // 转换前状态
+	RHIResourceState            StateAfter;    // 转换后状态
 };
 
 // 别名屏障描述
@@ -54,8 +61,9 @@ struct ResourceUAVBarrier
 // 资源屏障描述
 struct BarrierDesc
 {
-	ResourceBarrierType   Type;
-	ResourceBarrierFlags  Flags;
+	ResourceBarrierType   Type 			    = ResourceBarrierType::Transition;
+	ResourceType          ResourceType 		= ResourceType::Buffer;
+	ResourceBarrierFlags  Flags 			= ResourceBarrierFlags::None;
 	union
 	{
 		ResourceTransitionBarrier Transition;

@@ -360,9 +360,22 @@ int main(int argc, char* argv[])
                                         DispatchMessage(&msg);
                                         
                                         cmdList->BeginRecording();
+                                        uint32_t currentIndex = swapChain->GetFrameIndex();
+                                        RHI::RHITexture* BackBufferTexture = swapChain->GetBackBuffer(currentIndex);
+
+                                        RHI::BarrierDesc barrier = {};
+                                        barrier.Type                        = RHI::ResourceBarrierType::Transition;
+                                        barrier.ResourceType                = RHI::ResourceType::Texture;
+                                        barrier.Flags                       = RHI::ResourceBarrierFlags::None;
+                                        barrier.Transition.pResource        = BackBufferTexture;
+                                        barrier.Transition.Subresource      = 0;
+                                        barrier.Transition.StateBefore      = RHI::RHIResourceState::Present;
+                                        barrier.Transition.StateAfter       = RHI::RHIResourceState::RenderTarget;
+                                        
+                                        cmdList->ResourceBarrier(1, &barrier);
                                         // 设置渲染目标视图
-                                        //RHI::RHIRenderTargetView* pRTV = swapChain->GetRenderTargetView(0);
-                                        //cmdList->OMSetRenderTargets(1, &pRTV, false, nullptr);
+                                        RHI::RHIRenderTargetView* pRTV = swapChain->GetRenderTargetView(currentIndex);
+                                        cmdList->OMSetRenderTargets(1, &pRTV, false, nullptr);
 
                                         cmdList->SetGraphicsRootSignature(rootSignature.get());
                                         cmdList->SetPipelineState(graphicsPSO.get(), RHI::PipelineStateType::Graphics);
@@ -391,11 +404,21 @@ int main(int argc, char* argv[])
 
                                         // 绘制三角形
                                         cmdList->Draw(3, 0);            // TODO DX 11 处理 设置资源 VB
+
+                                        RHI::BarrierDesc barrierToPresent = {};
+                                        barrierToPresent.Type                        = RHI::ResourceBarrierType::Transition;
+                                        barrierToPresent.ResourceType                = RHI::ResourceType::Texture;
+                                        barrierToPresent.Flags                       = RHI::ResourceBarrierFlags::None;
+                                        barrierToPresent.Transition.pResource        = BackBufferTexture;
+                                        barrierToPresent.Transition.Subresource      = 0;
+                                        barrierToPresent.Transition.StateBefore      = RHI::RHIResourceState::RenderTarget;
+                                        barrierToPresent.Transition.StateAfter       = RHI::RHIResourceState::Present;
+                                        cmdList->ResourceBarrier(1, &barrierToPresent);
                                         cmdList->EndRecording();
                                         
                                         // run command list
                                         device->GetCommandQueue(RHI::RHICmdType::Graphics)->ExecuteCommandLists({cmdList});
-                                        //swapChain->Present();
+                                        swapChain->Present(1, 0);
                                         device->GetCommandQueue(RHI::RHICmdType::Graphics)->WaitForGPU();
                                     }
                                 }else{
