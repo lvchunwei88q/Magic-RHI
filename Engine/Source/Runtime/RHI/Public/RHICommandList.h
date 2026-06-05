@@ -100,6 +100,8 @@ namespace RHI
         RHICmdType GetQueueType() const { return QueueType; }
 
         virtual void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) = 0;
+        virtual void BeginFrame() = 0;
+        virtual void EndFrame() = 0;
         virtual void WaitForGPU() = 0;
 
         // 同步操作

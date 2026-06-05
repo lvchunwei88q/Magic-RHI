@@ -4,10 +4,11 @@
 struct PSInput
 {
     float4 pos : SV_POSITION;      // 屏幕空间位置
+    float4 Color : COLOR;          // 颜色
 };
 
 float4 main(PSInput input) : SV_Target
 {
-    float4 result = float4(1.0f, 0.0f, 0.0f, 1.0f);   
+    float4 result = input.Color;   
     return result;
 }

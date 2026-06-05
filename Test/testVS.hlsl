@@ -1,7 +1,21 @@
 #include "Function.hlsl"
 
-float4 main(float4 pos : POSITION) : SV_POSITION
+struct VSInput
 {
-    float4 result = pos;
+    float4 position : POSITION;  // 对应 InputLayout[0]
+    float4 color : COLOR;        // 对应 InputLayout[1]
+};
+
+struct VSOutput
+{
+    float4 pos : SV_POSITION;
+    float4 Color : COLOR;
+};
+
+VSOutput main(VSInput input)
+{
+    VSOutput result;
+    result.pos      = input.position;
+    result.Color    = input.color;
     return result;
 }

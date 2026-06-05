@@ -113,7 +113,9 @@ namespace RHI
         ~CommandQueueDirectX11() override = default;
 
         void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override;
-        void WaitForGPU() override {}
+        void BeginFrame() override;
+        void EndFrame() override;
+        void WaitForGPU() override;
 
         // 同步操作 但是 DX 11 不支持
         void Signal(uint64_t fenceValue) override {}

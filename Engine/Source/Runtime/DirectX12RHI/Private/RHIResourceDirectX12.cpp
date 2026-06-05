@@ -221,6 +221,7 @@ namespace RHI
             
             auto cmdAllocator = CreateCommandAllocator(RHICmdType::Copy);
             auto cmdList = CreateCommandList(cmdAllocator);
+            m_CopyQueue.get()->BeginFrame();
             cmdList->BeginRecording();
             
             // Default 资源初始状态是 COMMON，需要转换到 COPY_DEST
@@ -257,6 +258,7 @@ namespace RHI
             
             // run command list
             m_CopyQueue.get()->ExecuteCommandLists({cmdList});
+            m_CopyQueue.get()->EndFrame();
             m_CopyQueue.get()->WaitForGPU();
             
             // return buffer
@@ -321,7 +323,15 @@ namespace RHI
         }
         
         m_pCommandQueue->ExecuteCommandLists((UINT)d3dCmdLists.size(), d3dCmdLists.data());
-        
+    } 
+
+    void CommandQueueDirectX12::BeginFrame()
+    {
+        // NOT implemented
+    }
+    
+    void CommandQueueDirectX12::EndFrame()
+    {
         // add index
         UINT64 fenceValue = m_nextFenceValue++;
         ThrowIfFailed(m_pCommandQueue->Signal(m_Fence.Get(), fenceValue));
@@ -330,7 +340,7 @@ namespace RHI
         m_fenceValues[m_currentFrame] = fenceValue;
         // Advance to next frame
         m_currentFrame = (m_currentFrame + 1) % RHI_MULTI_BUFFERING;
-    } 
+    }
 
     void CommandQueueDirectX12::WaitForGPU()
     {

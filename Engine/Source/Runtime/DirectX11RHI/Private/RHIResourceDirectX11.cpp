@@ -225,6 +225,19 @@ namespace RHI
 
     }
 
+    void CommandQueueDirectX11::BeginFrame()
+    {
+        // NOT implemented
+    }
+    void CommandQueueDirectX11::EndFrame()
+    {
+        // NOT implemented
+    }
+    void CommandQueueDirectX11::WaitForGPU()
+    {
+        // NOT implemented
+    }
+
     bool CommandQueueDirectX11::GetTimestampFrequency(uint64_t* frequency) {
 
         // 开始测量

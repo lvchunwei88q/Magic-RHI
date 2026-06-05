@@ -10,6 +10,8 @@
 
 #define PI 3.1415926f
 
+uint32_t x, y; // windows size 
+bool ExeSetSize = false;
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -17,6 +19,19 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     case WM_DESTROY:
         PostQuitMessage(0);
         return 0;
+    case WM_SIZE:
+    {
+        // 获取新的窗口大小
+        UINT width = LOWORD(lParam);
+        UINT height = HIWORD(lParam);
+        if (width > 0 && height > 0)
+        {
+            x = width;
+            y = height;
+            ExeSetSize = true;
+        }
+        return 0;
+    }
     default:
         return DefWindowProc(hwnd, uMsg, wParam, lParam);
     }
@@ -27,7 +42,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 struct Vertex
 {
-    float Position[3];  // XYZ
+    float Position[4];  // XYZW
     float Color[4];     // RGBA
 };
 
@@ -52,6 +67,7 @@ std::vector<Vertex> GenerateRandomVertices(size_t targetSize)
         v.Position[0] = distPos(rng);
         v.Position[1] = distPos(rng);
         v.Position[2] = distPos(rng);
+        v.Position[3] = 1.0f;
         
         // 随机颜色
         v.Color[0] = distColor(rng);
@@ -163,9 +179,9 @@ int main(int argc, char* argv[])
                 std::cout << "SamplerState created successfully!" << std::endl;
 
                 Vertex tvertices[] = {
-                    { { 0.0f,  0.5f, 0.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },  // 顶点0: 顶部，红色
-                    { { 0.5f, -0.5f, 0.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },  // 顶点1: 右下，绿色
-                    { {-0.5f, -0.5f, 0.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }   // 顶点2: 左下，蓝色
+                    { { 0.0f,  0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },  // 顶点0: 顶部，红色
+                    { { 0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },  // 顶点1: 右下，绿色
+                    { {-0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }   // 顶点2: 左下，蓝色
                 };
 
                 std::vector<Vertex> cvertices = GenerateRandomVertices(2 * 1024);  // 2 KB
@@ -359,6 +375,9 @@ int main(int argc, char* argv[])
                                         TranslateMessage(&msg);
                                         DispatchMessage(&msg);
                                         
+                                        // 开启帧
+                                        device->GetCommandQueue(RHI::RHICmdType::Graphics)->BeginFrame();
+                                        // 开始记录命令
                                         cmdList->BeginRecording();
                                         uint32_t currentIndex = swapChain->GetFrameIndex();
                                         RHI::RHITexture* BackBufferTexture = swapChain->GetBackBuffer(currentIndex);
@@ -419,7 +438,15 @@ int main(int argc, char* argv[])
                                         // run command list
                                         device->GetCommandQueue(RHI::RHICmdType::Graphics)->ExecuteCommandLists({cmdList});
                                         swapChain->Present(1, 0);
+
+                                        // 结束帧
+                                        device->GetCommandQueue(RHI::RHICmdType::Graphics)->EndFrame();
                                         device->GetCommandQueue(RHI::RHICmdType::Graphics)->WaitForGPU();
+                                        
+                                        if (ExeSetSize) {
+                                            ExeSetSize = false;
+                                            swapChain->Resize(x, y);
+                                        }
                                     }
                                 }else{
                                     std::cout << "Failed to create CommandList!" << std::endl;
