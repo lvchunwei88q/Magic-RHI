@@ -1,6 +1,8 @@
 
+#include "Common/RHIException.h"
 #include "RHIDirectX11.h"
 #include "RHIPipelineStateDirectX11.h"
+#include "RHIResourceDirectX11.h"
 
 namespace RHI
 {
@@ -184,18 +186,66 @@ namespace RHI
         Shutdown();
     }
 
-    bool RHIPipelineStateDirectX11::Initialize(Device* /*device*/, const GraphicsPipelineStateDesc& desc)
+    bool RHIPipelineStateDirectX11::Initialize(Device* device, const GraphicsPipelineStateDesc& desc)
     {
         Type = PipelineStateType::Graphics;
+        RHIDirectX11* dx11direct = SafeCast<RHIDirectX11>(device);
         // TODO: Pipeline state data initialization
         //GraphicsDesc.pRootSignature = desc.pRootSignature;
-        GraphicsDesc.pInputElementDesc = desc.pInputElementDesc;
-        GraphicsDesc.NumInputElements = desc.NumInputElements;
-        GraphicsDesc.pVertexShader = desc.pVertexShader;
-        GraphicsDesc.pPixelShader = desc.pPixelShader;
-        GraphicsDesc.pGeometryShader = desc.pGeometryShader;
-        GraphicsDesc.pHullShader = desc.pHullShader;
-        GraphicsDesc.pDomainShader = desc.pDomainShader;
+
+        VertexShaderDirectX11* pVShader = SafeCast<VertexShaderDirectX11>(desc.pVertexShader);
+        ComPtr<ID3D11VertexShader> VShader = pVShader->GetShader();
+        ComPtr<ID3DBlob> pVSBlob = pVShader->GetVSBlob();
+
+        ComPtr<ID3D11PixelShader> PShader;
+        if(desc.pPixelShader != nullptr)
+        {
+            PixelShaderDirectX11* pPShader = SafeCast<PixelShaderDirectX11>(desc.pPixelShader);
+            PShader = pPShader->GetShader();
+        }
+
+        ComPtr<ID3D11GeometryShader> GShader;
+        if(desc.pGeometryShader != nullptr)
+        {
+            GeometryShaderDirectX11* pGShader = SafeCast<GeometryShaderDirectX11>(desc.pGeometryShader);
+            GShader = pGShader->GetShader();
+        }
+
+        ComPtr<ID3D11HullShader> HShader;
+        if(desc.pHullShader != nullptr)
+        {
+            HullShaderDirectX11* pHShader = SafeCast<HullShaderDirectX11>(desc.pHullShader);
+            HShader = pHShader->GetShader();
+        }
+
+        ComPtr<ID3D11DomainShader> DShader;
+        if(desc.pDomainShader != nullptr)
+        {
+            DomainShaderDirectX11* pDShader = SafeCast<DomainShaderDirectX11>(desc.pDomainShader);
+            DShader = pDShader->GetShader();
+        }
+
+        std::vector<D3D11_INPUT_ELEMENT_DESC> d3d11Elements;
+        d3d11Elements.reserve(desc.NumInputElements);
+        for (uint32_t i = 0; i < desc.NumInputElements; i++)
+        {
+            auto& inputElement = desc.pInputElementDesc[i];
+            d3d11Elements.push_back(ConvertInputLayout(inputElement));
+        }
+
+        ThrowIfFailed(dx11direct->GetDevice()->CreateInputLayout(
+            d3d11Elements.data(),
+            static_cast<UINT>(d3d11Elements.size()),
+            pVSBlob->GetBufferPointer(),   // VS 字节码（用于验证）
+            pVSBlob->GetBufferSize(),
+            GraphicsDesc.pInputLayout.GetAddressOf()
+        ));
+
+        GraphicsDesc.pVertexShader = VShader;
+        GraphicsDesc.pPixelShader = PShader;
+        GraphicsDesc.pGeometryShader = GShader;
+        GraphicsDesc.pHullShader = HShader;
+        GraphicsDesc.pDomainShader = DShader;
         GraphicsDesc.pRasterizerState = desc.pRasterizerState;
         GraphicsDesc.pBlendState = desc.pBlendState;
         GraphicsDesc.pDepthStencilState = desc.pDepthStencilState;
@@ -209,12 +259,17 @@ namespace RHI
         return true;
     }
 
-    bool RHIPipelineStateDirectX11::Initialize(Device* /*device*/, const ComputePipelineStateDesc& desc)
+    bool RHIPipelineStateDirectX11::Initialize(Device* device, const ComputePipelineStateDesc& desc)
     {
         Type = PipelineStateType::Compute;
+        RHIDirectX11* dx11direct = SafeCast<RHIDirectX11>(device);
         // TODO: Pipeline state data initialization
         //ComputeDesc.pRootSignature = desc.pRootSignature;
-        ComputeDesc.pComputeShader = desc.pComputeShader;
+        
+        ComputeShaderDirectX11* pCShader = SafeCast<ComputeShaderDirectX11>(desc.pComputeShader);
+        ComPtr<ID3D11ComputeShader> CShader = pCShader->GetShader();
+
+        ComputeDesc.pComputeShader = CShader;
         return true;
     }
 
@@ -224,7 +279,7 @@ namespace RHI
 
     bool RHIPipelineStateDirectX11::IsValid() const
     {
-        return true;
+        return Type != PipelineStateType::Unknown;
     }
 
     PipelineStateType RHIPipelineStateDirectX11::GetType() const

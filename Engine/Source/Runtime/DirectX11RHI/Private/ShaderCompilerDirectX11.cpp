@@ -165,7 +165,15 @@ namespace RHI
             if (!pShader)
                 return nullptr;
 
-            return std::make_shared<ShaderType>(pShader);
+            std::shared_ptr<ShaderType> shader = std::make_shared<ShaderType>(pShader);
+
+            if constexpr (std::is_same_v<ShaderType, VertexShaderDirectX11>)
+            {
+                shader->SetVSBlob(shaderBlob.Get());
+            }
+            // ... 其他类型
+
+            return shader;
         }
     }
 

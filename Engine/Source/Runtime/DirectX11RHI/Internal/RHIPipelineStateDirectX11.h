@@ -3,18 +3,26 @@
 #include <d3d11.h>
 #include <Common/RHIException.h>
 
+#include <wrl.h> // ComPtr
+using Microsoft::WRL::ComPtr;
+
 namespace RHI
 {
+    /*
+    * @brief 图形管线状态描述
+    * 由于DX11不支持所谓PSO，所以这里直接将管线状态描述存储在这里结构体中，在CommandListDX11_PipelineState.cpp中直接
+    * 调用D3D11DeviceContext::SetPipelineState()设置管线状态。
+    * 初始化时根据描述创建对应的DX11管线状态对象。
+    */
     struct GPSDDirectX11
     {        
-        InputElementDesc* pInputElementDesc = nullptr;
-        uint32_t NumInputElements = 0; 
+        ComPtr<ID3D11InputLayout> pInputLayout;
         
-        RHIVertexShader* pVertexShader = nullptr;
-        RHIPixelShader* pPixelShader = nullptr;
-        RHIGeometryShader* pGeometryShader = nullptr;
-        RHIHullShader* pHullShader = nullptr;
-        RHIDomainShader* pDomainShader = nullptr;
+        ComPtr<ID3D11VertexShader> pVertexShader;
+        ComPtr<ID3D11PixelShader> pPixelShader;
+        ComPtr<ID3D11GeometryShader> pGeometryShader;
+        ComPtr<ID3D11HullShader> pHullShader;
+        ComPtr<ID3D11DomainShader> pDomainShader;
 
         RHIRasterizerState* pRasterizerState = nullptr;
         RHIBlendState* pBlendState = nullptr;
@@ -27,7 +35,7 @@ namespace RHI
 
     struct CPSDDirectX11
     {
-        RHIComputeShader* pComputeShader = nullptr;
+        ComPtr<ID3D11ComputeShader> pComputeShader;
     };
 
     class RHIPipelineStateDirectX11 : public RHIPipelineState

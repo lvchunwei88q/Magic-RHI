@@ -125,8 +125,12 @@ namespace RHI
         VertexShaderDirectX11(ID3D11VertexShader* pShader) : m_pVertexShader(pShader) {}
         ~VertexShaderDirectX11() override = default;
         ID3D11VertexShader* GetShader() const { return m_pVertexShader.Get(); }
+        ID3DBlob* GetVSBlob() const { return m_pVSBlob.Get(); }
+
+        void SetVSBlob(ID3DBlob* pVSBlob) { m_pVSBlob = pVSBlob; }
     private:
         ComPtr<ID3D11VertexShader> m_pVertexShader;
+        ComPtr<ID3DBlob> m_pVSBlob;
     };
 
     class PixelShaderDirectX11 : public RHIPixelShader

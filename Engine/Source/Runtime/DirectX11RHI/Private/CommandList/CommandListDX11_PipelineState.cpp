@@ -21,7 +21,7 @@ namespace RHI
         }
             
 
-        auto pso = static_cast<RHIPipelineStateDirectX11*>(pPipelineState);
+        auto pso = SafeCast<RHIPipelineStateDirectX11>(pPipelineState);
         if (!pso->IsValid())
         {
 #if RHI_ENABLE_RESOURCE_DEBUG_INFO
