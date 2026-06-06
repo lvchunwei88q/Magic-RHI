@@ -24,9 +24,9 @@ namespace RHI
         ComPtr<ID3D11HullShader> pHullShader;
         ComPtr<ID3D11DomainShader> pDomainShader;
 
-        RHIRasterizerState* pRasterizerState = nullptr;
-        RHIBlendState* pBlendState = nullptr;
-        RHIDepthStencilState* pDepthStencilState = nullptr;
+        ComPtr<ID3D11RasterizerState> pRasterizerState;
+        ComPtr<ID3D11BlendState> pBlendState;
+        ComPtr<ID3D11DepthStencilState> pDepthStencilState;
 
         uint32_t NumRenderTargets = 0;
         DXGI_FORMAT RenderTargetFormats[8] = {};
@@ -51,6 +51,8 @@ namespace RHI
         bool IsValid() const override;
         PipelineStateType GetType() const override;
 
+        const GPSDDirectX11& GetGraphicsDesc() const;
+        const CPSDDirectX11& GetComputeDesc() const;
     private:
         PipelineStateType Type = PipelineStateType::Unknown;
         // 这里存放的是DirectX11的管线状态数据

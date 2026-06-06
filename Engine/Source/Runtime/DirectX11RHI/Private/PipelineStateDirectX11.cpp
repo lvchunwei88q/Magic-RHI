@@ -24,6 +24,8 @@ namespace RHI
         D3D11_BLEND_DESC ConvertBlendState(RHIBlendState* blendState)
         {
             D3D11_BLEND_DESC desc = {};
+            // 先给一个默认值，后续再修改
+            desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
             if (blendState)
             {
                 // TODO: Blend state data initialization
@@ -34,6 +36,9 @@ namespace RHI
         D3D11_RASTERIZER_DESC ConvertRasterizerState(RHIRasterizerState* rasterizerState)
         {
             D3D11_RASTERIZER_DESC desc = {};
+            // 先给一个默认值，后续再修改
+            desc.FillMode = D3D11_FILL_SOLID;
+            desc.CullMode = D3D11_CULL_BACK;
             if (rasterizerState)
             {
                 // TODO: Rasterizer state data initialization
@@ -241,14 +246,27 @@ namespace RHI
             GraphicsDesc.pInputLayout.GetAddressOf()
         ));
 
+
+        ComPtr<ID3D11RasterizerState> pRasterizerState;
+        D3D11_RASTERIZER_DESC rasterizerDesc = ConvertRasterizerState(desc.pRasterizerState);
+        ThrowIfFailed(dx11direct->GetDevice()->CreateRasterizerState(&rasterizerDesc, pRasterizerState.GetAddressOf()));
+
+        ComPtr<ID3D11BlendState> pBlendState;
+        D3D11_BLEND_DESC blendDesc = ConvertBlendState(desc.pBlendState);
+        ThrowIfFailed(dx11direct->GetDevice()->CreateBlendState(&blendDesc, pBlendState.GetAddressOf()));
+
+        ComPtr<ID3D11DepthStencilState> pDepthStencilState;
+        D3D11_DEPTH_STENCIL_DESC depthStencilDesc = ConvertDepthStencilState(desc.pDepthStencilState);
+        ThrowIfFailed(dx11direct->GetDevice()->CreateDepthStencilState(&depthStencilDesc, pDepthStencilState.GetAddressOf()));
+
         GraphicsDesc.pVertexShader = VShader;
         GraphicsDesc.pPixelShader = PShader;
         GraphicsDesc.pGeometryShader = GShader;
         GraphicsDesc.pHullShader = HShader;
         GraphicsDesc.pDomainShader = DShader;
-        GraphicsDesc.pRasterizerState = desc.pRasterizerState;
-        GraphicsDesc.pBlendState = desc.pBlendState;
-        GraphicsDesc.pDepthStencilState = desc.pDepthStencilState;
+        GraphicsDesc.pRasterizerState = pRasterizerState;
+        GraphicsDesc.pBlendState = pBlendState;
+        GraphicsDesc.pDepthStencilState = pDepthStencilState;
         GraphicsDesc.NumRenderTargets = desc.NumRenderTargets;
         // 复制数组
         for (uint32_t i = 0; i < 8; ++i)
@@ -285,6 +303,16 @@ namespace RHI
     PipelineStateType RHIPipelineStateDirectX11::GetType() const
     {
         return Type;
+    }
+
+    const GPSDDirectX11& RHIPipelineStateDirectX11::GetGraphicsDesc() const
+    {
+        return GraphicsDesc;
+    }
+
+    const CPSDDirectX11& RHIPipelineStateDirectX11::GetComputeDesc() const
+    {
+        return ComputeDesc;
     }
 
     std::shared_ptr<RHIPipelineState> RHIDirectX11::CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc)

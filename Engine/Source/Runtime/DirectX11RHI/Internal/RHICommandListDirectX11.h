@@ -32,7 +32,7 @@ namespace RHI
             : RHICommandList(pCmdAllocator), m_pDeviceContext(pDeviceContext) {}
         ~CommandListDirectX11() override = default;
 
-        /* DX 11 不支持命令列表记录 */ 
+        /* DX 11 不支持命令列表记录，直接执行命令 */ 
         void BeginRecording() override {}
         void EndRecording() override {}
 
