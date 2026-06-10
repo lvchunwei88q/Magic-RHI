@@ -10,18 +10,17 @@ namespace RHI
     {
         D3D12_SHADER_VISIBILITY Translate(ShaderVisibility vis)
         {
-            // All → ALL
-            if (vis == ShaderVisibility::All || vis == ShaderVisibility::AllGraphics)
-                return D3D12_SHADER_VISIBILITY_ALL;
-
             // 单个 bit → 映射
-            if (vis == ShaderVisibility::VertexBit)   return D3D12_SHADER_VISIBILITY_VERTEX;
-            if (vis == ShaderVisibility::PixelBit)    return D3D12_SHADER_VISIBILITY_PIXEL;
-            if (vis == ShaderVisibility::HullBit)     return D3D12_SHADER_VISIBILITY_HULL;
-            if (vis == ShaderVisibility::DomainBit)   return D3D12_SHADER_VISIBILITY_DOMAIN;
-            if (vis == ShaderVisibility::GeometryBit) return D3D12_SHADER_VISIBILITY_GEOMETRY;
-            if (vis == ShaderVisibility::AmpBit)      return D3D12_SHADER_VISIBILITY_AMPLIFICATION;
-            if (vis == ShaderVisibility::MeshBit)     return D3D12_SHADER_VISIBILITY_MESH;
+            if (vis == ShaderVisibility::Vertex)   return D3D12_SHADER_VISIBILITY_VERTEX;
+            if (vis == ShaderVisibility::Pixel)    return D3D12_SHADER_VISIBILITY_PIXEL;
+            if (vis == ShaderVisibility::Hull)     return D3D12_SHADER_VISIBILITY_HULL;
+            if (vis == ShaderVisibility::Domain)   return D3D12_SHADER_VISIBILITY_DOMAIN;
+            if (vis == ShaderVisibility::Geometry) return D3D12_SHADER_VISIBILITY_GEOMETRY;
+            if (vis == ShaderVisibility::Amplification) return D3D12_SHADER_VISIBILITY_AMPLIFICATION;
+            if (vis == ShaderVisibility::Mesh)     return D3D12_SHADER_VISIBILITY_MESH;
+            if (vis == ShaderVisibility::All) return D3D12_SHADER_VISIBILITY_ALL;
+            // 对于计算着色器它有自己的 根签名 所有可见性都为 ALL
+            if (vis == ShaderVisibility::Compute) return D3D12_SHADER_VISIBILITY_ALL;
 
             // 组合且不是全部 → 回退 ALL
             return D3D12_SHADER_VISIBILITY_ALL;

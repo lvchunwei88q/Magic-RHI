@@ -7,8 +7,13 @@ struct PSInput
     float4 Color : COLOR;          // 颜色
 };
 
+cbuffer DrawConstants : register(b3, space0)
+{
+    float value;
+};
+
 float4 main(PSInput input) : SV_Target
 {
-    float4 result = input.Color;   
+    float4 result =  value;
     return result;
 }

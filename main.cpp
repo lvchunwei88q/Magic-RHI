@@ -270,21 +270,21 @@ int main(int argc, char* argv[])
 
                     RHI::RootParameterDesc tableParam = {};
                     tableParam.Type                            = RHI::RootParameterType::DescriptorTable;
-                    tableParam.Visibility                      = RHI::ShaderVisibility::VertexPixel;
+                    tableParam.Visibility                      = RHI::ShaderVisibility::All;
                     tableParam.DescriptorTable.NumDescriptorRanges = 2;
                     tableParam.DescriptorTable.pDescriptorRanges   = ranges;
 
                     // ===== 参数 1：Root CBV，绑定到 b2 =====
                     RHI::RootParameterDesc cbvParam = {};
                     cbvParam.Type                         = RHI::RootParameterType::CBV;
-                    cbvParam.Visibility                   = RHI::ShaderVisibility::VertexPixel;
+                    cbvParam.Visibility                   = RHI::ShaderVisibility::All;
                     cbvParam.Descriptor.ShaderRegister    = 2;  // b2（b0~b1 已被描述符表中的 CBV Range 占用）
                     cbvParam.Descriptor.RegisterSpace     = 0;
 
-                    // ===== 参数 2：Root Constants，4 个 32 位值，绑定到 b3 =====
+                    // ===== 参数 2：Root Constants，1 个 32 位值，绑定到 b3 =====
                     RHI::RootParameterDesc constParam = {};
                     constParam.Type                       = RHI::RootParameterType::Constants;
-                    constParam.Visibility                 = RHI::ShaderVisibility::VertexPixel;
+                    constParam.Visibility                 = RHI::ShaderVisibility::Pixel;
                     constParam.Constants.ShaderRegister   = 3;  // b3（b0~b2 已被前面的 CBV Range + Root CBV 占用）
                     constParam.Constants.RegisterSpace    = 0;
                     constParam.Constants.Num32BitValues   = 1;  // 1 个 float
@@ -308,7 +308,7 @@ int main(int argc, char* argv[])
 
                     RHI::RootParameterDesc uavtableParam = {};
                     uavtableParam.Type                            = RHI::RootParameterType::DescriptorTable;
-                    uavtableParam.Visibility                      = RHI::ShaderVisibility::ComputeBit;
+                    uavtableParam.Visibility                      = RHI::ShaderVisibility::Compute;
                     uavtableParam.DescriptorTable.NumDescriptorRanges = 1;
                     uavtableParam.DescriptorTable.pDescriptorRanges   = uavranges;
                     rootUavDesc.Parameters.push_back(uavtableParam);
@@ -405,9 +405,11 @@ int main(int argc, char* argv[])
                                         RHI::RHIDescriptorHeap* heaps[] = {descriptorHeap, descriptorSamplerHeap};
                                         cmdList->SetDescriptorHeaps(2, heaps);
 
+                                        float floatValue = 0.5f; uint32_t intValue;
+                                        memcpy(&intValue, &floatValue, sizeof(float));
                                         cmdList->SetGraphicsRootDescriptorTable(0, descriptorHeap, 0);
                                         cmdList->SetGraphicsRootConstantBufferView(1, constantBuffer1->GetGPUVirtualAddress());
-                                        cmdList->SetGraphicsRoot32BitConstant(2, PI, 0);
+                                        cmdList->SetGraphicsRoot32BitConstant(2, intValue, 0);
                                         
                                         // 设置拓扑类型
                                         cmdList->IASetPrimitiveTopology(RHI::RHIPrimitiveTopology::TriangleList);
@@ -425,7 +427,7 @@ int main(int argc, char* argv[])
                                         cmdList->RSSetScissorRects(1, &scissorRect);
 
                                         // 绘制三角形
-                                        cmdList->Draw(3, 0);            // TODO DX 11 处理 设置资源 VB
+                                        cmdList->Draw(3, 0);
 
                                         RHI::BarrierDesc barrierToPresent = {};
                                         barrierToPresent.Type                        = RHI::ResourceBarrierType::Transition;

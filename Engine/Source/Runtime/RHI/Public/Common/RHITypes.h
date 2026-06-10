@@ -450,25 +450,17 @@ enum class RootSignatureFlags : uint32_t
 };
 ENUM_CLASS_FLAGS(RootSignatureFlags);
 
-enum class ShaderVisibility : uint32_t
+enum class ShaderVisibility : uint8_t
 {
-    None        = 0,
-
-    // 基础阶段位
-    VertexBit   = 1u << 0,   // 0x1  - 顶点着色器
-    HullBit     = 1u << 1,   // 0x2  - 外壳着色器
-    DomainBit   = 1u << 2,   // 0x4  - 域着色器
-    GeometryBit = 1u << 3,   // 0x8  - 几何着色器
-    PixelBit    = 1u << 4,   // 0x10 - 像素着色器
-    AmpBit      = 1u << 5,   // 0x20 - 放大着色器 / Task
-    MeshBit     = 1u << 6,   // 0x40 - 网格着色器
-    ComputeBit  = 1u << 7,   // 0x80 - 计算着色器
-
-    // 常用预设组合
-    AllGraphics = VertexBit | HullBit | DomainBit | GeometryBit | PixelBit | AmpBit | MeshBit,
-    All         = AllGraphics | ComputeBit,
-    VertexPixel = VertexBit | PixelBit,
-    VertexPixelGeometry = VertexBit | PixelBit | GeometryBit,
+    None        = 0,    // 无
+    All         = 1,    // 所有阶段可见
+    Vertex      = 2,    // 仅顶点着色器
+    Hull        = 3,    // 仅外壳着色器
+    Domain      = 4,    // 仅域着色器
+    Geometry    = 5,    // 仅几何着色器
+    Pixel       = 6,    // 仅像素着色器
+    Amplification = 7,  // 仅放大着色器
+    Mesh        = 8,    // 仅网格着色器
+    Compute     = 9,    // 仅计算着色器
 };
-ENUM_CLASS_FLAGS(ShaderVisibility);
 }
