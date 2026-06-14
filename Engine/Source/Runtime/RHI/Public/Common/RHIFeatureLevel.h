@@ -83,4 +83,24 @@ inline const char* ShaderModelToString(ShaderModelVersion version)
     default: return "Unknown";
     }
 }
+
+inline size_t ShaderModelToNumber(ShaderModelVersion version)
+{
+    switch (version)
+    {
+    case ShaderModelVersion::SM_5_0: return 50;
+    case ShaderModelVersion::SM_5_1: return 51;
+    case ShaderModelVersion::SM_6_0: return 60;
+    case ShaderModelVersion::SM_6_1: return 61;
+    case ShaderModelVersion::SM_6_2: return 62;
+    case ShaderModelVersion::SM_6_3: return 63;
+    case ShaderModelVersion::SM_6_4: return 64;
+    case ShaderModelVersion::SM_6_5: return 65;
+    case ShaderModelVersion::SM_6_6: return 66;
+    case ShaderModelVersion::SM_6_7: return 67;
+    case ShaderModelVersion::SM_6_8: return 68;
+    case ShaderModelVersion::SM_6_9: return 69;
+    default: return 0;
+    }
+}
 }

@@ -55,7 +55,7 @@ namespace RHI
         }
 
         bool CompileShaderToBlob(const std::string& source, const std::string& entryPoint, 
-                                const std::string& profile, bool enableDebug,
+                                const std::string& profile, bool enableDebug,const std::vector<ShaderMacro>& macros,
                                 ComPtr<ID3DBlob>& outBlob)
         {
             UINT flags = 0;
@@ -67,12 +67,19 @@ namespace RHI
                 flags |= D3DCOMPILE_DEBUG;
             }
 
+            std::vector<D3D_SHADER_MACRO> dx11Macros;
+            for (const auto& macro : macros)
+            {
+                dx11Macros.push_back({macro.Name, macro.Definition});
+            }
+            dx11Macros.push_back({nullptr, nullptr});
+
             ComPtr<ID3DBlob> errorBlob;
             HRESULT hr = D3DCompile(
                 source.c_str(),
                 source.size(),
                 nullptr,
-                nullptr,
+                dx11Macros.data(),
                 nullptr,
                 entryPoint.c_str(),
                 profile.c_str(),
@@ -158,7 +165,7 @@ namespace RHI
             std::string entryPoint = desc.EntryPoint ? desc.EntryPoint : "main";
 
             ComPtr<ID3DBlob> shaderBlob;
-            if (!CompileShaderToBlob(source, entryPoint, profile, desc.EnableDebugInfo, shaderBlob))
+            if (!CompileShaderToBlob(source, entryPoint, profile, desc.EnableDebugInfo, desc.Macros, shaderBlob))
                 return nullptr;
 
             auto pShader = createFunc(pDevice, shaderBlob);
@@ -241,5 +248,11 @@ namespace RHI
                     return pShader;
                 return nullptr;
             });
+    }
+
+    ShaderModelVersion RHIDirectX11::GetShaderModelVersion() const
+    {
+        // DX11 最高支持 SM_5_0
+        return ShaderModelVersion::SM_5_0;
     }
 }

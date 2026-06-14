@@ -123,7 +123,7 @@ namespace RHI
             std::string entryPoint = desc.EntryPoint ? desc.EntryPoint : "main";
 
             std::vector<uint8_t> bytecode;
-            if (!device->CompileShaderToBytecode(source, entryPoint, profile, desc.EnableDebugInfo, bytecode,basePath))
+            if (!device->CompileShaderToBytecode(source, entryPoint, profile, desc.EnableDebugInfo, desc.Macros, bytecode,basePath))
                 return nullptr;
 
             return std::make_shared<ShaderType>(bytecode);
@@ -149,7 +149,7 @@ namespace RHI
     }
 
     bool RHIDirectX12::CompileShaderToBytecode(const std::string& source, const std::string& entryPoint, 
-                                const std::string& profile, bool enableDebug,
+                                const std::string& profile, bool enableDebug, const std::vector<ShaderMacro>& macros,
                                 std::vector<uint8_t>& outBytecode,std::string& basePath)
     {   
         if (!compiler || !utils)
@@ -162,7 +162,7 @@ namespace RHI
         std::wstring sourceW = IO::ToWideString(source);
         std::wstring entryPointW = IO::ToWideString(entryPoint);
         std::wstring profileW = IO::ToWideString(profile);
-        
+
         // 创建源码 Blob
         ComPtr<IDxcBlobEncoding> sourceBlob;
         ThrowIfFailed(utils->CreateBlob(
@@ -176,6 +176,7 @@ namespace RHI
         
         // 准备参数
         std::vector<LPCWSTR> args;
+        std::vector<std::wstring> macroStrings; 
         args.push_back(L"-T"); args.push_back(profileW.c_str());
         args.push_back(L"-E"); args.push_back(entryPointW.c_str());
         args.push_back(L"-I"); args.push_back(shaderPath.c_str()); // 在当前目录找头文件
@@ -189,6 +190,15 @@ namespace RHI
         // 开启严格模式
         args.push_back(L"-Ges");
         args.push_back(L"-WX");
+
+        for (const auto& macro : macros)
+        {
+            std::wstring macroW = IO::ToWideString(macro.Name);
+            macroW += L"=" + IO::ToWideString(macro.Definition);
+            macroStrings.push_back(macroW); 
+            args.push_back(L"-D"); args.push_back(macroStrings.back().c_str());
+            //args.push_back(L"-D"); args.push_back(L"SHADER_MODEL=50");
+        }
         
         // 编译
         DxcBuffer sourceBuffer;
@@ -302,5 +312,10 @@ namespace RHI
     std::shared_ptr<RHIComputeShader> RHIDirectX12::CompileComputeShader(const ShaderCompileDesc& desc)
     {
         return CompileShaderInternal<ComputeShaderDirectX12>(this, desc, GetShaderTarget("cs").c_str());
+    }
+    
+    ShaderModelVersion RHIDirectX12::GetShaderModelVersion() const
+    {
+        return GetHighestSupportedShaderModel(GetDevice());
     }
 }

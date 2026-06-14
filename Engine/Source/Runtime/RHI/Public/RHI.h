@@ -82,6 +82,7 @@ namespace RHI
         [[nodiscard]] virtual std::shared_ptr<RHIHullShader> CompileHullShader(const ShaderCompileDesc& desc) = 0;
         [[nodiscard]] virtual std::shared_ptr<RHIDomainShader> CompileDomainShader(const ShaderCompileDesc& desc) = 0;
         [[nodiscard]] virtual std::shared_ptr<RHIComputeShader> CompileComputeShader(const ShaderCompileDesc& desc) = 0;
+        virtual ShaderModelVersion GetShaderModelVersion() const = 0;
 
         [[nodiscard]] virtual std::shared_ptr<RHIRootSignature> CreateRootSignature(const RootSignatureDesc& desc) = 0;
         virtual void DeleteRootSignature(std::shared_ptr<RHIRootSignature>& rootSignature) = 0;

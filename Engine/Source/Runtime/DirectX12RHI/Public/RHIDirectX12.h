@@ -58,6 +58,7 @@ namespace RHI
         [[nodiscard]] std::shared_ptr<RHIHullShader> CompileHullShader(const ShaderCompileDesc& desc) override;
         [[nodiscard]] std::shared_ptr<RHIDomainShader> CompileDomainShader(const ShaderCompileDesc& desc) override;
         [[nodiscard]] std::shared_ptr<RHIComputeShader> CompileComputeShader(const ShaderCompileDesc& desc) override;
+        ShaderModelVersion GetShaderModelVersion() const override;
 
         void CreateQueues();
 
@@ -78,7 +79,7 @@ namespace RHI
         std::string GetShaderTarget(const char* prefix) const;
 
         bool CompileShaderToBytecode(const std::string& source, const std::string& entryPoint, 
-                                    const std::string& profile, bool enableDebug,
+                                    const std::string& profile, bool enableDebug, const std::vector<ShaderMacro>& macros,
                                     std::vector<uint8_t>& outBytecode,std::string& basePath);
     private:
         ComPtr<ID3D12Device> m_pDevice;

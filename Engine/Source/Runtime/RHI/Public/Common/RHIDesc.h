@@ -1,5 +1,6 @@
 #pragma once
 #include "RHITypes.h"
+#include <vector>
 
 namespace RHI
 {
@@ -85,9 +86,16 @@ struct TextureDesc
     uint32_t Flags;
 };
 
+struct ShaderMacro
+{
+    const char* Name;
+    const char* Definition;
+};
+
 struct ShaderCompileDesc
 {
     ShaderType Type;
+    std::vector<ShaderMacro> Macros = {};
     const char* SourceCode = nullptr;
     const char* EntryPoint = "main";
     const char* Profile = nullptr; // 对于普通的Shader而言我们不希望你去指定Profile，因为在不同的平台上的Shader Model的支持程度是不同的，我们的Shader编译器会根据平台自动选择合适的Profile

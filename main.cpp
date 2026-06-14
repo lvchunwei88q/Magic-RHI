@@ -149,6 +149,7 @@ int main(int argc, char* argv[])
     if (device && device->Initialize())
     {
         std::cout << "Feature Level: " << GetFeatureLevelName(device->GetFeatureLevel()) << std::endl;
+        std::cout << "Shader Model Version: " << ShaderModelToString(device->GetShaderModelVersion()) << std::endl;
         std::wcout << L"Device initialized successfully: " << device->GetAdapterName() << std::endl;
         
         RHI::SwapChainDesc swapChainDesc = {};
@@ -221,6 +222,7 @@ int main(int argc, char* argv[])
                 std::cout << "VertexBuffer created successfully!" << std::endl;
                 
                 std::cout << "Shader compilation..." << std::endl;
+                std::string versionStr = std::to_string(ShaderModelToNumber(device->GetShaderModelVersion()));
                 // 从文件编译顶点着色器
                 std::string exePath = IO::ToNarrowString(IO::AbsolutePath::Get().GetExecutableDirectory());
                 std::string vsshaderPath = exePath + "\\..\\..\\Test\\testVS.hlsl"; // 你知道的这只是一个测试示例
@@ -233,6 +235,9 @@ int main(int argc, char* argv[])
 
                 RHI::ShaderCompileDesc psDesc{};
                 psDesc.Type = RHI::ShaderType::Pixel;
+                // Set shader model macro
+                psDesc.Macros.push_back({"SHADER_MODEL", 
+                    versionStr.c_str()});
                 psDesc.EnableDebugInfo = true;
                 psDesc.FilePath = psshaderPath.c_str();
 
