@@ -41,5 +41,9 @@ float4 main(PSInput input) : SV_Target
     float result1 = Vertices[input.Color.z * 64].Color.x;
     float result2 = Vertices[input.Color.y * 64].Color.y;
     float result3 = Vertices[input.Color.x * 64].Color.z;
-    return float4(result1, result2, result3, 1.0f);
+#if SHADER_MODEL > 50
+    return float4(result1, result2, result3, 1.0f) * SHADER_MODEL / 50.0f * value;
+#else
+    return input.Color;
+#endif
 }
