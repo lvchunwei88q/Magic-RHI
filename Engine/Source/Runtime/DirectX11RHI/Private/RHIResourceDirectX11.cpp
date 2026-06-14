@@ -120,7 +120,7 @@ namespace RHI
             {
                 miscFlags |= D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
             }
-            // TODO: 其他标志位
+            // TODO: 其他标志位 现在支持判断结构化缓冲区
             
             return miscFlags;
         }

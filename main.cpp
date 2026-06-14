@@ -207,6 +207,10 @@ int main(int argc, char* argv[])
                 std::shared_ptr<RHI::RHIConstantBuffer> constantBuffer1 = CreateBuffer(RHI::BufferHeapType::Default,RHI::BufferBindFlag::ConstantBuffer,RHI::DescriptorRangeType::CBV);
                 std::cout << "ConstantBuffer created successfully!" << std::endl;
                 std::cout << "ConstantBuffer Handle: " << constantBuffer1->GetBindlessHandle().GetIndex() << std::endl;
+
+                 auto cbv = device->GetDescriptorHeap(RHI::RHIDescriptorHeapType::Standard)->GetDescriptorHeepView(constantBuffer1->GetBindlessHandle());
+                 RHI::RHIConstantBufferView* cbvView = SafeCast<RHI::RHIConstantBufferView>(cbv);
+                 std::cout << "ConstantBuffer View: " << cbvView->GetGPUVirtualAddress() << std::endl;
                 
                 std::shared_ptr<RHI::RHIConstantBuffer> constantBuffer2 = CreateBuffer(RHI::BufferHeapType::Upload,RHI::BufferBindFlag::ShaderResource,RHI::DescriptorRangeType::SRV);
                 std::cout << "ShaderResource created successfully!" << std::endl;
@@ -413,7 +417,7 @@ int main(int argc, char* argv[])
                                         float floatValue = 0.5f; uint32_t intValue;
                                         memcpy(&intValue, &floatValue, sizeof(float));
                                         cmdList->SetGraphicsRootDescriptorTable(0, descriptorHeap, 0);
-                                        //cmdList->SetGraphicsRootConstantBufferView(1, constantBuffer1->GetGPUVirtualAddress());
+                                        cmdList->SetGraphicsRootConstantBufferView(1, cbvView->GetGPUVirtualAddress());
                                         cmdList->SetGraphicsRoot32BitConstant(2, intValue, 0);
                                         
                                         // 设置拓扑类型

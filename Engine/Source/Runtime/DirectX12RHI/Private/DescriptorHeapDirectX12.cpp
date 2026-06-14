@@ -2,6 +2,21 @@
 #include "DescriptorHeapDirectX12.h"
 #include "RHIDirectX12.h"
 
+#define IMPLEMENT_SET_DESCRIPTOR(Type, Member, View_Type, ErrorFunc)             \
+        if (!handle.IsValid() || handle.GetType() != HeapType)                  \
+            return;                                                             \
+        uint32_t index = handle.GetIndex();                                     \
+        if (index < Capacity)                                                   \
+        {                                                                       \
+            m_Descriptors[index].Member = std::unique_ptr<Type>(Member);        \
+            m_Descriptors[index].ViewType = View_Type;                          \
+        }                                                                       \
+        else                                                                    \
+        {                                                                       \
+            auto error = ErrorFunc;                                             \
+            error();                                                            \
+        }
+
 namespace RHI
 {
     D3D12_CPU_DESCRIPTOR_HANDLE DescriptorHeapDirectX12::GetCPUHandle(uint32_t index) const
@@ -27,7 +42,36 @@ namespace RHI
         handle.ptr += index * m_DescriptorSize;
         return handle;
     }
-
+    
+    RHIResource* DescriptorHeapDirectX12::GetDescriptorHeepView(RHIDescriptorHandle handle) const
+    {
+        if (!handle.IsValid() || handle.GetType() != HeapType)
+        {
+            ThrowErrorMessage("Error GetDescriptorHeepView Unknown index range");
+            return nullptr;
+        }
+        uint32_t index = handle.GetIndex();
+        auto& descriptor = m_Descriptors[index];
+        if (descriptor.ViewType == RHIResourceType::RRT_None)
+        {
+            ThrowErrorMessage("Error GetDescriptorHeepView Unknown index range");
+            return nullptr;
+        }
+        return descriptor.ViewType == RHIResourceType::RRT_ConstantBufferView
+            ? SafeCast<RHIResource>(descriptor.pCBV.get())
+            : descriptor.ViewType == RHIResourceType::RRT_ShaderResourceView
+            ? SafeCast<RHIResource>(descriptor.pSRV.get())
+            : descriptor.ViewType == RHIResourceType::RRT_UnorderedAccessView
+            ? SafeCast<RHIResource>(descriptor.pUAV.get())
+            : descriptor.ViewType == RHIResourceType::RRT_RenderTargetView
+            ? SafeCast<RHIResource>(descriptor.pRTV.get())
+            : descriptor.ViewType == RHIResourceType::RRT_DepthStencilView
+            ? SafeCast<RHIResource>(descriptor.pDSV.get())
+            : descriptor.ViewType == RHIResourceType::RRT_SamplerState
+            ? SafeCast<RHIResource>(descriptor.pSampler.get())
+            : nullptr;
+    }
+    
     RHIDescriptorHandle DescriptorHeapDirectX12::Allocate()
     {
         if (IsFull())
@@ -72,7 +116,63 @@ namespace RHI
         }
 #endif
         
+        m_Descriptors[index].Release();
         m_FreeList.push_back(index);
         CurrentIndex = Capacity - static_cast<uint32_t>(m_FreeList.size());
+    }
+
+    void DescriptorHeapDirectX12::SetDescriptor(RHIDescriptorHandle handle, ConstantBufferViewDirectX12* pCBV)
+    {
+        IMPLEMENT_SET_DESCRIPTOR(ConstantBufferViewDirectX12, pCBV, RHIResourceType::RRT_ConstantBufferView,[](){
+            ThrowErrorMessage("Error SetDescriptor ConstantBufferView Unknown index range");
+        });
+    }
+
+    void DescriptorHeapDirectX12::SetDescriptor(RHIDescriptorHandle handle, ShaderResourceViewDirectX12* pSRV)
+    {
+        IMPLEMENT_SET_DESCRIPTOR(ShaderResourceViewDirectX12, pSRV, RHIResourceType::RRT_ShaderResourceView,[](){
+            ThrowErrorMessage("Error SetDescriptor ShaderResourceView Unknown index range");
+        });
+    }
+
+    void DescriptorHeapDirectX12::SetDescriptor(RHIDescriptorHandle handle, UnorderedAccessViewDirectX12* pUAV)
+    {
+        IMPLEMENT_SET_DESCRIPTOR(UnorderedAccessViewDirectX12, pUAV, RHIResourceType::RRT_UnorderedAccessView,[](){
+            ThrowErrorMessage("Error SetDescriptor UnorderedAccessView Unknown index range");
+        });
+    }
+
+    void DescriptorHeapDirectX12::SetDescriptor(RHIDescriptorHandle handle, RenderTargetViewDirectX12* pRTV)
+    {
+        IMPLEMENT_SET_DESCRIPTOR(RenderTargetViewDirectX12, pRTV, RHIResourceType::RRT_RenderTargetView,[](){
+            ThrowErrorMessage("Error SetDescriptor RenderTargetView Unknown index range");
+        });
+    }
+
+    void DescriptorHeapDirectX12::SetDescriptor(RHIDescriptorHandle handle, DepthStencilViewDirectX12* pDSV)
+    {
+        IMPLEMENT_SET_DESCRIPTOR(DepthStencilViewDirectX12, pDSV, RHIResourceType::RRT_DepthStencilView,[](){
+            ThrowErrorMessage("Error SetDescriptor DepthStencilView Unknown index range");
+        });
+    }
+
+    void DescriptorHeapDirectX12::SetDescriptor(RHIDescriptorHandle handle, SamplerStateDirectX12* pSampler)
+    {
+        IMPLEMENT_SET_DESCRIPTOR(SamplerStateDirectX12, pSampler, RHIResourceType::RRT_SamplerState,[](){
+            ThrowErrorMessage("Error SetDescriptor SamplerState Unknown index range");
+        });
+    }
+
+    const DescriptorData* DescriptorHeapDirectX12::GetDescriptor(RHIDescriptorHandle handle) const
+    {   
+        if (!handle.IsValid() || handle.GetType() != HeapType)
+            return nullptr;
+        
+        uint32_t index = handle.GetIndex();
+        if (index < Capacity)
+        {
+            return &m_Descriptors[index];
+        }
+        return nullptr;
     }
 }

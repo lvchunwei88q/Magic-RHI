@@ -103,9 +103,12 @@ namespace RHI
             : m_GPUAddress(gpuAddress) {}
         ~ConstantBufferViewDirectX12() override = default;
 
+        const D3D12_CPU_DESCRIPTOR_HANDLE* GetCPUDescriptorHandle() const { return &m_CPUHandle; }
+        void SetCPUDescriptorHandle(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle) { m_CPUHandle = cpuHandle; }
         uint64_t GetGPUVirtualAddress() const override { return (uint64_t)m_GPUAddress; }
 
     private:
+        D3D12_CPU_DESCRIPTOR_HANDLE m_CPUHandle;
         D3D12_GPU_VIRTUAL_ADDRESS m_GPUAddress;
     };
 
@@ -117,6 +120,7 @@ namespace RHI
         ~ShaderResourceViewDirectX12() override = default;
 
         const D3D12_CPU_DESCRIPTOR_HANDLE* GetCPUDescriptorHandle() const { return &m_CPUHandle; }
+        void SetCPUDescriptorHandle(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle) { m_CPUHandle = cpuHandle; }
         uint64_t GetGPUVirtualAddress() const override { return (uint64_t)m_GPUAddress; }
 
     private:
@@ -132,6 +136,7 @@ namespace RHI
         ~UnorderedAccessViewDirectX12() override = default;
 
         const D3D12_CPU_DESCRIPTOR_HANDLE* GetCPUDescriptorHandle() const { return &m_CPUHandle; }
+        void SetCPUDescriptorHandle(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle) { m_CPUHandle = cpuHandle; }
         uint64_t GetGPUVirtualAddress() const override { return (uint64_t)m_GPUAddress; }
 
     private:

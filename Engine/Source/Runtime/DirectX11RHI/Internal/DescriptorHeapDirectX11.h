@@ -16,12 +16,14 @@ namespace RHI
         std::unique_ptr<RenderTargetViewDirectX11> pRTV;
         std::unique_ptr<DepthStencilViewDirectX11> pDSV;
         std::unique_ptr<SamplerStateDirectX11> pSampler;
+        RHIResourceType ViewType;
 
         void Release()
         {
             pCBV.reset();pSRV.reset();
             pUAV.reset();pRTV.reset();
             pDSV.reset();pSampler.reset();
+            ViewType = RHIResourceType::RRT_None;
         }
     };
 
@@ -40,17 +42,21 @@ namespace RHI
             }
         }
         ~DescriptorHeapDirectX11() override = default;
+        RHIResource* GetDescriptorHeepView(RHIDescriptorHandle handle) const override; // 获取描述符堆视图 直接返回包装引用的资源对象
 
         [[nodiscard]] RHIDescriptorHandle Allocate() override;
         void Free(RHIDescriptorHandle handle) override;
 
         bool IsFull() const override { return m_FreeList.empty(); }
 
+        // 默认我们的堆是所有的描述符类型都支持的但是为了规范我们也向DX12保持一致
         void SetDescriptor(RHIDescriptorHandle handle, ConstantBufferViewDirectX11* pCBV);
         void SetDescriptor(RHIDescriptorHandle handle, ShaderResourceViewDirectX11* pSRV);
         void SetDescriptor(RHIDescriptorHandle handle, UnorderedAccessViewDirectX11* pUAV);
+        
         void SetDescriptor(RHIDescriptorHandle handle, RenderTargetViewDirectX11* pRTV);
         void SetDescriptor(RHIDescriptorHandle handle, DepthStencilViewDirectX11* pDSV);
+        
         void SetDescriptor(RHIDescriptorHandle handle, SamplerStateDirectX11* pSampler);
 
         const DescriptorData* GetDescriptor(RHIDescriptorHandle handle) const;

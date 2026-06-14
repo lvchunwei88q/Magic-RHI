@@ -1,5 +1,6 @@
 #include "RHIDirectX12.h"
 #include "RHIResourceDirectX12.h"
+#include "DescriptorHeapDirectX12.h"
 
 namespace RHI
 {
@@ -32,15 +33,20 @@ namespace RHI
         {
         case DescriptorRangeType::CBV:
         {
+            auto GPUVirtualAddress = dx12Buffer->GetResource()->GetGPUVirtualAddress();
             D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-            cbvDesc.BufferLocation = dx12Buffer->GetResource()->GetGPUVirtualAddress();
+            cbvDesc.BufferLocation = GPUVirtualAddress;
             cbvDesc.SizeInBytes = (UINT)dx12Buffer->GetSize();
             m_pDevice->CreateConstantBufferView(&cbvDesc, cpuHandle);
+
+            ConstantBufferViewDirectX12* pCBView = new ConstantBufferViewDirectX12(GPUVirtualAddress);
+            m_pStandardHeap->SetDescriptor(handle, pCBView);
             break;
         }
         
         case DescriptorRangeType::SRV:
         {
+            auto GPUVirtualAddress = dx12Buffer->GetResource()->GetGPUVirtualAddress();
             D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
             srvDesc.Format = DXGI_FORMAT_UNKNOWN;
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
@@ -50,11 +56,15 @@ namespace RHI
             srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
             srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING; 
             m_pDevice->CreateShaderResourceView(dx12Buffer->GetResource(), &srvDesc, cpuHandle);
+
+            ShaderResourceViewDirectX12* pSRVView = new ShaderResourceViewDirectX12(GPUVirtualAddress);
+            m_pStandardHeap->SetDescriptor(handle, pSRVView);
             break;
         }
         
         case DescriptorRangeType::UAV:
         {
+            auto GPUVirtualAddress = dx12Buffer->GetResource()->GetGPUVirtualAddress();
             D3D12_UNORDERED_ACCESS_VIEW_DESC uavDesc = {};
             uavDesc.Format = DXGI_FORMAT_UNKNOWN;
             uavDesc.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
@@ -63,6 +73,9 @@ namespace RHI
             uavDesc.Buffer.StructureByteStride = dx12Buffer->GetStride();
             uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
             m_pDevice->CreateUnorderedAccessView(dx12Buffer->GetResource(), nullptr, &uavDesc, cpuHandle);
+
+            UnorderedAccessViewDirectX12* pUAVView = new UnorderedAccessViewDirectX12(GPUVirtualAddress);
+            m_pStandardHeap->SetDescriptor(handle, pUAVView);
             break;
         }
         
