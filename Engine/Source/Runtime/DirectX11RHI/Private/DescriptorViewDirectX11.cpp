@@ -5,6 +5,12 @@ namespace RHI
 {
     RHIDescriptorHandle RHIDirectX11::CreateStandardHeapDescriptorView(RHIBuffer* Buffer,DescriptorRangeType Type)
     {
+        if (!m_pStandardHeap || m_pStandardHeap->IsFull())
+        {
+            return RHIDescriptorHandle();
+        }
+        
+        auto dx11Buffer = SafeCast<BufferDirectX11>(Buffer);
         RHIDescriptorHandle handle = m_pStandardHeap->Allocate();
         if (!handle.IsValid())
         {
@@ -14,27 +20,48 @@ namespace RHI
             return RHIDescriptorHandle();
         }
         
-        Buffer->SetBindlessHandle(handle);
-        return Buffer->GetBindlessHandle();
+        dx11Buffer->SetBindlessHandle(handle);
+        m_pStandardHeap->SetDescriptor(handle, dx11Buffer);
+        return handle;
     }
 
     RHIDescriptorHandle RHIDirectX11::CreateStandardHeapDescriptorView(RHITexture* Texture,DescriptorRangeType Type)
     {
-        return RHIDescriptorHandle();
+        if (!m_pStandardHeap || m_pStandardHeap->IsFull())
+        {
+            return RHIDescriptorHandle();
+        }
+
+        return m_pStandardHeap->Allocate();
     }
 
     RHIDescriptorHandle RHIDirectX11::CreateSamplerHeapDescriptorView(const SamplerStateDesc& /*desc*/)
     {
-        return RHIDescriptorHandle();
+        if (!m_pSamplerHeap || m_pSamplerHeap->IsFull())
+        {
+            return RHIDescriptorHandle();
+        }
+
+        return m_pSamplerHeap->Allocate();
     }
 
     RHIDescriptorHandle RHIDirectX11::CreateRTVHeapDescriptorView(RHIRenderTargetView* /*InView*/)
     {
-        return RHIDescriptorHandle();
+        if (!m_pRTVHeap || m_pRTVHeap->IsFull())
+        {
+            return RHIDescriptorHandle();
+        }
+
+        return m_pRTVHeap->Allocate();
     }
 
     RHIDescriptorHandle RHIDirectX11::CreateDSVHeapDescriptorView(RHIDepthStencilView* /*InView*/)
     {
-        return RHIDescriptorHandle();
+        if (!m_pDSVHeap || m_pDSVHeap->IsFull())
+        {
+            return RHIDescriptorHandle();
+        }
+
+        return m_pDSVHeap->Allocate();
     }
 }

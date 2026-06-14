@@ -17,5 +17,6 @@ namespace RHI
 
     private:
         // TODO: Root signature data
+        RootSignatureDesc m_Desc;
     };
 }

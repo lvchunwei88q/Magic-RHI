@@ -14,7 +14,7 @@ namespace RHI
 
     bool RHIRootSignatureDirectX11::Initialize(Device* device, const RootSignatureDesc& desc)
     {
-        
+        m_Desc = desc;
         return true;
     }
 
