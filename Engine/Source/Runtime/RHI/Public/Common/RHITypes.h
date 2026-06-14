@@ -39,6 +39,7 @@ enum RHIResourceType : uint8_t
 	RRT_RenderQuery,
 	RRT_RenderQueryPool,
 	RRT_Viewport,
+	RRT_ConstantBufferView,
 	RRT_UnorderedAccessView,
 	RRT_ShaderResourceView,
 	RRT_DepthStencilView,

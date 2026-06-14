@@ -413,7 +413,7 @@ int main(int argc, char* argv[])
                                         float floatValue = 0.5f; uint32_t intValue;
                                         memcpy(&intValue, &floatValue, sizeof(float));
                                         cmdList->SetGraphicsRootDescriptorTable(0, descriptorHeap, 0);
-                                        cmdList->SetGraphicsRootConstantBufferView(1, constantBuffer1->GetGPUVirtualAddress());
+                                        //cmdList->SetGraphicsRootConstantBufferView(1, constantBuffer1->GetGPUVirtualAddress());
                                         cmdList->SetGraphicsRoot32BitConstant(2, intValue, 0);
                                         
                                         // 设置拓扑类型

@@ -97,7 +97,7 @@ namespace RHI
             dx12Device->CreateRenderTargetView(pResource.Get(), nullptr, rtvHandle);
             
             TextureDesc back_desc                               = { RHI_RTV_FORMAT, m_desc.Width, m_desc.Height, 1, 1, 1, 0 };
-            std::unique_ptr<RenderTargetViewDirectX12> pDerived = std::make_unique<RenderTargetViewDirectX12>(RHIDescriptorHandle{RHIDescriptorHeapType::RenderTarget,n},rtvHandle);
+            std::unique_ptr<RenderTargetViewDirectX12> pDerived = std::make_unique<RenderTargetViewDirectX12>(rtvHandle);
             std::unique_ptr<RHITexture> pBackBuffer             = std::make_unique<TextureDirectX12>(pResource.Get(),back_desc);
             // Set descriptor handle offset
             rtvHandle.Offset(1, rtvDescriptorSize);

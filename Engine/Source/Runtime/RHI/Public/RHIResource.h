@@ -194,7 +194,6 @@ namespace RHI
         virtual uint64_t GetSize() const { return SizeInBytes; }
         virtual uint32_t GetStride() const { return Stride; }   
         virtual BufferHeapType GetHeapType() const { return HeapType; }
-        virtual uint64_t GetGPUVirtualAddress() const = 0;
 
         virtual void SetBindlessHandle(RHIDescriptorHandle InHandle) { Handle = InHandle; }
         virtual RHIDescriptorHandle GetBindlessHandle() const { return Handle; }
@@ -298,16 +297,28 @@ namespace RHI
         TextureDesc m_Desc;
     };
 
+    class RHI_API RHIConstantBufferView : public RHIResource
+    {
+    public:
+        RHIConstantBufferView() : RHIResource(RRT_ConstantBufferView) {}
+
+        virtual uint64_t GetGPUVirtualAddress() const = 0;
+    };
+
     class RHI_API RHIShaderResourceView : public RHIResource
     {
     public:
         RHIShaderResourceView() : RHIResource(RRT_ShaderResourceView) {}
+
+        virtual uint64_t GetGPUVirtualAddress() const = 0;
     };
 
     class RHI_API RHIUnorderedAccessView : public RHIResource
     {
     public:
         RHIUnorderedAccessView() : RHIResource(RRT_UnorderedAccessView) {}
+
+        virtual uint64_t GetGPUVirtualAddress() const = 0;
     };
 
     class RHI_API RHIRenderTargetView : public RHIResource

@@ -47,6 +47,55 @@ namespace RHI
         ComPtr<ID3D11DepthStencilState> m_pDepthStencilState;
     };
 
+    class BufferDirectX11 : public RHIBuffer
+    {
+    public:
+        BufferDirectX11(ID3D11Buffer* pBuffer, const BufferDesc& InDesc, ID3D11DeviceContext* InDeviceContext)
+            : RHIBuffer(InDesc, RRT_Buffer)
+            , m_pBuffer(pBuffer)
+            , m_DeviceContext(InDeviceContext)
+        {
+        }
+
+        ~BufferDirectX11() override = default;
+
+        ID3D11Buffer* GetResource() const { return m_pBuffer.Get(); }
+
+        void* Map() override
+        {
+            if (m_DeviceContext && GetHeapType() != BufferHeapType::Default)
+            {
+                D3D11_MAPPED_SUBRESOURCE mappedResource;
+                HRESULT hr = m_DeviceContext->Map(m_pBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+                if (SUCCEEDED(hr))
+                {
+                    return mappedResource.pData;
+                }
+            }
+#if RHI_ENABLE_RESOURCE_INFO
+            else if(GetHeapType() == BufferHeapType::Default) 
+                ThrowErrorMessage("Failed to map default buffer");
+#endif
+            return nullptr;
+        }
+
+        void Unmap() override
+        {
+            if (m_DeviceContext && GetHeapType() != BufferHeapType::Default)
+            {
+                m_DeviceContext->Unmap(m_pBuffer.Get(), 0);
+            }
+#if RHI_ENABLE_RESOURCE_INFO
+            else if(GetHeapType() == BufferHeapType::Default) 
+                ThrowErrorMessage("Failed to unmap default buffer");
+#endif
+        }
+
+    private:
+        ComPtr<ID3D11Buffer> m_pBuffer;
+        ID3D11DeviceContext* m_DeviceContext;
+    };
+
     class TextureDirectX11 : public RHITexture
     {
     public:
@@ -67,6 +116,20 @@ namespace RHI
         ComPtr<ID3D11Texture2D> m_pTexture;
     };
 
+    class ConstantBufferViewDirectX11 : public RHIConstantBufferView
+    {
+    public:
+        ConstantBufferViewDirectX11(ID3D11Buffer* pCBV)
+            : m_pCBV(pCBV) {}
+        ~ConstantBufferViewDirectX11() override = default;
+
+        ID3D11Buffer* GetCBV() const { return m_pCBV.Get(); }
+        uint64_t GetGPUVirtualAddress() const override { return (uint64_t)m_pCBV.Get(); }
+
+    private:
+        ComPtr<ID3D11Buffer> m_pCBV;
+    };
+
     class ShaderResourceViewDirectX11 : public RHIShaderResourceView
     {
     public:
@@ -75,6 +138,7 @@ namespace RHI
         ~ShaderResourceViewDirectX11() override = default;
 
         ID3D11ShaderResourceView* GetSRV() const { return m_pSRV.Get(); }
+        uint64_t GetGPUVirtualAddress() const override { return (uint64_t)m_pSRV.Get(); }
 
     private:
         ComPtr<ID3D11ShaderResourceView> m_pSRV;
@@ -88,6 +152,7 @@ namespace RHI
         ~UnorderedAccessViewDirectX11() override = default;
 
         ID3D11UnorderedAccessView* GetUAV() const { return m_pUAV.Get(); }
+        uint64_t GetGPUVirtualAddress() const override { return (uint64_t)m_pUAV.Get(); }
 
     private:
         ComPtr<ID3D11UnorderedAccessView> m_pUAV;
@@ -194,57 +259,5 @@ namespace RHI
 
     private:
         ComPtr<ID3D11SamplerState> m_pSamplerState;
-    };
-
-    class BufferDirectX11 : public RHIBuffer
-    {
-    public:
-        BufferDirectX11(ID3D11Buffer* pBuffer, const BufferDesc& InDesc, ID3D11DeviceContext* InDeviceContext)
-            : RHIBuffer(InDesc, RRT_Buffer)
-            , m_pBuffer(pBuffer)
-            , m_DeviceContext(InDeviceContext)
-        {
-        }
-
-        ~BufferDirectX11() override = default;
-
-        // DirectX 11 Buffer 地址是 Buffer 的指针，不是 GPU 虚拟地址，所以这里返回 Buffer 的指针
-        uint64_t GetGPUVirtualAddress() const override{return (uint64_t)m_pBuffer.Get();}
-
-        ID3D11Buffer* GetResource() const { return m_pBuffer.Get(); }
-
-        void* Map() override
-        {
-            if (m_DeviceContext && GetHeapType() != BufferHeapType::Default)
-            {
-                D3D11_MAPPED_SUBRESOURCE mappedResource;
-                HRESULT hr = m_DeviceContext->Map(m_pBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-                if (SUCCEEDED(hr))
-                {
-                    return mappedResource.pData;
-                }
-            }
-#if RHI_ENABLE_RESOURCE_INFO
-            else if(GetHeapType() == BufferHeapType::Default) 
-                ThrowErrorMessage("Failed to map default buffer");
-#endif
-            return nullptr;
-        }
-
-        void Unmap() override
-        {
-            if (m_DeviceContext && GetHeapType() != BufferHeapType::Default)
-            {
-                m_DeviceContext->Unmap(m_pBuffer.Get(), 0);
-            }
-#if RHI_ENABLE_RESOURCE_INFO
-            else if(GetHeapType() == BufferHeapType::Default) 
-                ThrowErrorMessage("Failed to unmap default buffer");
-#endif
-        }
-
-    private:
-        ComPtr<ID3D11Buffer> m_pBuffer;
-        ID3D11DeviceContext* m_DeviceContext;
     };
 }

@@ -2,18 +2,18 @@
 #include "DescriptorHeapDirectX11.h"
 #include "RHIDirectX11.h"
 
-#define IMPLEMENT_SET_DESCRIPTOR(Type, Member, ErrorFunc)               \
-        if (!handle.IsValid() || handle.GetType() != HeapType)          \
-            return;                                                     \
-        uint32_t index = handle.GetIndex();                             \
-        if (index < Capacity)                                           \
-        {                                                               \
-            m_Descriptors[index].Type = Member;                         \
-        }                                                               \
-        else                                                            \
-        {                                                               \
-            auto error = ErrorFunc;                                     \
-            error();                                                    \
+#define IMPLEMENT_SET_DESCRIPTOR(Type, Member, ErrorFunc)                       \
+        if (!handle.IsValid() || handle.GetType() != HeapType)                  \
+            return;                                                             \
+        uint32_t index = handle.GetIndex();                                     \
+        if (index < Capacity)                                                   \
+        {                                                                       \
+            m_Descriptors[index].Member = std::unique_ptr<Type>(Member);       \
+        }                                                                       \
+        else                                                                    \
+        {                                                                       \
+            auto error = ErrorFunc;                                             \
+            error();                                                            \
         }
 
 namespace RHI
@@ -62,66 +62,63 @@ namespace RHI
         }
 #endif
         
-        m_Descriptors[index].pGeneric = nullptr;
+        m_Descriptors[index].Release();
         m_FreeList.push_back(index);
         CurrentIndex = Capacity - static_cast<uint32_t>(m_FreeList.size());
     }
 
-    void DescriptorHeapDirectX11::SetDescriptor(RHIDescriptorHandle handle, BufferDirectX11* pBuffer)
+    void DescriptorHeapDirectX11::SetDescriptor(RHIDescriptorHandle handle, ConstantBufferViewDirectX11* pCBV)
     {
-        IMPLEMENT_SET_DESCRIPTOR(pBuffer, pBuffer,[](){
-            ThrowErrorMessage("Error SetDescriptor Buffer Unknown index range");
+        IMPLEMENT_SET_DESCRIPTOR(ConstantBufferViewDirectX11, pCBV,[](){
+            ThrowErrorMessage("Error SetDescriptor ConstantBufferView Unknown index range");
         });
     }
 
     void DescriptorHeapDirectX11::SetDescriptor(RHIDescriptorHandle handle, ShaderResourceViewDirectX11* pSRV)
     {
-        IMPLEMENT_SET_DESCRIPTOR(pSRV, pSRV,[](){
+        IMPLEMENT_SET_DESCRIPTOR(ShaderResourceViewDirectX11, pSRV,[](){
             ThrowErrorMessage("Error SetDescriptor ShaderResourceView Unknown index range");
         });
     }
 
     void DescriptorHeapDirectX11::SetDescriptor(RHIDescriptorHandle handle, UnorderedAccessViewDirectX11* pUAV)
     {
-        IMPLEMENT_SET_DESCRIPTOR(pUAV, pUAV,[](){
+        IMPLEMENT_SET_DESCRIPTOR(UnorderedAccessViewDirectX11, pUAV,[](){
             ThrowErrorMessage("Error SetDescriptor UnorderedAccessView Unknown index range");
         });
     }
 
     void DescriptorHeapDirectX11::SetDescriptor(RHIDescriptorHandle handle, RenderTargetViewDirectX11* pRTV)
     {
-        IMPLEMENT_SET_DESCRIPTOR(pRTV, pRTV,[](){
+        IMPLEMENT_SET_DESCRIPTOR(RenderTargetViewDirectX11, pRTV,[](){
             ThrowErrorMessage("Error SetDescriptor RenderTargetView Unknown index range");
         });
     }
 
     void DescriptorHeapDirectX11::SetDescriptor(RHIDescriptorHandle handle, DepthStencilViewDirectX11* pDSV)
     {
-        IMPLEMENT_SET_DESCRIPTOR(pDSV, pDSV,[](){
+        IMPLEMENT_SET_DESCRIPTOR(DepthStencilViewDirectX11, pDSV,[](){
             ThrowErrorMessage("Error SetDescriptor DepthStencilView Unknown index range");
         });
     }
 
     void DescriptorHeapDirectX11::SetDescriptor(RHIDescriptorHandle handle, SamplerStateDirectX11* pSampler)
     {
-        IMPLEMENT_SET_DESCRIPTOR(pSampler, pSampler,[](){
+        IMPLEMENT_SET_DESCRIPTOR(SamplerStateDirectX11, pSampler,[](){
             ThrowErrorMessage("Error SetDescriptor SamplerState Unknown index range");
         });
     }
 
-    DescriptorData DescriptorHeapDirectX11::GetDescriptor(RHIDescriptorHandle handle) const
-    {
-        DescriptorData data = {};
-        data.pGeneric = nullptr;
-        
+    const DescriptorData* DescriptorHeapDirectX11::GetDescriptor(RHIDescriptorHandle handle) const
+    {   
         if (!handle.IsValid() || handle.GetType() != HeapType)
-            return data;
+            return nullptr;
         
         uint32_t index = handle.GetIndex();
         if (index < Capacity)
         {
-            return m_Descriptors[index];
+            return &m_Descriptors[index];
         }
-        return data;
+        return nullptr;
     }
 }

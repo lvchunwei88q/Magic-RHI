@@ -105,6 +105,25 @@ namespace RHI
                 return D3D11_COMPARISON_NEVER;
             }
         }
+
+        UINT ToD3D11MiscFlags(BufferBindFlag bindFlags, uint32_t stride)
+        {
+            UINT miscFlags = 0;
+            
+            // 判断是否需要结构化缓冲区标志
+            // 条件：有 stride（元素大小）且用于 SRV 或 UAV
+            bool needsStructured = (stride > 0) && 
+                (EnumHasAnyFlags(bindFlags, BufferBindFlag::ShaderResource) ||
+                EnumHasAnyFlags(bindFlags, BufferBindFlag::UnorderedAccess));
+            
+            if (needsStructured)
+            {
+                miscFlags |= D3D11_RESOURCE_MISC_BUFFER_STRUCTURED;
+            }
+            // TODO: 其他标志位
+            
+            return miscFlags;
+        }
     }
 
     void TextureDirectX11::GetDesc(D3D11_TEXTURE2D_DESC& desc) const
@@ -179,7 +198,7 @@ namespace RHI
         
         D3D11_BUFFER_DESC bufferDesc = {};
         bufferDesc.ByteWidth = static_cast<UINT>(desc.SizeInBytes);
-        bufferDesc.MiscFlags = 0;
+        bufferDesc.MiscFlags = ToD3D11MiscFlags(desc.BindFlags, desc.Stride);
         bufferDesc.BindFlags = ToD3D11BindFlags(desc.BindFlags);
         bufferDesc.StructureByteStride = desc.Stride;
         bufferDesc.Usage = ToD3D11Usage(desc.HeapType);

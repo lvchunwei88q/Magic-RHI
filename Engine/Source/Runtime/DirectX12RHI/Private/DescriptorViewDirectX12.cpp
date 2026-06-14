@@ -12,8 +12,6 @@ namespace RHI
             return RHIDescriptorHandle();
         }
         
-        // 使用标准堆创建描述符
-        RHIDescriptorHeapType heapType = RHIDescriptorHeapType::Standard;
         RHIDescriptorHandle handle = m_pStandardHeap->Allocate();
         if (!handle.IsValid())
         {

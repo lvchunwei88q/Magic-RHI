@@ -30,6 +30,55 @@ namespace RHI
         ~DepthStencilStateDirectX12() override = default;
     };
 
+    class BufferDirectX12 : public RHIBuffer
+    {
+    public:
+        BufferDirectX12(ID3D12Resource* pResource, const BufferDesc& InDesc, ID3D12Device* InDevice)
+            : RHIBuffer(InDesc, RRT_Buffer)
+            , m_pResource(pResource)
+            , m_Device(InDevice)
+        {
+        }
+
+        ~BufferDirectX12() override = default;
+
+        ID3D12Resource* GetResource() const { return m_pResource.Get(); }
+        
+        void* Map() override
+        {
+            if (GetHeapType() != BufferHeapType::Default){
+                void* pData = nullptr;
+                D3D12_RANGE readRange(0, 0);
+                HRESULT hr = m_pResource->Map(0, &readRange, &pData);
+                if (FAILED(hr))
+                {
+                    return nullptr;
+                }
+                return pData;
+            }
+#if RHI_ENABLE_RESOURCE_INFO
+            ThrowErrorMessage("Failed to unmap default buffer");
+#endif
+            return nullptr;
+        }
+
+        void Unmap() override
+        {
+            if (GetHeapType() != BufferHeapType::Default)
+            {
+                D3D12_RANGE writeRange(0, 0);
+                m_pResource->Unmap(0, &writeRange);
+            }
+#if RHI_ENABLE_RESOURCE_INFO
+            ThrowErrorMessage("Failed to unmap default buffer");
+#endif
+        }
+
+    private:
+        ComPtr<ID3D12Resource> m_pResource;
+        ID3D12Device* m_Device;
+    };
+
     class TextureDirectX12 : public RHITexture
     {
     public:
@@ -47,65 +96,73 @@ namespace RHI
     };
 
     // TODO 加入View 构造参数
+    class ConstantBufferViewDirectX12 : public RHIConstantBufferView
+    {
+    public:
+        ConstantBufferViewDirectX12(D3D12_GPU_VIRTUAL_ADDRESS gpuAddress)
+            : m_GPUAddress(gpuAddress) {}
+        ~ConstantBufferViewDirectX12() override = default;
+
+        uint64_t GetGPUVirtualAddress() const override { return (uint64_t)m_GPUAddress; }
+
+    private:
+        D3D12_GPU_VIRTUAL_ADDRESS m_GPUAddress;
+    };
+
     class ShaderResourceViewDirectX12 : public RHIShaderResourceView
     {
     public:
-        ShaderResourceViewDirectX12(RHIDescriptorHandle handle)
-            : m_Handle(handle) {}
+        ShaderResourceViewDirectX12(D3D12_GPU_VIRTUAL_ADDRESS gpuAddress)
+            : m_GPUAddress(gpuAddress) {}
         ~ShaderResourceViewDirectX12() override = default;
 
-        const RHIDescriptorHandle& GetHandle() const { return m_Handle; }
         const D3D12_CPU_DESCRIPTOR_HANDLE* GetCPUDescriptorHandle() const { return &m_CPUHandle; }
+        uint64_t GetGPUVirtualAddress() const override { return (uint64_t)m_GPUAddress; }
 
     private:
         D3D12_CPU_DESCRIPTOR_HANDLE m_CPUHandle;
-        RHIDescriptorHandle m_Handle;
+        D3D12_GPU_VIRTUAL_ADDRESS m_GPUAddress;
     };
 
     class UnorderedAccessViewDirectX12 : public RHIUnorderedAccessView
     {
     public:
-        UnorderedAccessViewDirectX12(RHIDescriptorHandle handle)
-            : m_Handle(handle) {}
+        UnorderedAccessViewDirectX12(D3D12_GPU_VIRTUAL_ADDRESS gpuAddress)
+            : m_GPUAddress(gpuAddress) {}
         ~UnorderedAccessViewDirectX12() override = default;
 
-        const RHIDescriptorHandle& GetHandle() const { return m_Handle; }
         const D3D12_CPU_DESCRIPTOR_HANDLE* GetCPUDescriptorHandle() const { return &m_CPUHandle; }
+        uint64_t GetGPUVirtualAddress() const override { return (uint64_t)m_GPUAddress; }
 
     private:
         D3D12_CPU_DESCRIPTOR_HANDLE m_CPUHandle;
-        RHIDescriptorHandle m_Handle;
+        D3D12_GPU_VIRTUAL_ADDRESS m_GPUAddress;
     };
 
     class RenderTargetViewDirectX12 : public RHIRenderTargetView
     {
     public:
-        RenderTargetViewDirectX12(RHIDescriptorHandle handle, D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle)
-            : m_CPUHandle(cpuHandle)
-            , m_Handle(handle) {}
+        RenderTargetViewDirectX12(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle)
+            : m_CPUHandle(cpuHandle) {}
         ~RenderTargetViewDirectX12() override = default;
 
-        const RHIDescriptorHandle& GetHandle() const { return m_Handle; }
         const D3D12_CPU_DESCRIPTOR_HANDLE* GetCPUDescriptorHandle() const { return &m_CPUHandle; }
 
     private:
         D3D12_CPU_DESCRIPTOR_HANDLE m_CPUHandle;
-        RHIDescriptorHandle m_Handle;
     };
 
     class DepthStencilViewDirectX12 : public RHIDepthStencilView
     {
     public:
-        DepthStencilViewDirectX12(RHIDescriptorHandle handle)
-            : m_Handle(handle) {}
+        DepthStencilViewDirectX12(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle)
+            : m_CPUHandle(cpuHandle) {}
         ~DepthStencilViewDirectX12() override = default;
 
-        const RHIDescriptorHandle& GetHandle() const { return m_Handle; }
         const D3D12_CPU_DESCRIPTOR_HANDLE* GetCPUDescriptorHandle() const { return &m_CPUHandle; }
 
     private:
         D3D12_CPU_DESCRIPTOR_HANDLE m_CPUHandle;
-        RHIDescriptorHandle m_Handle;
     };
 
     class VertexShaderDirectX12 : public RHIVertexShader
@@ -180,56 +237,5 @@ namespace RHI
 
     private:
         D3D12_SAMPLER_DESC m_SamplerDesc;
-    };
-
-    class BufferDirectX12 : public RHIBuffer
-    {
-    public:
-        BufferDirectX12(ID3D12Resource* pResource, const BufferDesc& InDesc, ID3D12Device* InDevice)
-            : RHIBuffer(InDesc, RRT_Buffer)
-            , m_pResource(pResource)
-            , m_Device(InDevice)
-        {
-        }
-
-        ~BufferDirectX12() override = default;
-
-        uint64_t GetGPUVirtualAddress() const override{return m_pResource->GetGPUVirtualAddress();}
-
-        ID3D12Resource* GetResource() const { return m_pResource.Get(); }
-        
-        void* Map() override
-        {
-            if (GetHeapType() != BufferHeapType::Default){
-                void* pData = nullptr;
-                D3D12_RANGE readRange(0, 0);
-                HRESULT hr = m_pResource->Map(0, &readRange, &pData);
-                if (FAILED(hr))
-                {
-                    return nullptr;
-                }
-                return pData;
-            }
-#if RHI_ENABLE_RESOURCE_INFO
-            ThrowErrorMessage("Failed to unmap default buffer");
-#endif
-            return nullptr;
-        }
-
-        void Unmap() override
-        {
-            if (GetHeapType() != BufferHeapType::Default)
-            {
-                D3D12_RANGE writeRange(0, 0);
-                m_pResource->Unmap(0, &writeRange);
-            }
-#if RHI_ENABLE_RESOURCE_INFO
-            ThrowErrorMessage("Failed to unmap default buffer");
-#endif
-        }
-
-    private:
-        ComPtr<ID3D12Resource> m_pResource;
-        ID3D12Device* m_Device;
     };
 }
