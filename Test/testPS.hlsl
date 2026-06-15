@@ -23,7 +23,7 @@ struct Vertex
 
 cbuffer VertexBuffer : register(b2)
 {
-    Vertex Vertices[1024];  // 编译时大小固定，且可能超限
+    Vertex Vertices[1024];  // 大小固定
 };
 
 #if SHADER_MODEL > 50

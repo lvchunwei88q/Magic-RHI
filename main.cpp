@@ -208,7 +208,7 @@ int main(int argc, char* argv[])
                 std::cout << "ConstantBuffer created successfully!" << std::endl;
                 std::cout << "ConstantBuffer Handle: " << constantBuffer1->GetBindlessHandle().GetIndex() << std::endl;
 
-                 auto cbv = device->GetDescriptorHeap(RHI::RHIDescriptorHeapType::Standard)->GetDescriptorHeepView(constantBuffer1->GetBindlessHandle());
+                 auto cbv = device->GetDescriptorHeap(RHI::RHIDescriptorHeapType::Standard)->GetDescriptorHeapView(constantBuffer1->GetBindlessHandle());
                  RHI::RHIConstantBufferView* cbvView = SafeCast<RHI::RHIConstantBufferView>(cbv);
                  std::cout << "ConstantBuffer View: " << cbvView->GetGPUVirtualAddress() << std::endl;
                 

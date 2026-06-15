@@ -49,7 +49,7 @@ namespace RHI
 
         ID3D12DescriptorHeap* GetHeap() const { return m_pHeap.Get(); }
         uint32_t GetDescriptorSize() const { return m_DescriptorSize; }
-        RHIResource* GetDescriptorHeepView(RHIDescriptorHandle handle) const override; // 获取描述符堆视图 直接返回包装引用的资源对象
+        RHIResource* GetDescriptorHeapView(RHIDescriptorHandle handle) const override; // 获取描述符堆视图 直接返回包装引用的资源对象
 
         D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(uint32_t index) const;
         D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(uint32_t index) const;

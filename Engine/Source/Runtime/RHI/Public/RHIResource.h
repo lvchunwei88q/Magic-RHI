@@ -122,7 +122,7 @@ namespace RHI
         RHIDescriptorHeapType GetHeapType() const { return HeapType; }
         uint32_t GetCapacity() const { return Capacity; }
         uint32_t GetCurrentIndex() const { return CurrentIndex; }
-        virtual RHIResource* GetDescriptorHeepView(RHIDescriptorHandle handle) const = 0; // 获取描述符堆视图 直接返回包装引用的资源对象
+        virtual RHIResource* GetDescriptorHeapView(RHIDescriptorHandle handle) const = 0; // 获取描述符堆视图 直接返回包装引用的资源对象
 
         [[nodiscard]] virtual RHIDescriptorHandle Allocate() = 0;
         virtual void Free(RHIDescriptorHandle handle) = 0;

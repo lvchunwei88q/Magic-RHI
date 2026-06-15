@@ -20,18 +20,18 @@
 
 namespace RHI
 {
-    RHIResource* DescriptorHeapDirectX11::GetDescriptorHeepView(RHIDescriptorHandle handle) const
+    RHIResource* DescriptorHeapDirectX11::GetDescriptorHeapView(RHIDescriptorHandle handle) const
     {
         if (!handle.IsValid() || handle.GetType() != HeapType)
         {
-            ThrowErrorMessage("Error GetDescriptorHeepView Unknown index range");
+            ThrowErrorMessage("Error GetDescriptorHeapView Unknown index range");
             return nullptr;
         }
         uint32_t index = handle.GetIndex();
         auto& descriptor = m_Descriptors[index];
         if (descriptor.ViewType == RHIResourceType::RRT_None)
         {
-            ThrowErrorMessage("Error GetDescriptorHeepView Unknown index range");
+            ThrowErrorMessage("Error GetDescriptorHeapView Unknown index range");
             return nullptr;
         }
         return descriptor.ViewType == RHIResourceType::RRT_ConstantBufferView

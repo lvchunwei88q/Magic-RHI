@@ -42,7 +42,7 @@ namespace RHI
             }
         }
         ~DescriptorHeapDirectX11() override = default;
-        RHIResource* GetDescriptorHeepView(RHIDescriptorHandle handle) const override; // 获取描述符堆视图 直接返回包装引用的资源对象
+        RHIResource* GetDescriptorHeapView(RHIDescriptorHandle handle) const override; // 获取描述符堆视图 直接返回包装引用的资源对象
 
         [[nodiscard]] RHIDescriptorHandle Allocate() override;
         void Free(RHIDescriptorHandle handle) override;
