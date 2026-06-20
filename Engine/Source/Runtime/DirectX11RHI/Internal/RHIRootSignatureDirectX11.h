@@ -4,6 +4,16 @@
 
 namespace RHI
 {
+    struct RootParameterDirectX11
+    {
+        // TODO: Root parameter data
+    };
+    struct RootSignatureDescDirectX11
+    {
+        std::vector<RootParameterDirectX11> RootParameters;
+        RootSignatureFlags Flags = RootSignatureFlags::None;
+    };
+    
     class RHIRootSignatureDirectX11 : public RHIRootSignature
     {
     public:
@@ -16,7 +26,6 @@ namespace RHI
         bool IsValid() const override;
 
     private:
-        // TODO: Root signature data
-        RootSignatureDesc m_Desc;
+        RootSignatureDescDirectX11 m_Desc;
     };
 }

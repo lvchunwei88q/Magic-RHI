@@ -4,12 +4,14 @@
 
 namespace RHI
 {
-    void CommandListDirectX11::SetGraphicsRootSignature(RHIRootSignature* /*pRootSignature*/)
+    void CommandListDirectX11::SetGraphicsRootSignature(RHIRootSignature* pRootSignature)
     {
+        m_pRootSignature = SafeCast<RHIRootSignatureDirectX11>(pRootSignature);
     }
 
-    void CommandListDirectX11::SetComputeRootSignature(RHIRootSignature* /*pRootSignature*/)
+    void CommandListDirectX11::SetComputeRootSignature(RHIRootSignature* pRootSignature)
     {
+        m_pRootSignature = SafeCast<RHIRootSignatureDirectX11>(pRootSignature);
     }
 
     void CommandListDirectX11::SetDescriptorHeaps(uint32_t /*numHeaps*/, RHIDescriptorHeap* const* /*ppHeaps*/)

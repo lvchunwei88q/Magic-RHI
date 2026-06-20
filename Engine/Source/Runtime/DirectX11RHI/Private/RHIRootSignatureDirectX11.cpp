@@ -14,7 +14,8 @@ namespace RHI
 
     bool RHIRootSignatureDirectX11::Initialize(Device* device, const RootSignatureDesc& desc)
     {
-        m_Desc = desc;
+        m_Desc.Flags = desc.Flags;
+        // TODO: Root signature data
         return true;
     }
 

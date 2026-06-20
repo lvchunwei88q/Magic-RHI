@@ -5,6 +5,7 @@
 #include <Common/RHIException.h>
 #include <RHICommandList.h>
 #include "RHIResourceDirectX11.h"
+#include "RHIRootSignatureDirectX11.h"
 #include <wrl.h>
 
 using Microsoft::WRL::ComPtr;
@@ -94,6 +95,9 @@ namespace RHI
 
     private:
         ID3D11DeviceContext* m_pDeviceContext;
+
+        // DX11 不支持根签名所以我们需要手动记录签名信息
+        RHIRootSignatureDirectX11* m_pRootSignature = nullptr;
     };
 
     class CommandQueueDirectX11 : public RHICommandQueue
