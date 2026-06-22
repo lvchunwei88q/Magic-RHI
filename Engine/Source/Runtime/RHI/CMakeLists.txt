@@ -9,10 +9,10 @@ add_engine_library(RHI SHARED
 
 # RHI实现的输出dll文件名
 file(GENERATE
-    OUTPUT ${CMAKE_BINARY_DIR}/generated/RHI.Modules.generated.h
+    OUTPUT ${CMAKE_GENERATE_OUTPUT_DIRECTORY}/RHI/RHI.modules.generated.h
     CONTENT "#pragma once\n#define RHI_D3D11_DLL_FILE \"$<TARGET_FILE_NAME:DirectX11RHI>\"\n#define RHI_D3D12_DLL_FILE \"$<TARGET_FILE_NAME:DirectX12RHI>\""
 )
-target_include_directories(RHI PUBLIC ${CMAKE_BINARY_DIR}/generated)
+target_include_directories(RHI PUBLIC ${CMAKE_GENERATE_OUTPUT_DIRECTORY}/RHI)
 
 target_include_directories(RHI
     PUBLIC

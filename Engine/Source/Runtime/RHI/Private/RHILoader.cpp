@@ -1,5 +1,5 @@
 #include "RHILoader.h"
-#include <RHI.Modules.generated.h>
+#include <RHI.modules.generated.h>
 
 namespace RHI
 {
