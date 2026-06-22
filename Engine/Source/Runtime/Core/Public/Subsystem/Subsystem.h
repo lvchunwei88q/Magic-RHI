@@ -1,9 +1,18 @@
 #pragma once
 #include "Common/CORE_API.h"
+#include "Common/Check.h"
 
 #include "Subsystem/SubsystemContext.h"
 
 #include <typeinfo> 
+
+FORBIDDEN_METHOD_CONCEPT(Subsystem, Init);
+FORBIDDEN_METHOD_CONCEPT(Subsystem, Uninstall);
+FORBIDDEN_METHOD_CONCEPT(Subsystem, Notification);
+
+template<typename T>
+concept COMBINE_FORBIDDEN_NAME(Subsystem) = COMBINE_FORBIDDEN_METHODS(Subsystem, Init) ||
+	COMBINE_FORBIDDEN_METHODS(Subsystem, Uninstall) || COMBINE_FORBIDDEN_METHODS(Subsystem, Notification);
 
 namespace Core
 {
@@ -71,3 +80,5 @@ namespace Core
 		}
 	};
 }
+// We use a nickname to make it more recognizable
+using SubSystem = Core::Subsystem;

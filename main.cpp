@@ -4,7 +4,7 @@
 #include <windows.h>
 #include <cstring>
 
-#include <Core.h>
+#include <CoreMinimal.h>
 #include <RHI.hpp>
 #include <IO.h>
 

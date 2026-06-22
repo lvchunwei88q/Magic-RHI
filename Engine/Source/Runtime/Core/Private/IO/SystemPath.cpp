@@ -33,20 +33,20 @@ namespace IO {
         return ExecutableDirectory;
     }
 
-    std::wstring AbsolutePath::GetCurrentWorkingDirectory()
+    WorkingDirectory AbsolutePath::GetCurrentWorkingDirectory()
     {
         if (!CurrentWorkingDirectory.empty()) {
-            return CurrentWorkingDirectory;
+            return WorkingDirectory(CurrentWorkingDirectory);
         }
 
         CurrentWorkingDirectory = fs::current_path().wstring();
-        return CurrentWorkingDirectory;
+        return WorkingDirectory(CurrentWorkingDirectory);
     }
 
-    std::wstring AbsolutePath::GetContentPath()
+    ContentDirectory AbsolutePath::GetContentDirectory()
     {
         if (!ContentPath.empty()) {
-            return ContentPath;
+            return ContentDirectory(ContentPath);
         }
 
         fs::path exeDir(GetExecutableDirectory());
@@ -58,13 +58,13 @@ namespace IO {
             / L"Content";
 
         ContentPath = fs_contentPath.wstring();
-        return ContentPath;
+        return ContentDirectory(ContentPath);
     }
 
-    std::wstring AbsolutePath::GetScriptPath()
+    ScriptDirectory AbsolutePath::GetScriptDirectory()
     {
         if (!ScriptPath.empty()) {
-            return ScriptPath;
+            return ScriptDirectory(ScriptPath);
         }
 
         fs::path exeDir(GetExecutableDirectory());
@@ -76,7 +76,7 @@ namespace IO {
             / L"Script";
 
         ScriptPath = fs_scriptPath.wstring();
-        return ScriptPath;
+        return ScriptDirectory(ScriptPath);
     }
 
     void AbsolutePath::ClearCache()

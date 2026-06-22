@@ -4,7 +4,7 @@
 
 // the subsystems template Cannot be used as an export API!!!
 template<typename T, Core::Priority Priority>
-class SubsystemTemplate : public Core::Subsystem, public Singleton<T>
+class SubsystemTemplate : public SubSystem, public Singleton<T>
 {
 public:
     static void RegisterStatic() {

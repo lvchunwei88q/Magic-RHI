@@ -1,7 +1,7 @@
 #include <Common/RHIException.h>
+#include <Common/Check.h>
 #include "DescriptorHeapDirectX11.h"
 #include "RHIDirectX11.h"
-#include "Tools/Cast.h"
 
 #define IMPLEMENT_SET_DESCRIPTOR(Type, Member, View_Type, ErrorFunc)             \
         if (!handle.IsValid() || handle.GetType() != HeapType)                  \

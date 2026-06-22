@@ -4,6 +4,7 @@
 /**
  * 单例基类
  * @tparam T - 子类类型（必须通过 CRTP 传入）
+ * 并且一般来说我们可以之间继承此类并且公开API接口，但是这也要求了你必须将API写在Class名称中而非者单独的函数中，否则你就无法通过Get()获取到实例了
  */
 template<typename T>
 class Singleton {
