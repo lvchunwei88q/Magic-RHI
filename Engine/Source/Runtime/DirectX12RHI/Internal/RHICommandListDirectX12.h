@@ -3,7 +3,7 @@
 #include "d3dx12.h"
 #include <d3d12.h>
 
-#include <Common/RHIException.h>
+#include <Common/Check.h>
 #include <Config/ConfigBase.h> // RHI配置
 
 #include <RHICommandList.h>

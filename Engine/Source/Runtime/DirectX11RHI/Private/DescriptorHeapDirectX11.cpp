@@ -1,4 +1,3 @@
-#include <Common/RHIException.h>
 #include <Common/Check.h>
 #include "DescriptorHeapDirectX11.h"
 #include "RHIDirectX11.h"

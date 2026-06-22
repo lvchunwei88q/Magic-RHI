@@ -1,5 +1,5 @@
 
-#include "Common/RHIException.h"
+#include <Common/Check.h>
 #include "RHIDirectX11.h"
 #include "RHIPipelineStateDirectX11.h"
 #include "RHIResourceDirectX11.h"

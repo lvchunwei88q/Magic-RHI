@@ -1,7 +1,7 @@
 #pragma once
 #include <RHIPipelineState.h>
 #include <d3d11.h>
-#include <Common/RHIException.h>
+#include <Common/Check.h>
 
 #include <wrl.h> // ComPtr
 using Microsoft::WRL::ComPtr;

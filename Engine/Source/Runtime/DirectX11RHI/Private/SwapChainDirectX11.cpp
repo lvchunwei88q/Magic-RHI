@@ -1,7 +1,7 @@
 /*
 * 因为使用到了前向声明所以需要先引入声明定义
  */
- #include <Common/RHIException.h>
+ #include <Common/Check.h>
 #include "SwapChainDirectX11.h"
 #include "RHIDirectX11.h"
 #include "RHICommandListDirectX11.h"

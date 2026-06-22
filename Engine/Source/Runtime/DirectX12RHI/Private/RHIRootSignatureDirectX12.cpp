@@ -1,5 +1,5 @@
 
-#include <Common/RHIException.h>
+#include <Common/Check.h>
 #include "RHIDirectX12.h"
 #include "RHIRootSignatureDirectX12.h"
 

@@ -1,4 +1,5 @@
-#include "Common/RHIException.h"
+#include <Common/Check.h>
+#include <CoreLogCapture/CoreLogCapture.h>
 #include "RHICommandListDirectX12.h"
 
 namespace RHI

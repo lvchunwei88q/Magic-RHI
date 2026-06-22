@@ -1,6 +1,6 @@
 #include "RHIResourceDirectX12.h"
 #include <Common/RHIDesc.h>
-#include <Common/RHIException.h>
+#include <Common/Check.h>
 #include "RHIDirectX12.h"
 
 #include <include/Support/ErrorCodes.h>

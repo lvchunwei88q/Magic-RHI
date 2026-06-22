@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <d3d11.h>
-#include <Common/RHIException.h>
+#include <Common/Check.h>
 #include <RHICommandList.h>
 #include "RHIResourceDirectX11.h"
 #include "RHIRootSignatureDirectX11.h"

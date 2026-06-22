@@ -1,6 +1,8 @@
 #include "RHILoader.h"
+#include <CoreLogCapture/CoreLogCapture.h>
 #include <RHI.modules.generated.h>
 
+using namespace Core;
 namespace RHI
 {
     AUTO_REGISTER(RHILoader);
@@ -40,13 +42,12 @@ namespace RHI
         }
         
         // load dll
-        CoreLog("Loading RHI DLL: " + std::string(dllName), CoreLogType::Info);
+        InfoCapture::Capture("Loading RHI DLL: " + std::string(dllName));
         m_hModule = LoadLibraryA(dllName);
         if (!m_hModule) {
             DWORD error = GetLastError();
-            
-            CoreLog("Failed to load RHI DLL: " + std::string(dllName) 
-                      + " with error code: " + std::to_string(error), CoreLogType::Error);
+            ErrorCapture::Capture("Failed to load RHI DLL: " + std::string(dllName) 
+                      + " with error code: " + std::to_string(error));
             return false;
         }
         
@@ -57,18 +58,18 @@ namespace RHI
         
         if (!m_CreateDevice || !m_CreateSwapChain || !m_GetRHIType) {
             Unload();
-            CoreLog("Failed to get RHI function pointers", CoreLogType::Error);
+            ErrorCapture::Capture("Failed to get RHI function pointers");
             return false;
         }
         
         // verify type match
         if (m_GetRHIType() != type) {
             Unload();
-            CoreLog("RHI type mismatch: " + std::string(ToString(type)), CoreLogType::Error);
+            ErrorCapture::Capture("RHI type mismatch: " + std::string(ToString(type)));
             return false;
         }
         
-        CoreLog("RHI type match: " + std::string(ToString(type)), CoreLogType::Info);
+        InfoCapture::Capture("RHI type match: " + std::string(ToString(type)));
         
         m_loadedType = type;
         return true;

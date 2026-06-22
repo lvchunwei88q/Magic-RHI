@@ -1,6 +1,6 @@
 #pragma once
 #include <d3d11.h>
-#include <Common/RHIException.h>
+#include <Common/Check.h>
 #include <RHIResource.h>
 
 #include <wrl.h> // ComPtr

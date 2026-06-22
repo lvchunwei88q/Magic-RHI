@@ -2,7 +2,7 @@
 * 因为使用到了前向声明所以需要先引入声明定义
 */
 
-#include <Common/RHIException.h>
+#include <Common/Check.h>
 #include <Common/RHIFeatureLevel.h>
 #include "RHIRootSignatureDirectX12.h"
 #include "RHICommandListDirectX12.h"

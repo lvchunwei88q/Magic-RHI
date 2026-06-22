@@ -1,5 +1,5 @@
 #include "RHICommandListDirectX12.h"
-#include <Common/RHIException.h>
+#include <Common/Check.h>
 
 namespace RHI
 {

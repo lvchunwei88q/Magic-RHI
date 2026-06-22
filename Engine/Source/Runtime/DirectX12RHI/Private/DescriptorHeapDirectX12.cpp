@@ -1,4 +1,4 @@
-#include <Common/RHIException.h>
+#include <Common/Check.h>
 #include "DescriptorHeapDirectX12.h"
 #include "RHIDirectX12.h"
 
