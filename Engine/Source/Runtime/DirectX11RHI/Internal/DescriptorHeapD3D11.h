@@ -1,5 +1,5 @@
 #pragma once
-#include <RHIResourceDirectX11.h>
+#include <RHIResourceD3D11.h>
 #include <vector>
 #include <memory>
 
@@ -10,12 +10,12 @@ namespace RHI
     */
     struct DescriptorData
     {
-        std::unique_ptr<ConstantBufferViewDirectX11> pCBV;
-        std::unique_ptr<ShaderResourceViewDirectX11> pSRV;
-        std::unique_ptr<UnorderedAccessViewDirectX11> pUAV;
-        std::unique_ptr<RenderTargetViewDirectX11> pRTV;
-        std::unique_ptr<DepthStencilViewDirectX11> pDSV;
-        std::unique_ptr<SamplerStateDirectX11> pSampler;
+        std::unique_ptr<ConstantBufferViewD3D11> pCBV;
+        std::unique_ptr<ShaderResourceViewD3D11> pSRV;
+        std::unique_ptr<UnorderedAccessViewD3D11> pUAV;
+        std::unique_ptr<RenderTargetViewD3D11> pRTV;
+        std::unique_ptr<DepthStencilViewD3D11> pDSV;
+        std::unique_ptr<SamplerStateD3D11> pSampler;
         RHIResourceType ViewType;
 
         void Release()
@@ -27,10 +27,10 @@ namespace RHI
         }
     };
 
-    class DescriptorHeapDirectX11 : public RHIDescriptorHeap
+    class DescriptorHeapD3D11 : public RHIDescriptorHeap
     {
     public:
-        DescriptorHeapDirectX11(RHIDescriptorHeapType InType, uint32_t InCapacity)
+        DescriptorHeapD3D11(RHIDescriptorHeapType InType, uint32_t InCapacity)
             : RHIDescriptorHeap(InType, InCapacity)
         {
             m_FreeList.reserve(InCapacity);
@@ -41,7 +41,7 @@ namespace RHI
                 m_FreeList.push_back(i);
             }
         }
-        ~DescriptorHeapDirectX11() override = default;
+        ~DescriptorHeapD3D11() override = default;
         RHIResource* GetDescriptorHeapView(RHIDescriptorHandle handle) const override; // 获取描述符堆视图 直接返回包装引用的资源对象
 
         [[nodiscard]] RHIDescriptorHandle Allocate() override;
@@ -50,14 +50,14 @@ namespace RHI
         bool IsFull() const override { return m_FreeList.empty(); }
 
         // 默认我们的堆是所有的描述符类型都支持的但是为了规范我们也向DX12保持一致
-        void SetDescriptor(RHIDescriptorHandle handle, ConstantBufferViewDirectX11* pCBV);
-        void SetDescriptor(RHIDescriptorHandle handle, ShaderResourceViewDirectX11* pSRV);
-        void SetDescriptor(RHIDescriptorHandle handle, UnorderedAccessViewDirectX11* pUAV);
+        void SetDescriptor(RHIDescriptorHandle handle, ConstantBufferViewD3D11* pCBV);
+        void SetDescriptor(RHIDescriptorHandle handle, ShaderResourceViewD3D11* pSRV);
+        void SetDescriptor(RHIDescriptorHandle handle, UnorderedAccessViewD3D11* pUAV);
         
-        void SetDescriptor(RHIDescriptorHandle handle, RenderTargetViewDirectX11* pRTV);
-        void SetDescriptor(RHIDescriptorHandle handle, DepthStencilViewDirectX11* pDSV);
+        void SetDescriptor(RHIDescriptorHandle handle, RenderTargetViewD3D11* pRTV);
+        void SetDescriptor(RHIDescriptorHandle handle, DepthStencilViewD3D11* pDSV);
         
-        void SetDescriptor(RHIDescriptorHandle handle, SamplerStateDirectX11* pSampler);
+        void SetDescriptor(RHIDescriptorHandle handle, SamplerStateD3D11* pSampler);
 
         const DescriptorData* GetDescriptor(RHIDescriptorHandle handle) const;
 

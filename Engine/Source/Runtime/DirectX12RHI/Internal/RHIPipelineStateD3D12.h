@@ -9,11 +9,11 @@ using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
-    class RHIPipelineStateDirectX12 : public RHIPipelineState
+    class RHIPipelineStateD3D12 : public RHIPipelineState
     {
     public:
-        RHIPipelineStateDirectX12();
-        ~RHIPipelineStateDirectX12() override;
+        RHIPipelineStateD3D12();
+        ~RHIPipelineStateD3D12() override;
 
         bool Initialize(Device* device, const GraphicsPipelineStateDesc& desc) override;
         bool Initialize(Device* device, const ComputePipelineStateDesc& desc) override;

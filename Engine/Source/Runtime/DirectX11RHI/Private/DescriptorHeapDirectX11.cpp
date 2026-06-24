@@ -1,6 +1,6 @@
 #include <Common/Check.h>
-#include "DescriptorHeapDirectX11.h"
-#include "RHIDirectX11.h"
+#include "DescriptorHeapD3D11.h"
+#include "RHID3D11.h"
 
 #define IMPLEMENT_SET_DESCRIPTOR(Type, Member, View_Type, ErrorFunc)             \
         if (!handle.IsValid() || handle.GetType() != HeapType)                  \
@@ -19,7 +19,7 @@
 
 namespace RHI
 {
-    RHIResource* DescriptorHeapDirectX11::GetDescriptorHeapView(RHIDescriptorHandle handle) const
+    RHIResource* DescriptorHeapD3D11::GetDescriptorHeapView(RHIDescriptorHandle handle) const
     {
         if (!handle.IsValid() || handle.GetType() != HeapType)
         {
@@ -48,7 +48,7 @@ namespace RHI
             : nullptr;
     }
 
-    RHIDescriptorHandle DescriptorHeapDirectX11::Allocate()
+    RHIDescriptorHandle DescriptorHeapD3D11::Allocate()
     {
         if (IsFull())
         {
@@ -65,7 +65,7 @@ namespace RHI
         return RHIDescriptorHandle(HeapType, index);
     }
 
-    void DescriptorHeapDirectX11::Free(RHIDescriptorHandle handle)
+    void DescriptorHeapD3D11::Free(RHIDescriptorHandle handle)
     {
         if (!handle.IsValid() || handle.GetType() != HeapType)
         {
@@ -97,49 +97,49 @@ namespace RHI
         CurrentIndex = Capacity - static_cast<uint32_t>(m_FreeList.size());
     }
 
-    void DescriptorHeapDirectX11::SetDescriptor(RHIDescriptorHandle handle, ConstantBufferViewDirectX11* pCBV)
+    void DescriptorHeapD3D11::SetDescriptor(RHIDescriptorHandle handle, ConstantBufferViewD3D11* pCBV)
     {
-        IMPLEMENT_SET_DESCRIPTOR(ConstantBufferViewDirectX11, pCBV, RHIResourceType::RRT_ConstantBufferView,[](){
+        IMPLEMENT_SET_DESCRIPTOR(ConstantBufferViewD3D11, pCBV, RHIResourceType::RRT_ConstantBufferView,[](){
             ThrowErrorMessage("Error SetDescriptor ConstantBufferView Unknown index range");
         });
     }
 
-    void DescriptorHeapDirectX11::SetDescriptor(RHIDescriptorHandle handle, ShaderResourceViewDirectX11* pSRV)
+    void DescriptorHeapD3D11::SetDescriptor(RHIDescriptorHandle handle, ShaderResourceViewD3D11* pSRV)
     {
-        IMPLEMENT_SET_DESCRIPTOR(ShaderResourceViewDirectX11, pSRV, RHIResourceType::RRT_ShaderResourceView,[](){
+        IMPLEMENT_SET_DESCRIPTOR(ShaderResourceViewD3D11, pSRV, RHIResourceType::RRT_ShaderResourceView,[](){
             ThrowErrorMessage("Error SetDescriptor ShaderResourceView Unknown index range");
         });
     }
 
-    void DescriptorHeapDirectX11::SetDescriptor(RHIDescriptorHandle handle, UnorderedAccessViewDirectX11* pUAV)
+    void DescriptorHeapD3D11::SetDescriptor(RHIDescriptorHandle handle, UnorderedAccessViewD3D11* pUAV)
     {
-        IMPLEMENT_SET_DESCRIPTOR(UnorderedAccessViewDirectX11, pUAV, RHIResourceType::RRT_UnorderedAccessView,[](){
+        IMPLEMENT_SET_DESCRIPTOR(UnorderedAccessViewD3D11, pUAV, RHIResourceType::RRT_UnorderedAccessView,[](){
             ThrowErrorMessage("Error SetDescriptor UnorderedAccessView Unknown index range");
         });
     }
 
-    void DescriptorHeapDirectX11::SetDescriptor(RHIDescriptorHandle handle, RenderTargetViewDirectX11* pRTV)
+    void DescriptorHeapD3D11::SetDescriptor(RHIDescriptorHandle handle, RenderTargetViewD3D11* pRTV)
     {
-        IMPLEMENT_SET_DESCRIPTOR(RenderTargetViewDirectX11, pRTV, RHIResourceType::RRT_RenderTargetView,[](){
+        IMPLEMENT_SET_DESCRIPTOR(RenderTargetViewD3D11, pRTV, RHIResourceType::RRT_RenderTargetView,[](){
             ThrowErrorMessage("Error SetDescriptor RenderTargetView Unknown index range");
         });
     }
 
-    void DescriptorHeapDirectX11::SetDescriptor(RHIDescriptorHandle handle, DepthStencilViewDirectX11* pDSV)
+    void DescriptorHeapD3D11::SetDescriptor(RHIDescriptorHandle handle, DepthStencilViewD3D11* pDSV)
     {
-        IMPLEMENT_SET_DESCRIPTOR(DepthStencilViewDirectX11, pDSV, RHIResourceType::RRT_DepthStencilView,[](){
+        IMPLEMENT_SET_DESCRIPTOR(DepthStencilViewD3D11, pDSV, RHIResourceType::RRT_DepthStencilView,[](){
             ThrowErrorMessage("Error SetDescriptor DepthStencilView Unknown index range");
         });
     }
 
-    void DescriptorHeapDirectX11::SetDescriptor(RHIDescriptorHandle handle, SamplerStateDirectX11* pSampler)
+    void DescriptorHeapD3D11::SetDescriptor(RHIDescriptorHandle handle, SamplerStateD3D11* pSampler)
     {
-        IMPLEMENT_SET_DESCRIPTOR(SamplerStateDirectX11, pSampler, RHIResourceType::RRT_SamplerState,[](){
+        IMPLEMENT_SET_DESCRIPTOR(SamplerStateD3D11, pSampler, RHIResourceType::RRT_SamplerState,[](){
             ThrowErrorMessage("Error SetDescriptor SamplerState Unknown index range");
         });
     }
 
-    const DescriptorData* DescriptorHeapDirectX11::GetDescriptor(RHIDescriptorHandle handle) const
+    const DescriptorData* DescriptorHeapD3D11::GetDescriptor(RHIDescriptorHandle handle) const
     {   
         if (!handle.IsValid() || handle.GetType() != HeapType)
             return nullptr;

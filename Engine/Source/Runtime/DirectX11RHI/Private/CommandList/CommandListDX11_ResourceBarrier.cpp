@@ -1,8 +1,8 @@
-#include "RHICommandListDirectX11.h"
+#include "RHICommandListD3D11.h"
 
 namespace RHI
 {
-    void CommandListDirectX11::ResourceBarrier(uint32_t numBarriers, const BarrierDesc* pBarriers)
+    void CommandListD3D11::ResourceBarrier(uint32_t numBarriers, const BarrierDesc* pBarriers)
     {
         // NOT
     }

@@ -1,9 +1,9 @@
-#include "RHICommandListDirectX12.h"
-#include "RHIPipelineStateDirectX12.h"
+#include "RHICommandListD3D12.h"
+#include "RHIPipelineStateD3D12.h"
 
 namespace RHI
 {
-    void CommandListDirectX12::SetPipelineState(RHIPipelineState* pPipelineState,PipelineStateType stateType)
+    void CommandListD3D12::SetPipelineState(RHIPipelineState* pPipelineState,PipelineStateType stateType)
     {
         if (!pPipelineState)
         {
@@ -21,7 +21,7 @@ namespace RHI
         }
             
 
-        auto pso = static_cast<RHIPipelineStateDirectX12*>(pPipelineState);
+        auto pso = static_cast<RHIPipelineStateD3D12*>(pPipelineState);
         if (!pso->IsValid())
         {
 #if RHI_ENABLE_RESOURCE_DEBUG_INFO

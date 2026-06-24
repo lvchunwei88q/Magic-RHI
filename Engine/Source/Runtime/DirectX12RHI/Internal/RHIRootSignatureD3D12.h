@@ -9,11 +9,11 @@ using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
-    class RHIRootSignatureDirectX12 : public RHIRootSignature
+    class RHIRootSignatureD3D12 : public RHIRootSignature
     {
     public:
-        RHIRootSignatureDirectX12();
-        ~RHIRootSignatureDirectX12() override;
+        RHIRootSignatureD3D12();
+        ~RHIRootSignatureD3D12() override;
 
         bool Initialize(Device* device, const RootSignatureDesc& desc) override;
         void Shutdown() override;

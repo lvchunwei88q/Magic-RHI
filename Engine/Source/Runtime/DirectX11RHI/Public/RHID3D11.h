@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Common/DIRECTX11RHI_API.h"
+#include "Common/D3D11RHI_API.h"
 #include <RHI.h>
 #include <d3d11.h>
 #include <dxgi.h>
 
 // DescriptorHeap
-#include "DescriptorHeapDirectX11.h"
+#include "DescriptorHeapD3D11.h"
 
 #include <wrl.h> // ComPtr
 using Microsoft::WRL::ComPtr;
@@ -14,19 +14,19 @@ using Microsoft::WRL::ComPtr;
 namespace RHI
 {
     // CommandQueue Forward Declaration
-    class CommandQueueDirectX11;
+    class CommandQueueD3D11;
 
-    class DIRECTX11RHI_API RHIDirectX11 : public Device
+    class D3D11RHI_API RHID3D11 : public Device
     {
     public:
-        RHIDirectX11();
-        ~RHIDirectX11() override;
+        RHID3D11();
+        ~RHID3D11() override;
 
         bool Initialize() override;
         void Shutdown() override;
 
         bool IsValid() const override;
-        RHIType GetType() const override { return RHIType::DirectX11; }
+        RHIType GetType() const override { return RHIType::D3D11; }
         const std::wstring& GetAdapterName() const override { return m_AdapterName; }
 
         [[nodiscard]] std::shared_ptr<RHISamplerState> CreateSamplerState(const SamplerStateDesc& desc) override;
@@ -71,16 +71,16 @@ namespace RHI
         ComPtr<ID3D11DeviceContext> m_pDeviceContext;
         std::wstring m_AdapterName;
         D3D_FEATURE_LEVEL m_FeatureLevel;
-        // CommandQueue DirectX11
-        std::unique_ptr<CommandQueueDirectX11> m_CommandQueue;
+        // CommandQueue D3D11
+        std::unique_ptr<CommandQueueD3D11> m_CommandQueue;
 
         /*
-         * DescriptorHeap DirectX11 模拟
+         * DescriptorHeap D3D11 模拟
          * 包含标准堆、采样器堆、RTV堆、DSV堆
         */
-        std::unique_ptr<DescriptorHeapDirectX11> m_pStandardHeap;
-        std::unique_ptr<DescriptorHeapDirectX11> m_pSamplerHeap;
-        std::unique_ptr<DescriptorHeapDirectX11> m_pRTVHeap;
-        std::unique_ptr<DescriptorHeapDirectX11> m_pDSVHeap;
+        std::unique_ptr<DescriptorHeapD3D11> m_pStandardHeap;
+        std::unique_ptr<DescriptorHeapD3D11> m_pSamplerHeap;
+        std::unique_ptr<DescriptorHeapD3D11> m_pRTVHeap;
+        std::unique_ptr<DescriptorHeapD3D11> m_pDSVHeap;
     };
 }

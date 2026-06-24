@@ -1,8 +1,8 @@
-#include "RHICommandListDirectX11.h"
+#include "RHICommandListD3D11.h"
 
 namespace RHI
 {
-    void CommandListDirectX11::RSSetViewports(uint32_t numViewports, const RHIViewport* pViewports)
+    void CommandListD3D11::RSSetViewports(uint32_t numViewports, const RHIViewport* pViewports)
     {
         std::vector<D3D11_VIEWPORT> d3dViewports;
         d3dViewports.reserve(numViewports);
@@ -18,11 +18,11 @@ namespace RHI
             d3dViewports.push_back(vp);
         }
 
-        CommandAllocatorDirectX11* pAllocator = SafeCast<CommandAllocatorDirectX11>(m_pAllocator);
+        CommandAllocatorD3D11* pAllocator = SafeCast<CommandAllocatorD3D11>(m_pAllocator);
         pAllocator->GetDeviceContext()->RSSetViewports(numViewports, d3dViewports.data());
     }
 
-    void CommandListDirectX11::RSSetScissorRects(uint32_t numRects, const RHIRect* pRects)
+    void CommandListD3D11::RSSetScissorRects(uint32_t numRects, const RHIRect* pRects)
     {
         std::vector<D3D11_RECT> d3dRects;
         d3dRects.reserve(numRects);
@@ -36,7 +36,7 @@ namespace RHI
             d3dRects.push_back(rect);
         }
 
-        CommandAllocatorDirectX11* pAllocator = SafeCast<CommandAllocatorDirectX11>(m_pAllocator);
+        CommandAllocatorD3D11* pAllocator = SafeCast<CommandAllocatorD3D11>(m_pAllocator);
         pAllocator->GetDeviceContext()->RSSetScissorRects(numRects, d3dRects.data());
     }
 }

@@ -1,7 +1,7 @@
-#include "RHIResourceDirectX11.h"
+#include "RHIResourceD3D11.h"
 #include <Common/RHIDesc.h>
 #include <Common/Check.h>
-#include "RHIDirectX11.h"
+#include "RHID3D11.h"
 #include <d3dcompiler.h>
 #include <regex>
 
@@ -174,7 +174,7 @@ namespace RHI
 
             std::shared_ptr<ShaderType> shader = std::make_shared<ShaderType>(pShader);
 
-            if constexpr (std::is_same_v<ShaderType, VertexShaderDirectX11>)
+            if constexpr (std::is_same_v<ShaderType, VertexShaderD3D11>)
             {
                 shader->SetVSBlob(shaderBlob.Get());
             }
@@ -184,9 +184,9 @@ namespace RHI
         }
     }
 
-    std::shared_ptr<RHIVertexShader> RHIDirectX11::CompileVertexShader(const ShaderCompileDesc& desc)
+    std::shared_ptr<RHIVertexShader> RHID3D11::CompileVertexShader(const ShaderCompileDesc& desc)
     {
-        return CompileShaderInternal<VertexShaderDirectX11>(m_pDevice.Get(), desc, "vs_5_0",
+        return CompileShaderInternal<VertexShaderD3D11>(m_pDevice.Get(), desc, "vs_5_0",
             [](ID3D11Device* device, ComPtr<ID3DBlob>& blob) -> ID3D11VertexShader* {
                 ID3D11VertexShader* pShader = nullptr;
                 if (SUCCEEDED(device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pShader)))
@@ -195,9 +195,9 @@ namespace RHI
             });
     }
 
-    std::shared_ptr<RHIPixelShader> RHIDirectX11::CompilePixelShader(const ShaderCompileDesc& desc)
+    std::shared_ptr<RHIPixelShader> RHID3D11::CompilePixelShader(const ShaderCompileDesc& desc)
     {
-        return CompileShaderInternal<PixelShaderDirectX11>(m_pDevice.Get(), desc, "ps_5_0",
+        return CompileShaderInternal<PixelShaderD3D11>(m_pDevice.Get(), desc, "ps_5_0",
             [](ID3D11Device* device, ComPtr<ID3DBlob>& blob) -> ID3D11PixelShader* {
                 ID3D11PixelShader* pShader = nullptr;
                 if (SUCCEEDED(device->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pShader)))
@@ -206,9 +206,9 @@ namespace RHI
             });
     }
 
-    std::shared_ptr<RHIGeometryShader> RHIDirectX11::CompileGeometryShader(const ShaderCompileDesc& desc)
+    std::shared_ptr<RHIGeometryShader> RHID3D11::CompileGeometryShader(const ShaderCompileDesc& desc)
     {
-        return CompileShaderInternal<GeometryShaderDirectX11>(m_pDevice.Get(), desc, "gs_5_0",
+        return CompileShaderInternal<GeometryShaderD3D11>(m_pDevice.Get(), desc, "gs_5_0",
             [](ID3D11Device* device, ComPtr<ID3DBlob>& blob) -> ID3D11GeometryShader* {
                 ID3D11GeometryShader* pShader = nullptr;
                 if (SUCCEEDED(device->CreateGeometryShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pShader)))
@@ -217,9 +217,9 @@ namespace RHI
             });
     }
 
-    std::shared_ptr<RHIHullShader> RHIDirectX11::CompileHullShader(const ShaderCompileDesc& desc)
+    std::shared_ptr<RHIHullShader> RHID3D11::CompileHullShader(const ShaderCompileDesc& desc)
     {
-        return CompileShaderInternal<HullShaderDirectX11>(m_pDevice.Get(), desc, "hs_5_0",
+        return CompileShaderInternal<HullShaderD3D11>(m_pDevice.Get(), desc, "hs_5_0",
             [](ID3D11Device* device, ComPtr<ID3DBlob>& blob) -> ID3D11HullShader* {
                 ID3D11HullShader* pShader = nullptr;
                 if (SUCCEEDED(device->CreateHullShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pShader)))
@@ -228,9 +228,9 @@ namespace RHI
             });
     }
 
-    std::shared_ptr<RHIDomainShader> RHIDirectX11::CompileDomainShader(const ShaderCompileDesc& desc)
+    std::shared_ptr<RHIDomainShader> RHID3D11::CompileDomainShader(const ShaderCompileDesc& desc)
     {
-        return CompileShaderInternal<DomainShaderDirectX11>(m_pDevice.Get(), desc, "ds_5_0",
+        return CompileShaderInternal<DomainShaderD3D11>(m_pDevice.Get(), desc, "ds_5_0",
             [](ID3D11Device* device, ComPtr<ID3DBlob>& blob) -> ID3D11DomainShader* {
                 ID3D11DomainShader* pShader = nullptr;
                 if (SUCCEEDED(device->CreateDomainShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pShader)))
@@ -239,9 +239,9 @@ namespace RHI
             });
     }
 
-    std::shared_ptr<RHIComputeShader> RHIDirectX11::CompileComputeShader(const ShaderCompileDesc& desc)
+    std::shared_ptr<RHIComputeShader> RHID3D11::CompileComputeShader(const ShaderCompileDesc& desc)
     {
-        return CompileShaderInternal<ComputeShaderDirectX11>(m_pDevice.Get(), desc, "cs_5_0",
+        return CompileShaderInternal<ComputeShaderD3D11>(m_pDevice.Get(), desc, "cs_5_0",
             [](ID3D11Device* device, ComPtr<ID3DBlob>& blob) -> ID3D11ComputeShader* {
                 ID3D11ComputeShader* pShader = nullptr;
                 if (SUCCEEDED(device->CreateComputeShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pShader)))
@@ -250,7 +250,7 @@ namespace RHI
             });
     }
 
-    ShaderModelVersion RHIDirectX11::GetShaderModelVersion() const
+    ShaderModelVersion RHID3D11::GetShaderModelVersion() const
     {
         // DX11 最高支持 SM_5_0
         return ShaderModelVersion::SM_5_0;

@@ -8,12 +8,12 @@ using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
-    class RasterizerStateDirectX11 : public RHIRasterizerState
+    class RasterizerStateD3D11 : public RHIRasterizerState
     {
     public:
-        RasterizerStateDirectX11(ID3D11RasterizerState* pRasterizerState)
+        RasterizerStateD3D11(ID3D11RasterizerState* pRasterizerState)
             : m_pRasterizerState(pRasterizerState) {}
-        ~RasterizerStateDirectX11() override = default;
+        ~RasterizerStateD3D11() override = default;
 
         ID3D11RasterizerState* GetRasterizerState() const { return m_pRasterizerState.Get(); }
 
@@ -21,12 +21,12 @@ namespace RHI
         ComPtr<ID3D11RasterizerState> m_pRasterizerState;
     };
 
-    class BlendStateDirectX11 : public RHIBlendState
+    class BlendStateD3D11 : public RHIBlendState
     {
     public:
-        BlendStateDirectX11(ID3D11BlendState* pBlendState)
+        BlendStateD3D11(ID3D11BlendState* pBlendState)
             : m_pBlendState(pBlendState) {}
-        ~BlendStateDirectX11() override = default;
+        ~BlendStateD3D11() override = default;
 
         ID3D11BlendState* GetBlendState() const { return m_pBlendState.Get(); }
 
@@ -34,12 +34,12 @@ namespace RHI
         ComPtr<ID3D11BlendState> m_pBlendState;
     };
 
-    class DepthStencilStateDirectX11 : public RHIDepthStencilState
+    class DepthStencilStateD3D11 : public RHIDepthStencilState
     {
     public:
-        DepthStencilStateDirectX11(ID3D11DepthStencilState* pDepthStencilState)
+        DepthStencilStateD3D11(ID3D11DepthStencilState* pDepthStencilState)
             : m_pDepthStencilState(pDepthStencilState) {}
-        ~DepthStencilStateDirectX11() override = default;
+        ~DepthStencilStateD3D11() override = default;
 
         ID3D11DepthStencilState* GetDepthStencilState() const { return m_pDepthStencilState.Get(); }
 
@@ -47,17 +47,17 @@ namespace RHI
         ComPtr<ID3D11DepthStencilState> m_pDepthStencilState;
     };
 
-    class BufferDirectX11 : public RHIBuffer
+    class BufferD3D11 : public RHIBuffer
     {
     public:
-        BufferDirectX11(ID3D11Buffer* pBuffer, const BufferDesc& InDesc, ID3D11DeviceContext* InDeviceContext)
+        BufferD3D11(ID3D11Buffer* pBuffer, const BufferDesc& InDesc, ID3D11DeviceContext* InDeviceContext)
             : RHIBuffer(InDesc, RRT_Buffer)
             , m_pBuffer(pBuffer)
             , m_DeviceContext(InDeviceContext)
         {
         }
 
-        ~BufferDirectX11() override = default;
+        ~BufferD3D11() override = default;
 
         ID3D11Buffer* GetResource() const { return m_pBuffer.Get(); }
 
@@ -96,13 +96,13 @@ namespace RHI
         ID3D11DeviceContext* m_DeviceContext;
     };
 
-    class TextureDirectX11 : public RHITexture
+    class TextureD3D11 : public RHITexture
     {
     public:
-        TextureDirectX11(ID3D11Texture2D* pTexture, const TextureDesc& desc)
+        TextureD3D11(ID3D11Texture2D* pTexture, const TextureDesc& desc)
             : m_pTexture(pTexture)
             , RHITexture(desc) {}
-        ~TextureDirectX11() override = default;
+        ~TextureD3D11() override = default;
 
         uint64_t GetSize() const override;
         uint32_t GetWidth() const override;
@@ -116,12 +116,12 @@ namespace RHI
         ComPtr<ID3D11Texture2D> m_pTexture;
     };
 
-    class ConstantBufferViewDirectX11 : public RHIConstantBufferView
+    class ConstantBufferViewD3D11 : public RHIConstantBufferView
     {
     public:
-        ConstantBufferViewDirectX11(ID3D11Buffer* pCBV)
+        ConstantBufferViewD3D11(ID3D11Buffer* pCBV)
             : m_pCBV(pCBV) {}
-        ~ConstantBufferViewDirectX11() override = default;
+        ~ConstantBufferViewD3D11() override = default;
 
         ID3D11Buffer* GetCBV() const { return m_pCBV.Get(); }
         uint64_t GetGPUVirtualAddress() const override { return (uint64_t)m_pCBV.Get(); }
@@ -130,12 +130,12 @@ namespace RHI
         ComPtr<ID3D11Buffer> m_pCBV;
     };
 
-    class ShaderResourceViewDirectX11 : public RHIShaderResourceView
+    class ShaderResourceViewD3D11 : public RHIShaderResourceView
     {
     public:
-        ShaderResourceViewDirectX11(ID3D11ShaderResourceView* pSRV)
+        ShaderResourceViewD3D11(ID3D11ShaderResourceView* pSRV)
             : m_pSRV(pSRV) {}
-        ~ShaderResourceViewDirectX11() override = default;
+        ~ShaderResourceViewD3D11() override = default;
 
         ID3D11ShaderResourceView* GetSRV() const { return m_pSRV.Get(); }
         uint64_t GetGPUVirtualAddress() const override { return (uint64_t)m_pSRV.Get(); }
@@ -144,12 +144,12 @@ namespace RHI
         ComPtr<ID3D11ShaderResourceView> m_pSRV;
     };
 
-    class UnorderedAccessViewDirectX11 : public RHIUnorderedAccessView
+    class UnorderedAccessViewD3D11 : public RHIUnorderedAccessView
     {
     public:
-        UnorderedAccessViewDirectX11(ID3D11UnorderedAccessView* pUAV)
+        UnorderedAccessViewD3D11(ID3D11UnorderedAccessView* pUAV)
             : m_pUAV(pUAV) {}
-        ~UnorderedAccessViewDirectX11() override = default;
+        ~UnorderedAccessViewD3D11() override = default;
 
         ID3D11UnorderedAccessView* GetUAV() const { return m_pUAV.Get(); }
         uint64_t GetGPUVirtualAddress() const override { return (uint64_t)m_pUAV.Get(); }
@@ -158,12 +158,12 @@ namespace RHI
         ComPtr<ID3D11UnorderedAccessView> m_pUAV;
     };
 
-    class RenderTargetViewDirectX11 : public RHIRenderTargetView
+    class RenderTargetViewD3D11 : public RHIRenderTargetView
     {
     public:
-        RenderTargetViewDirectX11(ID3D11RenderTargetView* pRTV)
+        RenderTargetViewD3D11(ID3D11RenderTargetView* pRTV)
             : m_pRTV(pRTV) {}
-        ~RenderTargetViewDirectX11() override = default;
+        ~RenderTargetViewD3D11() override = default;
 
         ID3D11RenderTargetView* GetRTV() const { return m_pRTV.Get(); }
 
@@ -171,12 +171,12 @@ namespace RHI
         ComPtr<ID3D11RenderTargetView> m_pRTV;
     };
 
-    class DepthStencilViewDirectX11 : public RHIDepthStencilView
+    class DepthStencilViewD3D11 : public RHIDepthStencilView
     {
     public:
-        DepthStencilViewDirectX11(ID3D11DepthStencilView* pDSV)
+        DepthStencilViewD3D11(ID3D11DepthStencilView* pDSV)
             : m_pDSV(pDSV) {}
-        ~DepthStencilViewDirectX11() override = default;
+        ~DepthStencilViewD3D11() override = default;
 
         ID3D11DepthStencilView* GetDSV() const { return m_pDSV.Get(); }
 
@@ -184,11 +184,11 @@ namespace RHI
         ComPtr<ID3D11DepthStencilView> m_pDSV;
     };
 
-    class VertexShaderDirectX11 : public RHIVertexShader
+    class VertexShaderD3D11 : public RHIVertexShader
     {
     public:
-        VertexShaderDirectX11(ID3D11VertexShader* pShader) : m_pVertexShader(pShader) {}
-        ~VertexShaderDirectX11() override = default;
+        VertexShaderD3D11(ID3D11VertexShader* pShader) : m_pVertexShader(pShader) {}
+        ~VertexShaderD3D11() override = default;
         ID3D11VertexShader* GetShader() const { return m_pVertexShader.Get(); }
         ID3DBlob* GetVSBlob() const { return m_pVSBlob.Get(); }
 
@@ -198,62 +198,62 @@ namespace RHI
         ComPtr<ID3DBlob> m_pVSBlob;
     };
 
-    class PixelShaderDirectX11 : public RHIPixelShader
+    class PixelShaderD3D11 : public RHIPixelShader
     {
     public:
-        PixelShaderDirectX11(ID3D11PixelShader* pShader) : m_pPixelShader(pShader) {}
-        ~PixelShaderDirectX11() override = default;
+        PixelShaderD3D11(ID3D11PixelShader* pShader) : m_pPixelShader(pShader) {}
+        ~PixelShaderD3D11() override = default;
         ID3D11PixelShader* GetShader() const { return m_pPixelShader.Get(); }
     private:
         ComPtr<ID3D11PixelShader> m_pPixelShader;
     };
 
-    class GeometryShaderDirectX11 : public RHIGeometryShader
+    class GeometryShaderD3D11 : public RHIGeometryShader
     {
     public:
-        GeometryShaderDirectX11(ID3D11GeometryShader* pShader) : m_pGeometryShader(pShader) {}
-        ~GeometryShaderDirectX11() override = default;
+        GeometryShaderD3D11(ID3D11GeometryShader* pShader) : m_pGeometryShader(pShader) {}
+        ~GeometryShaderD3D11() override = default;
         ID3D11GeometryShader* GetShader() const { return m_pGeometryShader.Get(); }
     private:
         ComPtr<ID3D11GeometryShader> m_pGeometryShader;
     };
 
-    class HullShaderDirectX11 : public RHIHullShader
+    class HullShaderD3D11 : public RHIHullShader
     {
     public:
-        HullShaderDirectX11(ID3D11HullShader* pShader) : m_pHullShader(pShader) {}
-        ~HullShaderDirectX11() override = default;
+        HullShaderD3D11(ID3D11HullShader* pShader) : m_pHullShader(pShader) {}
+        ~HullShaderD3D11() override = default;
         ID3D11HullShader* GetShader() const { return m_pHullShader.Get(); }
     private:
         ComPtr<ID3D11HullShader> m_pHullShader;
     };
 
-    class DomainShaderDirectX11 : public RHIDomainShader
+    class DomainShaderD3D11 : public RHIDomainShader
     {
     public:
-        DomainShaderDirectX11(ID3D11DomainShader* pShader) : m_pDomainShader(pShader) {}
-        ~DomainShaderDirectX11() override = default;
+        DomainShaderD3D11(ID3D11DomainShader* pShader) : m_pDomainShader(pShader) {}
+        ~DomainShaderD3D11() override = default;
         ID3D11DomainShader* GetShader() const { return m_pDomainShader.Get(); }
     private:
         ComPtr<ID3D11DomainShader> m_pDomainShader;
     };
 
-    class ComputeShaderDirectX11 : public RHIComputeShader
+    class ComputeShaderD3D11 : public RHIComputeShader
     {
     public:
-        ComputeShaderDirectX11(ID3D11ComputeShader* pShader) : m_pComputeShader(pShader) {}
-        ~ComputeShaderDirectX11() override = default;
+        ComputeShaderD3D11(ID3D11ComputeShader* pShader) : m_pComputeShader(pShader) {}
+        ~ComputeShaderD3D11() override = default;
         ID3D11ComputeShader* GetShader() const { return m_pComputeShader.Get(); }
     private:
         ComPtr<ID3D11ComputeShader> m_pComputeShader;
     };
 
-    class SamplerStateDirectX11 : public RHISamplerState
+    class SamplerStateD3D11 : public RHISamplerState
     {
     public:
-        SamplerStateDirectX11(ID3D11SamplerState* pSamplerState) : m_pSamplerState(pSamplerState),
+        SamplerStateD3D11(ID3D11SamplerState* pSamplerState) : m_pSamplerState(pSamplerState),
          RHISamplerState({RHIDescriptorHeapType::Sampler, 0}) {}
-        ~SamplerStateDirectX11() override = default;
+        ~SamplerStateD3D11() override = default;
 
         ID3D11SamplerState* GetSamplerState() const { return m_pSamplerState.Get(); }
 

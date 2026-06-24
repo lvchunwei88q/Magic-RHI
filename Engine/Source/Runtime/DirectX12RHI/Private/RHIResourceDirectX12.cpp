@@ -2,8 +2,8 @@
  * 因为使用到了前向声明所以需要先引入声明定义
  */
  #include <Common/Check.h>
-#include "RHICommandListDirectX12.h"
-#include "RHIDirectX12.h"
+#include "RHICommandListD3D12.h"
+#include "RHID3D12.h"
 
 namespace RHI
 {
@@ -134,7 +134,7 @@ namespace RHI
         }
     }
 
-    std::shared_ptr<RHISamplerState> RHIDirectX12::CreateSamplerState(const SamplerStateDesc& desc)
+    std::shared_ptr<RHISamplerState> RHID3D12::CreateSamplerState(const SamplerStateDesc& desc)
     {
         D3D12_SAMPLER_DESC samplerDesc = {};
         samplerDesc.Filter = ConvertFilter(desc.Filter);
@@ -158,16 +158,16 @@ namespace RHI
 
         RHIDescriptorHandle handle = {(uint8_t)RHIDescriptorHeapType::Sampler, index};
 
-        return std::make_shared<SamplerStateDirectX12>(samplerDesc, handle);
+        return std::make_shared<SamplerStateD3D12>(samplerDesc, handle);
     }
 
-    void RHIDirectX12::DeleteSamplerState(std::shared_ptr<RHI::RHISamplerState>& samplerState) 
+    void RHID3D12::DeleteSamplerState(std::shared_ptr<RHI::RHISamplerState>& samplerState) 
     {
         m_pSamplerHeap->Free(samplerState->GetBindlessHandle());
         samplerState.reset();
     }
 
-    std::shared_ptr<RHIBuffer> RHIDirectX12::CreateBuffer(BufferDesc& desc)
+    std::shared_ptr<RHIBuffer> RHID3D12::CreateBuffer(BufferDesc& desc)
     {
         auto isConstantBuffer = [](BufferBindFlag flag) -> bool {
             return flag == BufferBindFlag::ConstantBuffer;
@@ -195,7 +195,7 @@ namespace RHI
             nullptr,
             IID_PPV_ARGS(&pResource)));
 
-        std::shared_ptr<BufferDirectX12> buffer = std::make_shared<BufferDirectX12>(pResource.Get(), desc, m_pDevice.Get());
+        std::shared_ptr<BufferD3D12> buffer = std::make_shared<BufferD3D12>(pResource.Get(), desc, m_pDevice.Get());
 
         if(desc.HeapType == BufferHeapType::Default && desc.InitialData != nullptr){ // 需要Copy数据到Default堆
             // create Upload heap
@@ -217,7 +217,7 @@ namespace RHI
             
             // initial data to Upload heap
             InitBufferData(pUploadBuffer);
-            std::shared_ptr<BufferDirectX12> uploadBuffer = std::make_shared<BufferDirectX12>(pUploadBuffer.Get(), desc, m_pDevice.Get());
+            std::shared_ptr<BufferD3D12> uploadBuffer = std::make_shared<BufferD3D12>(pUploadBuffer.Get(), desc, m_pDevice.Get());
             
             auto cmdAllocator = CreateCommandAllocator(RHICmdType::Copy);
             auto cmdList = CreateCommandList(cmdAllocator);
@@ -277,7 +277,7 @@ namespace RHI
         return buffer;
     }
 
-    void RHIDirectX12::DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer)
+    void RHID3D12::DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer)
     {
         // 只有在有描述符句柄时才需要释放
         if(buffer->HasDescriptorHandle())
@@ -285,19 +285,19 @@ namespace RHI
         buffer.reset();
     }
 
-    void CommandListDirectX12::BeginRecording()
+    void CommandListD3D12::BeginRecording()
     {
         if(m_pAllocator == nullptr){
 #ifdef RHI_ENABLE_RESOURCE_DEBUG_INFO
-            ThrowErrorMessage("CommandAllocatorDirectX12 is nullptr");
+            ThrowErrorMessage("CommandAllocatorD3D12 is nullptr");
 #endif
             return;
         }
-        CommandAllocatorDirectX12* dx12CmdAllocator = SafeCast<CommandAllocatorDirectX12>(m_pAllocator);
+        CommandAllocatorD3D12* dx12CmdAllocator = SafeCast<CommandAllocatorD3D12>(m_pAllocator);
 
         if(dx12CmdAllocator == nullptr){
 #ifdef RHI_ENABLE_RESOURCE_DEBUG_INFO
-            ThrowErrorMessage("CommandAllocatorDirectX12 is nullptr");
+            ThrowErrorMessage("CommandAllocatorD3D12 is nullptr");
 #endif
             return;
         }
@@ -306,31 +306,31 @@ namespace RHI
         ThrowIfFailed(m_pCommandList->Reset(dx12CmdAllocator->GetCommandAllocator(), nullptr));
     }
 
-    void CommandListDirectX12::EndRecording()
+    void CommandListD3D12::EndRecording()
     {
         ThrowIfFailed(m_pCommandList->Close());
     }
 
-    void CommandQueueDirectX12::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists)
+    void CommandQueueD3D12::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists)
     {
         std::vector<ID3D12CommandList*> d3dCmdLists;
         d3dCmdLists.reserve(cmdLists.size());
         
         for (const auto& cmdList : cmdLists)
         {
-            auto dx12CmdList = std::static_pointer_cast<CommandListDirectX12>(cmdList);
+            auto dx12CmdList = std::static_pointer_cast<CommandListD3D12>(cmdList);
             d3dCmdLists.push_back(dx12CmdList->GetCommandList());
         }
         
         m_pCommandQueue->ExecuteCommandLists((UINT)d3dCmdLists.size(), d3dCmdLists.data());
     } 
 
-    void CommandQueueDirectX12::BeginFrame()
+    void CommandQueueD3D12::BeginFrame()
     {
         // NOT implemented
     }
     
-    void CommandQueueDirectX12::EndFrame()
+    void CommandQueueD3D12::EndFrame()
     {
         // add index
         UINT64 fenceValue = m_nextFenceValue++;
@@ -342,7 +342,7 @@ namespace RHI
         m_currentFrame = (m_currentFrame + 1) % RHI_MULTI_BUFFERING;
     }
 
-    void CommandQueueDirectX12::WaitForGPU()
+    void CommandQueueD3D12::WaitForGPU()
     {
         for (int i = 0; i < RHI_MULTI_BUFFERING; ++i) {
             UINT64 fenceValue = m_fenceValues[i];
@@ -354,22 +354,22 @@ namespace RHI
         }
     }
 
-    void CommandQueueDirectX12::Signal(uint64_t fenceValue)
+    void CommandQueueD3D12::Signal(uint64_t fenceValue)
     {   
         ThrowIfFailed(m_pCommandQueue->Signal(m_Fence.Get(), fenceValue));
     }
 
-    bool CommandQueueDirectX12::GetTimestampFrequency(uint64_t* frequency)
+    bool CommandQueueD3D12::GetTimestampFrequency(uint64_t* frequency)
     {
         return SUCCEEDED(m_pCommandQueue->GetTimestampFrequency(frequency));
     }
 
-    bool CommandQueueDirectX12::SetEventOnCompletion(uint64_t fenceValue, void* hEvent)
+    bool CommandQueueD3D12::SetEventOnCompletion(uint64_t fenceValue, void* hEvent)
     {
         return SUCCEEDED(m_Fence->SetEventOnCompletion(fenceValue, (HANDLE)hEvent));
     }
 
-    uint64_t CommandQueueDirectX12::GetFrameIndex() const
+    uint64_t CommandQueueD3D12::GetFrameIndex() const
     {
         return m_currentFrame;
     }

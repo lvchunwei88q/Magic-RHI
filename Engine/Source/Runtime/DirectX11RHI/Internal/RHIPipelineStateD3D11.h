@@ -14,7 +14,7 @@ namespace RHI
     * 调用D3D11DeviceContext::SetPipelineState()设置管线状态。
     * 初始化时根据描述创建对应的DX11管线状态对象。
     */
-    struct GPSDDirectX11
+    struct GPSDD3D11
     {        
         ComPtr<ID3D11InputLayout> pInputLayout;
         
@@ -33,16 +33,16 @@ namespace RHI
         DXGI_FORMAT DepthStencilFormat = DXGI_FORMAT_UNKNOWN;
     };
 
-    struct CPSDDirectX11
+    struct CPSDD3D11
     {
         ComPtr<ID3D11ComputeShader> pComputeShader;
     };
 
-    class RHIPipelineStateDirectX11 : public RHIPipelineState
+    class RHIPipelineStateD3D11 : public RHIPipelineState
     {
     public:
-        RHIPipelineStateDirectX11();
-        ~RHIPipelineStateDirectX11() override;
+        RHIPipelineStateD3D11();
+        ~RHIPipelineStateD3D11() override;
 
         bool Initialize(Device* device, const GraphicsPipelineStateDesc& desc) override;
         bool Initialize(Device* device, const ComputePipelineStateDesc& desc) override;
@@ -51,12 +51,12 @@ namespace RHI
         bool IsValid() const override;
         PipelineStateType GetType() const override;
 
-        const GPSDDirectX11& GetGraphicsDesc() const;
-        const CPSDDirectX11& GetComputeDesc() const;
+        const GPSDD3D11& GetGraphicsDesc() const;
+        const CPSDD3D11& GetComputeDesc() const;
     private:
         PipelineStateType Type = PipelineStateType::Unknown;
-        // 这里存放的是DirectX11的管线状态数据
-        GPSDDirectX11 GraphicsDesc;
-        CPSDDirectX11 ComputeDesc;
+        // 这里存放的是D3D11的管线状态数据
+        GPSDD3D11 GraphicsDesc;
+        CPSDD3D11 ComputeDesc;
     };
 }

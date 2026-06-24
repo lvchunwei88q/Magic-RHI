@@ -1,4 +1,4 @@
-﻿; DirectX12RHI.def
+﻿; D3D12RHI.def
 EXPORTS
     CreateDevice
     CreateSwapChain

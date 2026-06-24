@@ -2,25 +2,25 @@
 * 因为使用到了前向声明所以需要先引入声明定义
  */
  #include <Common/Check.h>
-#include "SwapChainDirectX11.h"
-#include "RHIDirectX11.h"
-#include "RHICommandListDirectX11.h"
+#include "SwapChainD3D11.h"
+#include "RHID3D11.h"
+#include "RHICommandListD3D11.h"
 #include "DirectXConfig.h"
 
 namespace RHI
 {
-    SwapChainDirectX11::SwapChainDirectX11()
+    SwapChainD3D11::SwapChainD3D11()
     {
     }
 
-    SwapChainDirectX11::~SwapChainDirectX11()
+    SwapChainD3D11::~SwapChainD3D11()
     {
         Shutdown();
     }
 
-    bool SwapChainDirectX11::Initialize(Device* device, const SwapChainDesc& desc)
+    bool SwapChainD3D11::Initialize(Device* device, const SwapChainDesc& desc)
     {
-        m_pRHI = static_cast<RHIDirectX11*>(device);
+        m_pRHI = static_cast<RHID3D11*>(device);
         if (!m_pRHI)
         {
             return false;
@@ -75,29 +75,29 @@ namespace RHI
 
         // Create back buffer and render target view
         TextureDesc back_desc   = { RHI_RTV_FORMAT, m_desc.Width, m_desc.Height, 1, 1, 1, 0 };
-        m_pBackBuffer           = std::make_unique<TextureDirectX11>(backBuffer.Get(),back_desc);
-        m_pRenderTargetView     = std::make_unique<RenderTargetViewDirectX11>(RenderTargetView.Get());
+        m_pBackBuffer           = std::make_unique<TextureD3D11>(backBuffer.Get(),back_desc);
+        m_pRenderTargetView     = std::make_unique<RenderTargetViewD3D11>(RenderTargetView.Get());
         return true;
     }
 
-    void SwapChainDirectX11::Shutdown()
+    void SwapChainD3D11::Shutdown()
     {
         m_pBackBuffer.reset();
         m_pRenderTargetView.reset();
         m_pSwapChain.Reset();
     }
 
-    bool SwapChainDirectX11::IsValid() const
+    bool SwapChainD3D11::IsValid() const
     {
         return m_pSwapChain != nullptr;
     }
 
-    void SwapChainDirectX11::Present(uint32_t syncInterval, uint32_t presentFlags)
+    void SwapChainD3D11::Present(uint32_t syncInterval, uint32_t presentFlags)
     {
         m_pSwapChain->Present(syncInterval, presentFlags);
     }
 
-    void SwapChainDirectX11::Resize(uint32_t width, uint32_t height)
+    void SwapChainD3D11::Resize(uint32_t width, uint32_t height)
     {
         m_desc.Width = width;
         m_desc.Height = height;
@@ -128,8 +128,8 @@ namespace RHI
 
         // Create back buffer and render target view
         TextureDesc back_desc   = { RHI_RTV_FORMAT, m_desc.Width, m_desc.Height, 1, 1, 1, 0 };
-        m_pBackBuffer           = std::make_unique<TextureDirectX11>(backBuffer.Get(),back_desc);
-        m_pRenderTargetView     = std::make_unique<RenderTargetViewDirectX11>(RenderTargetView.Get());
+        m_pBackBuffer           = std::make_unique<TextureD3D11>(backBuffer.Get(),back_desc);
+        m_pRenderTargetView     = std::make_unique<RenderTargetViewD3D11>(RenderTargetView.Get());
 
         // Set viewport
         ID3D11DeviceContext* pContext = m_pRHI->GetDeviceContext();
@@ -145,12 +145,12 @@ namespace RHI
         pContext->RSSetViewports(1, &viewport);
     }
 
-    RHIRenderTargetView* SwapChainDirectX11::GetRenderTargetView(uint32_t index) const 
+    RHIRenderTargetView* SwapChainD3D11::GetRenderTargetView(uint32_t index) const 
     { 
         return m_pRenderTargetView.get();
     }
 
-    RHITexture*  SwapChainDirectX11::GetBackBuffer(uint32_t index) const
+    RHITexture*  SwapChainD3D11::GetBackBuffer(uint32_t index) const
     {
         return m_pBackBuffer.get();
     }

@@ -4,21 +4,21 @@
 
 namespace RHI
 {
-    struct RootParameterDirectX11
+    struct RootParameterD3D11
     {
         // TODO: Root parameter data
     };
-    struct RootSignatureDescDirectX11
+    struct RootSignatureDescD3D11
     {
-        std::vector<RootParameterDirectX11> RootParameters;
+        std::vector<RootParameterD3D11> RootParameters;
         RootSignatureFlags Flags = RootSignatureFlags::None;
     };
     
-    class RHIRootSignatureDirectX11 : public RHIRootSignature
+    class RHIRootSignatureD3D11 : public RHIRootSignature
     {
     public:
-        RHIRootSignatureDirectX11();
-        ~RHIRootSignatureDirectX11() override;
+        RHIRootSignatureD3D11();
+        ~RHIRootSignatureD3D11() override;
 
         bool Initialize(Device* device, const RootSignatureDesc& desc) override;
         void Shutdown() override;
@@ -26,6 +26,6 @@ namespace RHI
         bool IsValid() const override;
 
     private:
-        RootSignatureDescDirectX11 m_Desc;
+        RootSignatureDescD3D11 m_Desc;
     };
 }

@@ -1,8 +1,8 @@
 
-#include "RHIDirectX12.h"
-#include "RHIResourceDirectX12.h"
-#include "RHIPipelineStateDirectX12.h"
-#include "RHIRootSignatureDirectX12.h"
+#include "RHID3D12.h"
+#include "RHIResourceD3D12.h"
+#include "RHIPipelineStateD3D12.h"
+#include "RHIRootSignatureD3D12.h"
 
 namespace RHI
 {
@@ -177,31 +177,31 @@ namespace RHI
         }
     }
 
-    RHIPipelineStateDirectX12::RHIPipelineStateDirectX12()
+    RHIPipelineStateD3D12::RHIPipelineStateD3D12()
     {
     }
 
-    RHIPipelineStateDirectX12::~RHIPipelineStateDirectX12()
+    RHIPipelineStateD3D12::~RHIPipelineStateD3D12()
     {
         Shutdown();
     }
 
-    bool RHIPipelineStateDirectX12::Initialize(Device* device, const GraphicsPipelineStateDesc& desc)
+    bool RHIPipelineStateD3D12::Initialize(Device* device, const GraphicsPipelineStateDesc& desc)
     {
         if (!device || !desc.pRootSignature || !desc.pVertexShader || !desc.pPixelShader)
             return false;
 
-        auto dx12Device = static_cast<RHIDirectX12*>(device);
+        auto dx12Device = static_cast<RHID3D12*>(device);
         auto d3dDevice = dx12Device->GetDevice();
         if (!d3dDevice)
             return false;
 
-        auto rootSig = static_cast<RHIRootSignatureDirectX12*>(desc.pRootSignature);
+        auto rootSig = static_cast<RHIRootSignatureD3D12*>(desc.pRootSignature);
         if (!rootSig->GetRootSignature())
             return false;
 
-        auto vsShader = static_cast<VertexShaderDirectX12*>(desc.pVertexShader);
-        auto psShader = static_cast<PixelShaderDirectX12*>(desc.pPixelShader);
+        auto vsShader = static_cast<VertexShaderD3D12*>(desc.pVertexShader);
+        auto psShader = static_cast<PixelShaderD3D12*>(desc.pPixelShader);
         
         std::vector<D3D12_INPUT_ELEMENT_DESC> d3d12Elements;
         d3d12Elements.reserve(desc.NumInputElements); 
@@ -219,19 +219,19 @@ namespace RHI
 
         if (desc.pGeometryShader)
         {
-            auto gsShader = static_cast<GeometryShaderDirectX12*>(desc.pGeometryShader);
+            auto gsShader = static_cast<GeometryShaderD3D12*>(desc.pGeometryShader);
             psoDesc.GS = CD3DX12_SHADER_BYTECODE(gsShader->GetBytecode().data(), static_cast<UINT>(gsShader->GetBytecode().size()));
         }
 
         if (desc.pHullShader)
         {
-            auto hsShader = static_cast<HullShaderDirectX12*>(desc.pHullShader);
+            auto hsShader = static_cast<HullShaderD3D12*>(desc.pHullShader);
             psoDesc.HS = CD3DX12_SHADER_BYTECODE(hsShader->GetBytecode().data(), static_cast<UINT>(hsShader->GetBytecode().size()));
         }
 
         if (desc.pDomainShader)
         {
-            auto dsShader = static_cast<DomainShaderDirectX12*>(desc.pDomainShader);
+            auto dsShader = static_cast<DomainShaderD3D12*>(desc.pDomainShader);
             psoDesc.DS = CD3DX12_SHADER_BYTECODE(dsShader->GetBytecode().data(), static_cast<UINT>(dsShader->GetBytecode().size()));
         }
 
@@ -264,21 +264,21 @@ namespace RHI
         return true;
     }
 
-    bool RHIPipelineStateDirectX12::Initialize(Device* device, const ComputePipelineStateDesc& desc)
+    bool RHIPipelineStateD3D12::Initialize(Device* device, const ComputePipelineStateDesc& desc)
     {
         if (!device || !desc.pRootSignature || !desc.pComputeShader)
             return false;
 
-        auto dx12Device = static_cast<RHIDirectX12*>(device);
+        auto dx12Device = static_cast<RHID3D12*>(device);
         auto d3dDevice = dx12Device->GetDevice();
         if (!d3dDevice)
             return false;
 
-        auto rootSig = static_cast<RHIRootSignatureDirectX12*>(desc.pRootSignature);
+        auto rootSig = static_cast<RHIRootSignatureD3D12*>(desc.pRootSignature);
         if (!rootSig->GetRootSignature())
             return false;
 
-        auto csShader = static_cast<ComputeShaderDirectX12*>(desc.pComputeShader);
+        auto csShader = static_cast<ComputeShaderD3D12*>(desc.pComputeShader);
 
         D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = {};
         psoDesc.pRootSignature = rootSig->GetRootSignature();
@@ -292,24 +292,24 @@ namespace RHI
         return true;
     }
 
-    void RHIPipelineStateDirectX12::Shutdown()
+    void RHIPipelineStateD3D12::Shutdown()
     {
         m_pPipelineState.Reset();
     }
 
-    bool RHIPipelineStateDirectX12::IsValid() const
+    bool RHIPipelineStateD3D12::IsValid() const
     {
         return m_pPipelineState != nullptr;
     }
 
-    PipelineStateType RHIPipelineStateDirectX12::GetType() const
+    PipelineStateType RHIPipelineStateD3D12::GetType() const
     {
         return Type;
     }
 
-    std::shared_ptr<RHIPipelineState> RHIDirectX12::CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc)
+    std::shared_ptr<RHIPipelineState> RHID3D12::CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc)
     {
-        auto pipelineState = std::make_shared<RHIPipelineStateDirectX12>();
+        auto pipelineState = std::make_shared<RHIPipelineStateD3D12>();
         if (pipelineState->Initialize(this, desc))
         {
             return pipelineState;
@@ -317,9 +317,9 @@ namespace RHI
         return nullptr;
     }
 
-    std::shared_ptr<RHIPipelineState> RHIDirectX12::CreateComputePipelineState(const ComputePipelineStateDesc& desc)
+    std::shared_ptr<RHIPipelineState> RHID3D12::CreateComputePipelineState(const ComputePipelineStateDesc& desc)
     {
-        auto pipelineState = std::make_shared<RHIPipelineStateDirectX12>();
+        auto pipelineState = std::make_shared<RHIPipelineStateD3D12>();
         if (pipelineState->Initialize(this, desc))
         {
             return pipelineState;
@@ -327,11 +327,11 @@ namespace RHI
         return nullptr;
     }
 
-    void RHIDirectX12::DeletePipelineState(std::shared_ptr<RHIPipelineState>& pipelineState)
+    void RHID3D12::DeletePipelineState(std::shared_ptr<RHIPipelineState>& pipelineState)
     {
         if (pipelineState)
         {
-            auto dx12PipelineState = static_cast<RHIPipelineStateDirectX12*>(pipelineState.get());
+            auto dx12PipelineState = static_cast<RHIPipelineStateD3D12*>(pipelineState.get());
             if (dx12PipelineState)
             {
                 dx12PipelineState->Shutdown();

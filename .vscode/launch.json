@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch DirectX11 RHI - Debug",
+            "name": "Launch D3D11 RHI - Debug",
             "type":"lldb",
             "request": "launch",
             "program": "${workspaceRoot}/Binary/Debug/MagicRHI.exe",
@@ -14,7 +14,7 @@
             "console": "integratedTerminal", 
         },
         {
-            "name": "Launch DirectX12 RHI - Debug",
+            "name": "Launch D3D12 RHI - Debug",
             "type":"lldb",
             "request": "launch",
             "program": "${workspaceRoot}/Binary/Debug/MagicRHI.exe",
@@ -23,7 +23,7 @@
             "console": "integratedTerminal", 
         },
         {
-            "name": "Launch DirectX11 RHI - Release",
+            "name": "Launch D3D11 RHI - Release",
             "type":"lldb",
             "request": "launch",
             "program": "${workspaceRoot}/Binary/Release/MagicRHI.exe",
@@ -31,7 +31,7 @@
             "cwd": "${workspaceRoot}"
         },
         {
-            "name": "Launch DirectX12 RHI - Release",
+            "name": "Launch D3D12 RHI - Release",
             "type":"lldb",
             "request": "launch",
             "program": "${workspaceRoot}/Binary/Release/MagicRHI.exe",

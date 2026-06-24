@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Common/DIRECTX11RHI_API.h"
+#include "Common/D3D11RHI_API.h"
 #include <RHI.h>
 #include <RHIResource.h>
 #include <d3d11.h>
@@ -11,13 +11,13 @@ using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
-    class RHIDirectX11;
+    class RHID3D11;
 
-    class DIRECTX11RHI_API SwapChainDirectX11 : public SwapChain
+    class D3D11RHI_API SwapChainD3D11 : public SwapChain
     {
     public:
-        SwapChainDirectX11();
-        ~SwapChainDirectX11() override;
+        SwapChainD3D11();
+        ~SwapChainD3D11() override;
 
         bool Initialize(Device* device, const SwapChainDesc& desc) override;
         void Shutdown() override;
@@ -37,7 +37,7 @@ namespace RHI
         IDXGISwapChain* GetSwapChain() const { return m_pSwapChain.Get(); }
 
     private:
-        RHIDirectX11* m_pRHI;
+        RHID3D11* m_pRHI;
         
         ComPtr<IDXGISwapChain> m_pSwapChain;
         std::unique_ptr<RHITexture> m_pBackBuffer;

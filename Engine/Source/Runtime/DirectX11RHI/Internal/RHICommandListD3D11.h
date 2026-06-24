@@ -4,21 +4,21 @@
 #include <d3d11.h>
 #include <Common/Check.h>
 #include <RHICommandList.h>
-#include "RHIResourceDirectX11.h"
-#include "RHIRootSignatureDirectX11.h"
+#include "RHIResourceD3D11.h"
+#include "RHIRootSignatureD3D11.h"
 #include <wrl.h>
 
 using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
-    class CommandAllocatorDirectX11 : public RHICommandAllocator
+    class CommandAllocatorD3D11 : public RHICommandAllocator
     {
         public:
-            CommandAllocatorDirectX11(RHICmdType type, ID3D11DeviceContext* pContext)
+            CommandAllocatorD3D11(RHICmdType type, ID3D11DeviceContext* pContext)
                 : RHICommandAllocator(type)
                 , m_pDeviceContext(pContext) {}
-            virtual ~CommandAllocatorDirectX11() = default;
+            virtual ~CommandAllocatorD3D11() = default;
 
             ID3D11DeviceContext* GetDeviceContext() const { return m_pDeviceContext; }
         private:
@@ -26,12 +26,12 @@ namespace RHI
     };
 
 
-    class CommandListDirectX11 : public RHICommandList
+    class CommandListD3D11 : public RHICommandList
     {
     public:
-        CommandListDirectX11(RHICommandAllocator* pCmdAllocator, ID3D11DeviceContext* pDeviceContext)
+        CommandListD3D11(RHICommandAllocator* pCmdAllocator, ID3D11DeviceContext* pDeviceContext)
             : RHICommandList(pCmdAllocator), m_pDeviceContext(pDeviceContext) {}
-        ~CommandListDirectX11() override = default;
+        ~CommandListD3D11() override = default;
 
         /* DX 11 不支持命令列表记录，直接执行命令 */ 
         void BeginRecording() override {}
@@ -97,13 +97,13 @@ namespace RHI
         ID3D11DeviceContext* m_pDeviceContext;
 
         // DX11 不支持根签名所以我们需要手动记录签名信息
-        RHIRootSignatureDirectX11* m_pRootSignature = nullptr;
+        RHIRootSignatureD3D11* m_pRootSignature = nullptr;
     };
 
-    class CommandQueueDirectX11 : public RHICommandQueue
+    class CommandQueueD3D11 : public RHICommandQueue
     {
     public:
-        CommandQueueDirectX11(RHICmdType InType, ID3D11DeviceContext* pContext, ID3D11Device* pDevice)
+        CommandQueueD3D11(RHICmdType InType, ID3D11DeviceContext* pContext, ID3D11Device* pDevice)
             : RHICommandQueue(InType)
             , m_pDeviceContext(pContext)
             , m_pDevice(pDevice) {
@@ -114,7 +114,7 @@ namespace RHI
                 desc.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
                 m_pDevice->CreateQuery(&desc, &m_pDisjoint);
             }
-        ~CommandQueueDirectX11() override = default;
+        ~CommandQueueD3D11() override = default;
 
         void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override;
         void BeginFrame() override;

@@ -3,9 +3,9 @@
  */
 #include <Common/RHIFeatureLevel.h>
 #include <Common/Check.h>
-#include "RHIRootSignatureDirectX11.h"
-#include "RHICommandListDirectX11.h"
-#include "RHIDirectX11.h"
+#include "RHIRootSignatureD3D11.h"
+#include "RHICommandListD3D11.h"
+#include "RHID3D11.h"
 #include "DirectXConfig.h"
 
 namespace RHI
@@ -33,16 +33,16 @@ namespace RHI
         }
     }
     
-    RHIDirectX11::RHIDirectX11()
+    RHID3D11::RHID3D11()
     {
     }
 
-    RHIDirectX11::~RHIDirectX11()
+    RHID3D11::~RHID3D11()
     {
         Shutdown();
     }
 
-    bool RHIDirectX11::Initialize()
+    bool RHID3D11::Initialize()
     {
         UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
@@ -83,18 +83,18 @@ namespace RHI
         m_AdapterName = desc.Description;
 
         // 初始化命令队列
-        m_CommandQueue = std::make_unique<CommandQueueDirectX11>(RHICmdType::Graphics, m_pDeviceContext.Get(), m_pDevice.Get());
+        m_CommandQueue = std::make_unique<CommandQueueD3D11>(RHICmdType::Graphics, m_pDeviceContext.Get(), m_pDevice.Get());
 
         // -------------------- Create descriptor heaps --------------------
-        m_pStandardHeap = std::make_unique<DescriptorHeapDirectX11>(RHIDescriptorHeapType::Standard, RHI_DESCRIPTOR_HEAP_SIZE_STANDARD);
-        m_pSamplerHeap = std::make_unique<DescriptorHeapDirectX11>(RHIDescriptorHeapType::Sampler, RHI_DESCRIPTOR_HEAP_SIZE_SAMPLER);
-        m_pRTVHeap = std::make_unique<DescriptorHeapDirectX11>(RHIDescriptorHeapType::RenderTarget, RHI_DESCRIPTOR_HEAP_SIZE_RENDER_TARGET);
-        m_pDSVHeap = std::make_unique<DescriptorHeapDirectX11>(RHIDescriptorHeapType::DepthStencil, RHI_DESCRIPTOR_HEAP_SIZE_DEPTH_STENCIL);
+        m_pStandardHeap = std::make_unique<DescriptorHeapD3D11>(RHIDescriptorHeapType::Standard, RHI_DESCRIPTOR_HEAP_SIZE_STANDARD);
+        m_pSamplerHeap = std::make_unique<DescriptorHeapD3D11>(RHIDescriptorHeapType::Sampler, RHI_DESCRIPTOR_HEAP_SIZE_SAMPLER);
+        m_pRTVHeap = std::make_unique<DescriptorHeapD3D11>(RHIDescriptorHeapType::RenderTarget, RHI_DESCRIPTOR_HEAP_SIZE_RENDER_TARGET);
+        m_pDSVHeap = std::make_unique<DescriptorHeapD3D11>(RHIDescriptorHeapType::DepthStencil, RHI_DESCRIPTOR_HEAP_SIZE_DEPTH_STENCIL);
         // -------------------- Create descriptor heaps End --------------------
         return true;
     }
 
-    void RHIDirectX11::Shutdown()
+    void RHID3D11::Shutdown()
     {
         if (m_pDeviceContext) {
             m_pDeviceContext->ClearState();
@@ -113,42 +113,42 @@ namespace RHI
         m_pDevice.Reset();
     }
 
-    FeatureLevel RHIDirectX11::GetFeatureLevel() const{
+    FeatureLevel RHID3D11::GetFeatureLevel() const{
         return FromD3DFeatureLevel(m_FeatureLevel);
     }
 
-    bool RHIDirectX11::IsValid() const
+    bool RHID3D11::IsValid() const
     {
         return m_pDevice != nullptr;
     }
 
-    std::shared_ptr<RHICommandAllocator> RHIDirectX11::CreateCommandAllocator(RHICmdType type)
+    std::shared_ptr<RHICommandAllocator> RHID3D11::CreateCommandAllocator(RHICmdType type)
     {
-        return std::make_shared<CommandAllocatorDirectX11>(type, m_pDeviceContext.Get());
+        return std::make_shared<CommandAllocatorD3D11>(type, m_pDeviceContext.Get());
     }
 
-    std::shared_ptr<RHICommandList> RHIDirectX11::CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator)
+    std::shared_ptr<RHICommandList> RHID3D11::CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator)
     {
         // DX 11 没有列表，使用DeviceContext提交命令
-        return std::make_shared<CommandListDirectX11>(allocator.get(), m_pDeviceContext.Get());
+        return std::make_shared<CommandListD3D11>(allocator.get(), m_pDeviceContext.Get());
     }
 
     /*
     * 获取图形命令队列 因为DX11 不支持多个命令队列，所以返回的是同一个队列
     */
-    RHICommandQueue* RHIDirectX11::GetCommandQueue(RHICmdType Type) const
+    RHICommandQueue* RHID3D11::GetCommandQueue(RHICmdType Type) const
     {
         return m_CommandQueue.get();
     }
 
-    std::shared_ptr<RHIRootSignature> RHIDirectX11::CreateRootSignature(const RootSignatureDesc& desc)
+    std::shared_ptr<RHIRootSignature> RHID3D11::CreateRootSignature(const RootSignatureDesc& desc)
     {
-        auto rootSignature = std::make_shared<RHIRootSignatureDirectX11>();
+        auto rootSignature = std::make_shared<RHIRootSignatureD3D11>();
         rootSignature->Initialize(this, desc);
         return rootSignature;
     }
 
-    void RHIDirectX11::DeleteRootSignature(std::shared_ptr<RHIRootSignature>& rootSignature)
+    void RHID3D11::DeleteRootSignature(std::shared_ptr<RHIRootSignature>& rootSignature)
     {
         if (rootSignature)
         {
@@ -157,7 +157,7 @@ namespace RHI
         }
     }
 
-    RHIDescriptorHeap* RHIDirectX11::GetDescriptorHeap(RHIDescriptorHeapType type) const
+    RHIDescriptorHeap* RHID3D11::GetDescriptorHeap(RHIDescriptorHeapType type) const
     {
         switch (type)
         {

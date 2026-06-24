@@ -1,8 +1,8 @@
-#include "RHICommandListDirectX12.h"
+#include "RHICommandListD3D12.h"
 
 namespace RHI
 {
-    void CommandListDirectX12::RSSetViewports(uint32_t numViewports, const RHIViewport* pViewports)
+    void CommandListD3D12::RSSetViewports(uint32_t numViewports, const RHIViewport* pViewports)
     {
         std::vector<D3D12_VIEWPORT> d3dViewports;
         d3dViewports.reserve(numViewports);
@@ -20,7 +20,7 @@ namespace RHI
         m_pCommandList->RSSetViewports(numViewports, d3dViewports.data());
     }
 
-    void CommandListDirectX12::RSSetScissorRects(uint32_t numRects, const RHIRect* pRects)
+    void CommandListD3D12::RSSetScissorRects(uint32_t numRects, const RHIRect* pRects)
     {
         std::vector<D3D12_RECT> d3dRects;
         d3dRects.reserve(numRects);

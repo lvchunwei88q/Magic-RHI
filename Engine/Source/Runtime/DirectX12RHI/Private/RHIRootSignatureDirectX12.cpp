@@ -1,7 +1,7 @@
 
 #include <Common/Check.h>
-#include "RHIDirectX12.h"
-#include "RHIRootSignatureDirectX12.h"
+#include "RHID3D12.h"
+#include "RHIRootSignatureD3D12.h"
 
 namespace RHI
 {
@@ -56,18 +56,18 @@ namespace RHI
 
     }
 
-    RHIRootSignatureDirectX12::RHIRootSignatureDirectX12()
+    RHIRootSignatureD3D12::RHIRootSignatureD3D12()
     {
     }
 
-    RHIRootSignatureDirectX12::~RHIRootSignatureDirectX12()
+    RHIRootSignatureD3D12::~RHIRootSignatureD3D12()
     {
         Shutdown();
     }
 
-    bool RHIRootSignatureDirectX12::Initialize(Device* device, const RootSignatureDesc& desc)
+    bool RHIRootSignatureD3D12::Initialize(Device* device, const RootSignatureDesc& desc)
     {
-        RHIDirectX12* dx12Device = static_cast<RHIDirectX12*>(device);
+        RHID3D12* dx12Device = static_cast<RHID3D12*>(device);
         if (!dx12Device)
         {
             return false;
@@ -149,12 +149,12 @@ namespace RHI
         return true;
     }
 
-    void RHIRootSignatureDirectX12::Shutdown()
+    void RHIRootSignatureD3D12::Shutdown()
     {
         m_pRootSignature.Reset();
     }
 
-    bool RHIRootSignatureDirectX12::IsValid() const
+    bool RHIRootSignatureD3D12::IsValid() const
     {
         return m_pRootSignature != nullptr;
     }

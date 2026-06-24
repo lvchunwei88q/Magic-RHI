@@ -9,8 +9,8 @@ namespace RHI
     enum class RHIType : uint8_t
     {
         Unknown = 0,
-        DirectX11,      // DirectX 11
-        DirectX12,      // DirectX 12
+        D3D11,      // DirectX 11
+        D3D12,      // DirectX 12
         // More RHI types
     };
 
@@ -19,8 +19,8 @@ namespace RHI
         switch (type)
         {
             case RHIType::Unknown:      return "Unknown";
-            case RHIType::DirectX11:    return "DirectX11";
-            case RHIType::DirectX12:    return "DirectX12";
+            case RHIType::D3D11:    return "D3D11";
+            case RHIType::D3D12:    return "D3D12";
             default:                    return "Invalid";
         }
     }
@@ -29,10 +29,10 @@ namespace RHI
     
     inline bool IsMultiThreadingSupported(RHIType type) {
         switch (type) {
-            case RHIType::DirectX12:
+            case RHIType::D3D12:
                 return true;  // 现代 API，原生支持多线程录制
                 
-            case RHIType::DirectX11:
+            case RHIType::D3D11:
                 return false; // 传统 API，需要特殊处理或禁用
                 
             default:

@@ -31,8 +31,8 @@ namespace RHI
     RHIType GetBestAvailableRHI()
     {
         // Windows 优先级：D3D12 > D3D11 -> Unknown
-        if (IsD3D12Available()) return RHIType::DirectX12;
-        if (IsD3D11Available()) return RHIType::DirectX11;
+        if (IsD3D12Available()) return RHIType::D3D12;
+        if (IsD3D11Available()) return RHIType::D3D11;
         
         return RHIType::Unknown;
     }

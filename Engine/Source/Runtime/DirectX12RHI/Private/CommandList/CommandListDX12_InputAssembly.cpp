@@ -1,4 +1,4 @@
-#include "RHICommandListDirectX12.h"
+#include "RHICommandListD3D12.h"
 #include <Common/Check.h>
 
 namespace RHI
@@ -73,7 +73,7 @@ namespace RHI
         }
     }
 
-    void CommandListDirectX12::IASetPrimitiveTopology(RHIPrimitiveTopology topology, uint32_t controlPointCount)
+    void CommandListD3D12::IASetPrimitiveTopology(RHIPrimitiveTopology topology, uint32_t controlPointCount)
     {
         if (topology == RHIPrimitiveTopology::ControlPointPatchList)
         {
@@ -85,14 +85,14 @@ namespace RHI
         }
     }
 
-    void CommandListDirectX12::IASetVertexBuffers(uint32_t startSlot, uint32_t numBuffers, RHIVertexBuffer* const* ppBuffers, const uint64_t* pOffsets)
+    void CommandListD3D12::IASetVertexBuffers(uint32_t startSlot, uint32_t numBuffers, RHIVertexBuffer* const* ppBuffers, const uint64_t* pOffsets)
     {
         std::vector<D3D12_VERTEX_BUFFER_VIEW> vertexBufferViews;
         vertexBufferViews.reserve(numBuffers);
 
         for (uint32_t i = 0; i < numBuffers; ++i)
         {
-            BufferDirectX12* dxBuffer = static_cast<BufferDirectX12*>(ppBuffers[i]);
+            BufferD3D12* dxBuffer = static_cast<BufferD3D12*>(ppBuffers[i]);
             D3D12_VERTEX_BUFFER_VIEW view = {};
             view.BufferLocation = SafeCast<ID3D12Resource>(dxBuffer->GetResource())->GetGPUVirtualAddress();
             view.StrideInBytes = dxBuffer->GetStride();
@@ -103,11 +103,11 @@ namespace RHI
         m_pCommandList->IASetVertexBuffers(startSlot, numBuffers, vertexBufferViews.data());
     }
 
-    void CommandListDirectX12::IASetIndexBuffer(RHIIndexBuffer* pIndexBuffer, RHIIndexFormat format, uint64_t offset)
+    void CommandListD3D12::IASetIndexBuffer(RHIIndexBuffer* pIndexBuffer, RHIIndexFormat format, uint64_t offset)
     {
         if (pIndexBuffer)
         {
-            BufferDirectX12* dxBuffer = static_cast<BufferDirectX12*>(pIndexBuffer);
+            BufferD3D12* dxBuffer = static_cast<BufferD3D12*>(pIndexBuffer);
             D3D12_INDEX_BUFFER_VIEW view = {};  
             view.BufferLocation = SafeCast<ID3D12Resource>(dxBuffer->GetResource())->GetGPUVirtualAddress() + offset;
             view.Format = ConvertIndexFormat(format);

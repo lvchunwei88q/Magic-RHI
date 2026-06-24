@@ -1,4 +1,4 @@
-#include "RHICommandListDirectX11.h"
+#include "RHICommandListD3D11.h"
 
 namespace RHI
 {
@@ -72,9 +72,9 @@ namespace RHI
         }
     }
 
-    void CommandListDirectX11::IASetPrimitiveTopology(RHIPrimitiveTopology topology, uint32_t controlPointCount)
+    void CommandListD3D11::IASetPrimitiveTopology(RHIPrimitiveTopology topology, uint32_t controlPointCount)
     {
-        CommandAllocatorDirectX11* pAllocator = SafeCast<CommandAllocatorDirectX11>(m_pAllocator);
+        CommandAllocatorD3D11* pAllocator = SafeCast<CommandAllocatorD3D11>(m_pAllocator);
         if (topology == RHIPrimitiveTopology::ControlPointPatchList)
         {
             pAllocator->GetDeviceContext()->IASetPrimitiveTopology(ConvertControlPointPatchList(controlPointCount));
@@ -85,7 +85,7 @@ namespace RHI
         }
     }
 
-    void CommandListDirectX11::IASetVertexBuffers(uint32_t startSlot, uint32_t numBuffers, RHIVertexBuffer* const* ppBuffers, const uint64_t* pOffsets)
+    void CommandListD3D11::IASetVertexBuffers(uint32_t startSlot, uint32_t numBuffers, RHIVertexBuffer* const* ppBuffers, const uint64_t* pOffsets)
     {
         std::vector<ID3D11Buffer*> buffers;
         std::vector<UINT> strides;
@@ -97,22 +97,22 @@ namespace RHI
 
         for (uint32_t i = 0; i < numBuffers; ++i)
         {
-            BufferDirectX11* dxBuffer = static_cast<BufferDirectX11*>(ppBuffers[i]);
+            BufferD3D11* dxBuffer = static_cast<BufferD3D11*>(ppBuffers[i]);
             buffers.push_back(SafeCast<ID3D11Buffer>(dxBuffer->GetResource()));
             strides.push_back(dxBuffer->GetStride());
             offsets.push_back(pOffsets ? (UINT)pOffsets[i] : 0);
         }
 
-        CommandAllocatorDirectX11* pAllocator = SafeCast<CommandAllocatorDirectX11>(m_pAllocator);
+        CommandAllocatorD3D11* pAllocator = SafeCast<CommandAllocatorD3D11>(m_pAllocator);
         pAllocator->GetDeviceContext()->IASetVertexBuffers(startSlot, numBuffers, buffers.data(), strides.data(), offsets.data());
     }
 
-    void CommandListDirectX11::IASetIndexBuffer(RHIIndexBuffer* pIndexBuffer, RHIIndexFormat format, uint64_t offset)
+    void CommandListD3D11::IASetIndexBuffer(RHIIndexBuffer* pIndexBuffer, RHIIndexFormat format, uint64_t offset)
     {
-        CommandAllocatorDirectX11* pAllocator = SafeCast<CommandAllocatorDirectX11>(m_pAllocator);
+        CommandAllocatorD3D11* pAllocator = SafeCast<CommandAllocatorD3D11>(m_pAllocator);
         if (pIndexBuffer)
         {
-            BufferDirectX11* dxBuffer = static_cast<BufferDirectX11*>(pIndexBuffer);
+            BufferD3D11* dxBuffer = static_cast<BufferD3D11*>(pIndexBuffer);
             pAllocator->GetDeviceContext()->IASetIndexBuffer(SafeCast<ID3D11Buffer>(dxBuffer->GetResource()),
              ConvertIndexFormat(format), (UINT)offset);
         }

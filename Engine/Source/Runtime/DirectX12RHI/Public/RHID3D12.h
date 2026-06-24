@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Common/DIRECTX12RHI_API.h"
+#include "Common/D3D12RHI_API.h"
 #include <RHI.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -9,7 +9,7 @@
 #include <include/dxcapi.h>
 
 // DescriptorHeap
-#include "DescriptorHeapDirectX12.h"
+#include "DescriptorHeapD3D12.h"
 
 #include <vector>
 #include <wrl.h> // ComPtr
@@ -18,22 +18,22 @@ using Microsoft::WRL::ComPtr;
 namespace RHI
 {
     // CommandQueue Forward Declaration
-    class CommandQueueDirectX12;
-    using GraphicsCommandQueueDirectX12 = CommandQueueDirectX12;
-    using ComputeCommandQueueDirectX12 = CommandQueueDirectX12;
-    using CopyCommandQueueDirectX12 = CommandQueueDirectX12;
+    class CommandQueueD3D12;
+    using GraphicsCommandQueueD3D12 = CommandQueueD3D12;
+    using ComputeCommandQueueD3D12 = CommandQueueD3D12;
+    using CopyCommandQueueD3D12 = CommandQueueD3D12;
 
-    class DIRECTX12RHI_API RHIDirectX12 : public Device
+    class D3D12RHI_API RHID3D12 : public Device
     {
     public:
-        RHIDirectX12();
-        ~RHIDirectX12() override;
+        RHID3D12();
+        ~RHID3D12() override;
 
         bool Initialize() override;
         void Shutdown() override;
 
         bool IsValid() const override;
-        RHIType GetType() const override { return RHIType::DirectX12; }
+        RHIType GetType() const override { return RHIType::D3D12; }
         const std::wstring& GetAdapterName() const override { return m_AdapterName; }
         
         [[nodiscard]] std::shared_ptr<RHISamplerState> CreateSamplerState(const SamplerStateDesc& desc) override;
@@ -89,14 +89,14 @@ namespace RHI
         ComPtr<IDXGIAdapter1> m_pAdapter; // GPU
 
         // CommandQueue
-        std::unique_ptr<GraphicsCommandQueueDirectX12> m_GraphicsQueue;
-        std::unique_ptr<ComputeCommandQueueDirectX12> m_ComputeQueue;
-        std::unique_ptr<CopyCommandQueueDirectX12> m_CopyQueue;
+        std::unique_ptr<GraphicsCommandQueueD3D12> m_GraphicsQueue;
+        std::unique_ptr<ComputeCommandQueueD3D12> m_ComputeQueue;
+        std::unique_ptr<CopyCommandQueueD3D12> m_CopyQueue;
 
-        std::unique_ptr<DescriptorHeapDirectX12> m_pStandardHeap;
-        std::unique_ptr<DescriptorHeapDirectX12> m_pSamplerHeap;
-        std::unique_ptr<DescriptorHeapDirectX12> m_pRTVHeap;
-        std::unique_ptr<DescriptorHeapDirectX12> m_pDSVHeap;
+        std::unique_ptr<DescriptorHeapD3D12> m_pStandardHeap;
+        std::unique_ptr<DescriptorHeapD3D12> m_pSamplerHeap;
+        std::unique_ptr<DescriptorHeapD3D12> m_pRTVHeap;
+        std::unique_ptr<DescriptorHeapD3D12> m_pDSVHeap;
 
         // ShaderCompiler
         ComPtr<IDxcCompiler3> compiler;

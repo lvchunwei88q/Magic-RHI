@@ -2,25 +2,25 @@
  * 因为使用到了前向声明所以需要先引入声明定义
  */
  #include <Common/Check.h>
-#include "RHICommandListDirectX12.h"
-#include "RHIDirectX12.h"
-#include "SwapChainDirectX12.h"
+#include "RHICommandListD3D12.h"
+#include "RHID3D12.h"
+#include "SwapChainD3D12.h"
 #include "DirectXConfig.h"
 
 namespace RHI
 {
-    SwapChainDirectX12::SwapChainDirectX12()
+    SwapChainD3D12::SwapChainD3D12()
     {
     }
 
-    SwapChainDirectX12::~SwapChainDirectX12()
+    SwapChainD3D12::~SwapChainD3D12()
     {
         Shutdown();
     }
 
-    bool SwapChainDirectX12::Initialize(Device* device, const SwapChainDesc& desc)
+    bool SwapChainD3D12::Initialize(Device* device, const SwapChainDesc& desc)
     {
-        m_pRHI = static_cast<RHIDirectX12*>(device);
+        m_pRHI = static_cast<RHID3D12*>(device);
         if (!m_pRHI)
         {
             return false;
@@ -46,7 +46,7 @@ namespace RHI
         // 只有图形队列可以绑定交换链
         ComPtr<IDXGISwapChain1> swapChain1;
         ThrowIfFailed(factory->CreateSwapChainForHwnd(
-            SafeCast<CommandQueueDirectX12>(m_pRHI->GetCommandQueue(RHICmdType::Graphics))->GetCommandQueue(),
+            SafeCast<CommandQueueD3D12>(m_pRHI->GetCommandQueue(RHICmdType::Graphics))->GetCommandQueue(),
             static_cast<HWND>(desc.WindowHandle),
             &swapChainDesc,
             nullptr,
@@ -82,7 +82,7 @@ namespace RHI
         return true;
     }
 
-    void SwapChainDirectX12::CreateRTVs()
+    void SwapChainD3D12::CreateRTVs()
     {
         ComPtr<ID3D12Device> dx12Device;
         ThrowIfFailed(m_pSwapChain1->GetDevice(IID_PPV_ARGS(&dx12Device)));
@@ -97,8 +97,8 @@ namespace RHI
             dx12Device->CreateRenderTargetView(pResource.Get(), nullptr, rtvHandle);
             
             TextureDesc back_desc                               = { RHI_RTV_FORMAT, m_desc.Width, m_desc.Height, 1, 1, 1, 0 };
-            std::unique_ptr<RenderTargetViewDirectX12> pDerived = std::make_unique<RenderTargetViewDirectX12>(rtvHandle);
-            std::unique_ptr<RHITexture> pBackBuffer             = std::make_unique<TextureDirectX12>(pResource.Get(),back_desc);
+            std::unique_ptr<RenderTargetViewD3D12> pDerived = std::make_unique<RenderTargetViewD3D12>(rtvHandle);
+            std::unique_ptr<RHITexture> pBackBuffer             = std::make_unique<TextureD3D12>(pResource.Get(),back_desc);
             // Set descriptor handle offset
             rtvHandle.Offset(1, rtvDescriptorSize);
             
@@ -108,7 +108,7 @@ namespace RHI
         }
     }
 
-    void SwapChainDirectX12::Shutdown()
+    void SwapChainD3D12::Shutdown()
     {
         for (UINT n = 0; n < RHI_MULTI_BUFFERING; n++)
         {
@@ -119,17 +119,17 @@ namespace RHI
         m_pSwapChain1.Reset();
     }
 
-    bool SwapChainDirectX12::IsValid() const
+    bool SwapChainD3D12::IsValid() const
     {
         return m_pSwapChain1 != nullptr || m_pSwapChain3 != nullptr;
     }
 
-    void SwapChainDirectX12::Present(uint32_t syncInterval, uint32_t presentFlags)
+    void SwapChainD3D12::Present(uint32_t syncInterval, uint32_t presentFlags)
     {
         m_pSwapChain1->Present(syncInterval, presentFlags);
     }
 
-    void SwapChainDirectX12::Resize(uint32_t width, uint32_t height)
+    void SwapChainD3D12::Resize(uint32_t width, uint32_t height)
     {
         m_desc.Width = width;
         m_desc.Height = height;
@@ -151,12 +151,12 @@ namespace RHI
         CreateRTVs();
     }
 
-    RHIRenderTargetView* SwapChainDirectX12::GetRenderTargetView(uint32_t index) const
+    RHIRenderTargetView* SwapChainD3D12::GetRenderTargetView(uint32_t index) const
     {
         return m_pRenderTargetViews[index].get();
     }
 
-    RHITexture*  SwapChainDirectX12::GetBackBuffer(uint32_t index) const
+    RHITexture*  SwapChainD3D12::GetBackBuffer(uint32_t index) const
     {
         return m_pBackBuffers[index].get();
     }

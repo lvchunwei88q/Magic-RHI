@@ -8,39 +8,39 @@ using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
-    class RasterizerStateDirectX12 : public RHIRasterizerState
+    class RasterizerStateD3D12 : public RHIRasterizerState
     {
     public:
-        RasterizerStateDirectX12(ID3D12RootSignature* /*pRootSignature*/) {}
-        ~RasterizerStateDirectX12() override = default;
+        RasterizerStateD3D12(ID3D12RootSignature* /*pRootSignature*/) {}
+        ~RasterizerStateD3D12() override = default;
     };
 
-    class BlendStateDirectX12 : public RHIBlendState
+    class BlendStateD3D12 : public RHIBlendState
 
     {
     public:
-        BlendStateDirectX12(ID3D12RootSignature* /*pRootSignature*/) {}
-        ~BlendStateDirectX12() override = default;
+        BlendStateD3D12(ID3D12RootSignature* /*pRootSignature*/) {}
+        ~BlendStateD3D12() override = default;
     };
 
-    class DepthStencilStateDirectX12 : public RHIDepthStencilState
+    class DepthStencilStateD3D12 : public RHIDepthStencilState
     {
     public:
-        DepthStencilStateDirectX12(ID3D12RootSignature* /*pRootSignature*/) {}
-        ~DepthStencilStateDirectX12() override = default;
+        DepthStencilStateD3D12(ID3D12RootSignature* /*pRootSignature*/) {}
+        ~DepthStencilStateD3D12() override = default;
     };
 
-    class BufferDirectX12 : public RHIBuffer
+    class BufferD3D12 : public RHIBuffer
     {
     public:
-        BufferDirectX12(ID3D12Resource* pResource, const BufferDesc& InDesc, ID3D12Device* InDevice)
+        BufferD3D12(ID3D12Resource* pResource, const BufferDesc& InDesc, ID3D12Device* InDevice)
             : RHIBuffer(InDesc, RRT_Buffer)
             , m_pResource(pResource)
             , m_Device(InDevice)
         {
         }
 
-        ~BufferDirectX12() override = default;
+        ~BufferD3D12() override = default;
 
         ID3D12Resource* GetResource() const { return m_pResource.Get(); }
         
@@ -79,13 +79,13 @@ namespace RHI
         ID3D12Device* m_Device;
     };
 
-    class TextureDirectX12 : public RHITexture
+    class TextureD3D12 : public RHITexture
     {
     public:
-        TextureDirectX12(ID3D12Resource* pResource, const TextureDesc& desc)
+        TextureD3D12(ID3D12Resource* pResource, const TextureDesc& desc)
             : m_pResource(pResource)
             , RHITexture(desc) {}
-        ~TextureDirectX12() override = default;
+        ~TextureD3D12() override = default;
 
         uint64_t GetSize() const override { return 0; }
 
@@ -96,12 +96,12 @@ namespace RHI
     };
 
     // TODO 加入View 构造参数
-    class ConstantBufferViewDirectX12 : public RHIConstantBufferView
+    class ConstantBufferViewD3D12 : public RHIConstantBufferView
     {
     public:
-        ConstantBufferViewDirectX12(D3D12_GPU_VIRTUAL_ADDRESS gpuAddress)
+        ConstantBufferViewD3D12(D3D12_GPU_VIRTUAL_ADDRESS gpuAddress)
             : m_GPUAddress(gpuAddress) {}
-        ~ConstantBufferViewDirectX12() override = default;
+        ~ConstantBufferViewD3D12() override = default;
 
         const D3D12_CPU_DESCRIPTOR_HANDLE* GetCPUDescriptorHandle() const { return &m_CPUHandle; }
         void SetCPUDescriptorHandle(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle) { m_CPUHandle = cpuHandle; }
@@ -112,12 +112,12 @@ namespace RHI
         D3D12_GPU_VIRTUAL_ADDRESS m_GPUAddress;
     };
 
-    class ShaderResourceViewDirectX12 : public RHIShaderResourceView
+    class ShaderResourceViewD3D12 : public RHIShaderResourceView
     {
     public:
-        ShaderResourceViewDirectX12(D3D12_GPU_VIRTUAL_ADDRESS gpuAddress)
+        ShaderResourceViewD3D12(D3D12_GPU_VIRTUAL_ADDRESS gpuAddress)
             : m_GPUAddress(gpuAddress) {}
-        ~ShaderResourceViewDirectX12() override = default;
+        ~ShaderResourceViewD3D12() override = default;
 
         const D3D12_CPU_DESCRIPTOR_HANDLE* GetCPUDescriptorHandle() const { return &m_CPUHandle; }
         void SetCPUDescriptorHandle(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle) { m_CPUHandle = cpuHandle; }
@@ -128,12 +128,12 @@ namespace RHI
         D3D12_GPU_VIRTUAL_ADDRESS m_GPUAddress;
     };
 
-    class UnorderedAccessViewDirectX12 : public RHIUnorderedAccessView
+    class UnorderedAccessViewD3D12 : public RHIUnorderedAccessView
     {
     public:
-        UnorderedAccessViewDirectX12(D3D12_GPU_VIRTUAL_ADDRESS gpuAddress)
+        UnorderedAccessViewD3D12(D3D12_GPU_VIRTUAL_ADDRESS gpuAddress)
             : m_GPUAddress(gpuAddress) {}
-        ~UnorderedAccessViewDirectX12() override = default;
+        ~UnorderedAccessViewD3D12() override = default;
 
         const D3D12_CPU_DESCRIPTOR_HANDLE* GetCPUDescriptorHandle() const { return &m_CPUHandle; }
         void SetCPUDescriptorHandle(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle) { m_CPUHandle = cpuHandle; }
@@ -144,12 +144,12 @@ namespace RHI
         D3D12_GPU_VIRTUAL_ADDRESS m_GPUAddress;
     };
 
-    class RenderTargetViewDirectX12 : public RHIRenderTargetView
+    class RenderTargetViewD3D12 : public RHIRenderTargetView
     {
     public:
-        RenderTargetViewDirectX12(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle)
+        RenderTargetViewD3D12(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle)
             : m_CPUHandle(cpuHandle) {}
-        ~RenderTargetViewDirectX12() override = default;
+        ~RenderTargetViewD3D12() override = default;
 
         const D3D12_CPU_DESCRIPTOR_HANDLE* GetCPUDescriptorHandle() const { return &m_CPUHandle; }
 
@@ -157,12 +157,12 @@ namespace RHI
         D3D12_CPU_DESCRIPTOR_HANDLE m_CPUHandle;
     };
 
-    class DepthStencilViewDirectX12 : public RHIDepthStencilView
+    class DepthStencilViewD3D12 : public RHIDepthStencilView
     {
     public:
-        DepthStencilViewDirectX12(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle)
+        DepthStencilViewD3D12(D3D12_CPU_DESCRIPTOR_HANDLE cpuHandle)
             : m_CPUHandle(cpuHandle) {}
-        ~DepthStencilViewDirectX12() override = default;
+        ~DepthStencilViewD3D12() override = default;
 
         const D3D12_CPU_DESCRIPTOR_HANDLE* GetCPUDescriptorHandle() const { return &m_CPUHandle; }
 
@@ -170,73 +170,73 @@ namespace RHI
         D3D12_CPU_DESCRIPTOR_HANDLE m_CPUHandle;
     };
 
-    class VertexShaderDirectX12 : public RHIVertexShader
+    class VertexShaderD3D12 : public RHIVertexShader
     {
     public:
-        VertexShaderDirectX12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
-        ~VertexShaderDirectX12() override = default;
+        VertexShaderD3D12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
+        ~VertexShaderD3D12() override = default;
         const std::vector<uint8_t>& GetBytecode() const { return m_Bytecode; }
     private:
         std::vector<uint8_t> m_Bytecode;
     };
 
-    class PixelShaderDirectX12 : public RHIPixelShader
+    class PixelShaderD3D12 : public RHIPixelShader
     {
     public:
-        PixelShaderDirectX12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
-        ~PixelShaderDirectX12() override = default;
+        PixelShaderD3D12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
+        ~PixelShaderD3D12() override = default;
         const std::vector<uint8_t>& GetBytecode() const { return m_Bytecode; }
     private:
         std::vector<uint8_t> m_Bytecode;
     };
 
-    class GeometryShaderDirectX12 : public RHIGeometryShader
+    class GeometryShaderD3D12 : public RHIGeometryShader
     {
     public:
-        GeometryShaderDirectX12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
-        ~GeometryShaderDirectX12() override = default;
+        GeometryShaderD3D12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
+        ~GeometryShaderD3D12() override = default;
         const std::vector<uint8_t>& GetBytecode() const { return m_Bytecode; }
     private:
         std::vector<uint8_t> m_Bytecode;
     };
 
-    class HullShaderDirectX12 : public RHIHullShader
+    class HullShaderD3D12 : public RHIHullShader
     {
     public:
-        HullShaderDirectX12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
-        ~HullShaderDirectX12() override = default;
+        HullShaderD3D12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
+        ~HullShaderD3D12() override = default;
         const std::vector<uint8_t>& GetBytecode() const { return m_Bytecode; }
     private:
         std::vector<uint8_t> m_Bytecode;
     };
 
-    class DomainShaderDirectX12 : public RHIDomainShader
+    class DomainShaderD3D12 : public RHIDomainShader
     {
     public:
-        DomainShaderDirectX12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
-        ~DomainShaderDirectX12() override = default;
+        DomainShaderD3D12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
+        ~DomainShaderD3D12() override = default;
         const std::vector<uint8_t>& GetBytecode() const { return m_Bytecode; }
     private:
         std::vector<uint8_t> m_Bytecode;
     };
 
-    class ComputeShaderDirectX12 : public RHIComputeShader
+    class ComputeShaderD3D12 : public RHIComputeShader
     {
     public:
-        ComputeShaderDirectX12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
-        ~ComputeShaderDirectX12() override = default;
+        ComputeShaderD3D12(const std::vector<uint8_t>& bytecode) : m_Bytecode(bytecode) {}
+        ~ComputeShaderD3D12() override = default;
         const std::vector<uint8_t>& GetBytecode() const { return m_Bytecode; }
     private:
         std::vector<uint8_t> m_Bytecode;
     };
 
-    class SamplerStateDirectX12 : public RHISamplerState
+    class SamplerStateD3D12 : public RHISamplerState
     {
     public:
-        SamplerStateDirectX12(D3D12_SAMPLER_DESC desc, RHIDescriptorHandle handle) 
+        SamplerStateD3D12(D3D12_SAMPLER_DESC desc, RHIDescriptorHandle handle) 
             : m_SamplerDesc(desc), RHISamplerState(handle) {} // 初始化 Handle
 
-        ~SamplerStateDirectX12() override = default;
+        ~SamplerStateD3D12() override = default;
 
         const D3D12_SAMPLER_DESC& GetSamplerDesc() const { return m_SamplerDesc; }
 

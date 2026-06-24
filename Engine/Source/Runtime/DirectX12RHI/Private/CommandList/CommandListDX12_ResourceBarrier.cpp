@@ -1,6 +1,6 @@
 #include <Common/Check.h>
 #include <CoreLogCapture/CoreLogCapture.h>
-#include "RHICommandListDirectX12.h"
+#include "RHICommandListD3D12.h"
 
 namespace RHI
 {
@@ -68,11 +68,11 @@ namespace RHI
             switch(type){
                 case ResourceType::Texture:
                 {
-                    return SafeCast<TextureDirectX12>(pResource)->GetResource();
+                    return SafeCast<TextureD3D12>(pResource)->GetResource();
                 }
                 case ResourceType::Buffer:
                 {
-                    return SafeCast<BufferDirectX12>(pResource)->GetResource();
+                    return SafeCast<BufferD3D12>(pResource)->GetResource();
                 }
                 default:
                 {
@@ -83,7 +83,7 @@ namespace RHI
         }
     }
 
-    void CommandListDirectX12::ResourceBarrier(uint32_t numBarriers, const BarrierDesc* pBarriers)
+    void CommandListD3D12::ResourceBarrier(uint32_t numBarriers, const BarrierDesc* pBarriers)
     {
         if (numBarriers == 0 || pBarriers == nullptr)
             return;

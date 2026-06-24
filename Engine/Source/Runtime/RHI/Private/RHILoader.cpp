@@ -31,10 +31,10 @@ namespace RHI
 
         switch (type)
         {
-        case RHIType::DirectX12:
+        case RHIType::D3D12:
             dllName = RHI_D3D12_DLL_FILE;
             break;
-        case RHIType::DirectX11:
+        case RHIType::D3D11:
             dllName = RHI_D3D11_DLL_FILE;
             break;
         default:

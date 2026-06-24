@@ -88,11 +88,11 @@ int main(int argc, char* argv[])
     RHI::RHIType type = RHI::GetBestAvailableRHI();
     
     if (argc > 1 && strcmp(argv[1], "dx12") == 0) {
-        type = RHI::RHIType::DirectX12;
-        std::cout << "Using DirectX12" << std::endl;
+        type = RHI::RHIType::D3D12;
+        std::cout << "Using D3D12" << std::endl;
     } else {
-        type = RHI::RHIType::DirectX11;
-        std::cout << "Using DirectX11" << std::endl;
+        type = RHI::RHIType::D3D11;
+        std::cout << "Using D3D11" << std::endl;
     }
 
     Core::SubsystemControl::Init();
@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
     HWND hwnd = CreateWindowEx(
         0,
         CLASS_NAME,
-        type == RHI::RHIType::DirectX11 ? L"RHI DirectX11 Window" : L"RHI DirectX12 Window",
+        type == RHI::RHIType::D3D11 ? L"RHI D3D11 Window" : L"RHI D3D12 Window",
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
         nullptr,

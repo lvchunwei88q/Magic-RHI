@@ -1,7 +1,7 @@
-#include "RHIResourceDirectX12.h"
+#include "RHIResourceD3D12.h"
 #include <Common/RHIDesc.h>
 #include <Common/Check.h>
-#include "RHIDirectX12.h"
+#include "RHID3D12.h"
 
 #include <include/Support/ErrorCodes.h>
 
@@ -112,7 +112,7 @@ namespace RHI
         }
 
         template<typename ShaderType>
-        std::shared_ptr<ShaderType> CompileShaderInternal(RHIDirectX12* device, const ShaderCompileDesc& desc, const char* defaultProfile)
+        std::shared_ptr<ShaderType> CompileShaderInternal(RHID3D12* device, const ShaderCompileDesc& desc, const char* defaultProfile)
         {
             std::string basePath;
             std::string source = LoadShaderSource(desc, basePath);
@@ -130,7 +130,7 @@ namespace RHI
         }
     }
 
-    std::string RHIDirectX12::GetShaderTarget(const char* prefix) const
+    std::string RHID3D12::GetShaderTarget(const char* prefix) const
     {
         ShaderModelVersion highestSM = GetHighestSupportedShaderModel(m_pDevice.Get());
         
@@ -148,7 +148,7 @@ namespace RHI
         }
     }
 
-    bool RHIDirectX12::CompileShaderToBytecode(const std::string& source, const std::string& entryPoint, 
+    bool RHID3D12::CompileShaderToBytecode(const std::string& source, const std::string& entryPoint, 
                                 const std::string& profile, bool enableDebug, const std::vector<ShaderMacro>& macros,
                                 std::vector<uint8_t>& outBytecode,std::string& basePath)
     {   
@@ -284,37 +284,37 @@ namespace RHI
     }
 
 
-    std::shared_ptr<RHIVertexShader> RHIDirectX12::CompileVertexShader(const ShaderCompileDesc& desc)
+    std::shared_ptr<RHIVertexShader> RHID3D12::CompileVertexShader(const ShaderCompileDesc& desc)
     {
-        return CompileShaderInternal<VertexShaderDirectX12>(this, desc, GetShaderTarget("vs").c_str());
+        return CompileShaderInternal<VertexShaderD3D12>(this, desc, GetShaderTarget("vs").c_str());
     }
 
-    std::shared_ptr<RHIPixelShader> RHIDirectX12::CompilePixelShader(const ShaderCompileDesc& desc)
+    std::shared_ptr<RHIPixelShader> RHID3D12::CompilePixelShader(const ShaderCompileDesc& desc)
     {
-        return CompileShaderInternal<PixelShaderDirectX12>(this, desc, GetShaderTarget("ps").c_str());
+        return CompileShaderInternal<PixelShaderD3D12>(this, desc, GetShaderTarget("ps").c_str());
     }
 
-    std::shared_ptr<RHIGeometryShader> RHIDirectX12::CompileGeometryShader(const ShaderCompileDesc& desc)
+    std::shared_ptr<RHIGeometryShader> RHID3D12::CompileGeometryShader(const ShaderCompileDesc& desc)
     {
-        return CompileShaderInternal<GeometryShaderDirectX12>(this, desc, GetShaderTarget("gs").c_str());
+        return CompileShaderInternal<GeometryShaderD3D12>(this, desc, GetShaderTarget("gs").c_str());
     }
 
-    std::shared_ptr<RHIHullShader> RHIDirectX12::CompileHullShader(const ShaderCompileDesc& desc)
+    std::shared_ptr<RHIHullShader> RHID3D12::CompileHullShader(const ShaderCompileDesc& desc)
     {
-        return CompileShaderInternal<HullShaderDirectX12>(this, desc, GetShaderTarget("hs").c_str());
+        return CompileShaderInternal<HullShaderD3D12>(this, desc, GetShaderTarget("hs").c_str());
     }
 
-    std::shared_ptr<RHIDomainShader> RHIDirectX12::CompileDomainShader(const ShaderCompileDesc& desc)
+    std::shared_ptr<RHIDomainShader> RHID3D12::CompileDomainShader(const ShaderCompileDesc& desc)
     {
-        return CompileShaderInternal<DomainShaderDirectX12>(this, desc, GetShaderTarget("ds").c_str());
+        return CompileShaderInternal<DomainShaderD3D12>(this, desc, GetShaderTarget("ds").c_str());
     }
 
-    std::shared_ptr<RHIComputeShader> RHIDirectX12::CompileComputeShader(const ShaderCompileDesc& desc)
+    std::shared_ptr<RHIComputeShader> RHID3D12::CompileComputeShader(const ShaderCompileDesc& desc)
     {
-        return CompileShaderInternal<ComputeShaderDirectX12>(this, desc, GetShaderTarget("cs").c_str());
+        return CompileShaderInternal<ComputeShaderD3D12>(this, desc, GetShaderTarget("cs").c_str());
     }
     
-    ShaderModelVersion RHIDirectX12::GetShaderModelVersion() const
+    ShaderModelVersion RHID3D12::GetShaderModelVersion() const
     {
         return GetHighestSupportedShaderModel(GetDevice());
     }

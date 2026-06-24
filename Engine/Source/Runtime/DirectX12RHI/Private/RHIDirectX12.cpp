@@ -4,9 +4,9 @@
 
 #include <Common/Check.h>
 #include <Common/RHIFeatureLevel.h>
-#include "RHIRootSignatureDirectX12.h"
-#include "RHICommandListDirectX12.h"
-#include "RHIDirectX12.h"
+#include "RHIRootSignatureD3D12.h"
+#include "RHICommandListD3D12.h"
+#include "RHID3D12.h"
 #include "DirectXConfig.h"
 
 namespace RHI
@@ -205,16 +205,16 @@ namespace RHI
             }
         }
     }
-    RHIDirectX12::RHIDirectX12()
+    RHID3D12::RHID3D12()
     {
     }
 
-    RHIDirectX12::~RHIDirectX12()
+    RHID3D12::~RHID3D12()
     {
         Shutdown();
     }
 
-    bool RHIDirectX12::Initialize()
+    bool RHID3D12::Initialize()
     {
         UINT dxgiFactoryFlags = 0;
 
@@ -301,10 +301,10 @@ namespace RHI
         dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
         ThrowIfFailed(m_pDevice->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&pDSVHeap)));
 
-        m_pStandardHeap = std::make_unique<DescriptorHeapDirectX12>(pStandardHeap.Get(), RHIDescriptorHeapType::Standard, RHI_DESCRIPTOR_HEAP_SIZE_STANDARD, m_StandardDescriptorSize);
-        m_pSamplerHeap = std::make_unique<DescriptorHeapDirectX12>(pSamplerHeap.Get(), RHIDescriptorHeapType::Sampler, RHI_DESCRIPTOR_HEAP_SIZE_SAMPLER, m_SamplerDescriptorSize);
-        m_pRTVHeap = std::make_unique<DescriptorHeapDirectX12>(pRTVHeap.Get(), RHIDescriptorHeapType::RenderTarget, RHI_DESCRIPTOR_HEAP_SIZE_RENDER_TARGET, m_RTVDescriptorSize);
-        m_pDSVHeap = std::make_unique<DescriptorHeapDirectX12>(pDSVHeap.Get(), RHIDescriptorHeapType::DepthStencil, RHI_DESCRIPTOR_HEAP_SIZE_DEPTH_STENCIL, m_DSVDescriptorSize);
+        m_pStandardHeap = std::make_unique<DescriptorHeapD3D12>(pStandardHeap.Get(), RHIDescriptorHeapType::Standard, RHI_DESCRIPTOR_HEAP_SIZE_STANDARD, m_StandardDescriptorSize);
+        m_pSamplerHeap = std::make_unique<DescriptorHeapD3D12>(pSamplerHeap.Get(), RHIDescriptorHeapType::Sampler, RHI_DESCRIPTOR_HEAP_SIZE_SAMPLER, m_SamplerDescriptorSize);
+        m_pRTVHeap = std::make_unique<DescriptorHeapD3D12>(pRTVHeap.Get(), RHIDescriptorHeapType::RenderTarget, RHI_DESCRIPTOR_HEAP_SIZE_RENDER_TARGET, m_RTVDescriptorSize);
+        m_pDSVHeap = std::make_unique<DescriptorHeapD3D12>(pDSVHeap.Get(), RHIDescriptorHeapType::DepthStencil, RHI_DESCRIPTOR_HEAP_SIZE_DEPTH_STENCIL, m_DSVDescriptorSize);
         // -------------------- Create descriptor heaps End --------------------
 
 #ifdef _DEBUG
@@ -323,7 +323,7 @@ namespace RHI
         return true;
     }
 
-    void RHIDirectX12::Shutdown()
+    void RHID3D12::Shutdown()
     {
         m_pDSVHeap.reset();
         m_pRTVHeap.reset();
@@ -337,11 +337,11 @@ namespace RHI
         m_pDevice.Reset();
     }
 
-    FeatureLevel RHIDirectX12::GetFeatureLevel() const{
+    FeatureLevel RHID3D12::GetFeatureLevel() const{
         return FromD3DFeatureLevel(m_FeatureLevel);
     }
 
-    void RHIDirectX12::CreateQueues()
+    void RHID3D12::CreateQueues()
     {
         // 创建命令队列 这是唯一的Com接口没有 1，2，3 等版本的接口
         ComPtr<ID3D12CommandQueue> pGraphicsQueue;
@@ -369,43 +369,43 @@ namespace RHI
         copyQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
         ThrowIfFailed(m_pDevice->CreateCommandQueue(&copyQueueDesc, IID_PPV_ARGS(&pCopyQueue)));
 
-        m_GraphicsQueue = std::make_unique<GraphicsCommandQueueDirectX12>(
+        m_GraphicsQueue = std::make_unique<GraphicsCommandQueueD3D12>(
             RHICmdType::Graphics, 
             pGraphicsQueue.Get(),
             m_pDevice.Get()
         );
-        m_ComputeQueue = std::make_unique<ComputeCommandQueueDirectX12>(
+        m_ComputeQueue = std::make_unique<ComputeCommandQueueD3D12>(
             RHICmdType::Compute, 
             pComputeQueue.Get(),
             m_pDevice.Get()
         );
-        m_CopyQueue = std::make_unique<CopyCommandQueueDirectX12>(
+        m_CopyQueue = std::make_unique<CopyCommandQueueD3D12>(
             RHICmdType::Copy, 
             pCopyQueue.Get(),
             m_pDevice.Get()
         );
     }
 
-    bool RHIDirectX12::IsValid() const
+    bool RHID3D12::IsValid() const
     {
         return m_pDevice != nullptr;
     }
 
-    std::shared_ptr<RHICommandAllocator> RHIDirectX12::CreateCommandAllocator(RHICmdType type)
+    std::shared_ptr<RHICommandAllocator> RHID3D12::CreateCommandAllocator(RHICmdType type)
     {
         D3D12_COMMAND_LIST_TYPE d3dType = ConvertRHICmdTypeToD3D12(type);
 
         // Create command allocator 这是唯一的Com接口没有 1，2，3 等版本的接口
         ComPtr<ID3D12CommandAllocator> pAllocator;
         ThrowIfFailed(m_pDevice->CreateCommandAllocator(d3dType, IID_PPV_ARGS(&pAllocator)));
-        return std::make_shared<CommandAllocatorDirectX12>(type, pAllocator.Get());
+        return std::make_shared<CommandAllocatorD3D12>(type, pAllocator.Get());
     }
     
-    std::shared_ptr<RHICommandList> RHIDirectX12::CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator)
+    std::shared_ptr<RHICommandList> RHID3D12::CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator)
     {
-        CommandAllocatorDirectX12* pAllocator = SafeCast<CommandAllocatorDirectX12>(allocator.get());
+        CommandAllocatorD3D12* pAllocator = SafeCast<CommandAllocatorD3D12>(allocator.get());
         if (pAllocator == nullptr) {
-            ThrowErrorMessage("CommandAllocatorDirectX12 is nullptr");
+            ThrowErrorMessage("CommandAllocatorD3D12 is nullptr");
             return nullptr;
         }
         RHICmdType type = pAllocator->GetCmdType();
@@ -423,13 +423,13 @@ namespace RHI
         ThrowIfFailed(pCmdList->Close());
     
         // Create RHI wrapper object
-        return std::make_shared<CommandListDirectX12>(pAllocator, pCmdList.Get());
+        return std::make_shared<CommandListD3D12>(pAllocator, pCmdList.Get());
     }
     
     /*
     * 获取图形命令队列
     */
-    RHICommandQueue* RHIDirectX12::GetCommandQueue(RHICmdType Type) const
+    RHICommandQueue* RHID3D12::GetCommandQueue(RHICmdType Type) const
     {
         switch (Type)
         {
@@ -444,9 +444,9 @@ namespace RHI
         }
     }
 
-    std::shared_ptr<RHIRootSignature> RHIDirectX12::CreateRootSignature(const RootSignatureDesc& desc)
+    std::shared_ptr<RHIRootSignature> RHID3D12::CreateRootSignature(const RootSignatureDesc& desc)
     {
-        auto rootSignature = std::make_shared<RHIRootSignatureDirectX12>();
+        auto rootSignature = std::make_shared<RHIRootSignatureD3D12>();
         if (rootSignature->Initialize(this, desc))
         {
             return rootSignature;
@@ -454,7 +454,7 @@ namespace RHI
         return nullptr;
     }
 
-    void RHIDirectX12::DeleteRootSignature(std::shared_ptr<RHIRootSignature>& rootSignature)
+    void RHID3D12::DeleteRootSignature(std::shared_ptr<RHIRootSignature>& rootSignature)
     {
         if (rootSignature)
         {
@@ -463,7 +463,7 @@ namespace RHI
         }
     }
 
-    RHIDescriptorHeap* RHIDirectX12::GetDescriptorHeap(RHIDescriptorHeapType type) const
+    RHIDescriptorHeap* RHID3D12::GetDescriptorHeap(RHIDescriptorHeapType type) const
     {
         switch (type)
         {

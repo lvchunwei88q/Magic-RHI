@@ -1,8 +1,8 @@
 
 #include <Common/Check.h>
-#include "RHIDirectX11.h"
-#include "RHIPipelineStateDirectX11.h"
-#include "RHIResourceDirectX11.h"
+#include "RHID3D11.h"
+#include "RHIPipelineStateD3D11.h"
+#include "RHIResourceD3D11.h"
 
 namespace RHI
 {
@@ -182,51 +182,51 @@ namespace RHI
         }
     }
     
-    RHIPipelineStateDirectX11::RHIPipelineStateDirectX11()
+    RHIPipelineStateD3D11::RHIPipelineStateD3D11()
     {
     }
 
-    RHIPipelineStateDirectX11::~RHIPipelineStateDirectX11()
+    RHIPipelineStateD3D11::~RHIPipelineStateD3D11()
     {
         Shutdown();
     }
 
-    bool RHIPipelineStateDirectX11::Initialize(Device* device, const GraphicsPipelineStateDesc& desc)
+    bool RHIPipelineStateD3D11::Initialize(Device* device, const GraphicsPipelineStateDesc& desc)
     {
         Type = PipelineStateType::Graphics;
-        RHIDirectX11* dx11direct = SafeCast<RHIDirectX11>(device);
+        RHID3D11* dx11direct = SafeCast<RHID3D11>(device);
         // TODO: Pipeline state data initialization
         //GraphicsDesc.pRootSignature = desc.pRootSignature;
 
-        VertexShaderDirectX11* pVShader = SafeCast<VertexShaderDirectX11>(desc.pVertexShader);
+        VertexShaderD3D11* pVShader = SafeCast<VertexShaderD3D11>(desc.pVertexShader);
         ComPtr<ID3D11VertexShader> VShader = pVShader->GetShader();
         ComPtr<ID3DBlob> pVSBlob = pVShader->GetVSBlob();
 
         ComPtr<ID3D11PixelShader> PShader;
         if(desc.pPixelShader != nullptr)
         {
-            PixelShaderDirectX11* pPShader = SafeCast<PixelShaderDirectX11>(desc.pPixelShader);
+            PixelShaderD3D11* pPShader = SafeCast<PixelShaderD3D11>(desc.pPixelShader);
             PShader = pPShader->GetShader();
         }
 
         ComPtr<ID3D11GeometryShader> GShader;
         if(desc.pGeometryShader != nullptr)
         {
-            GeometryShaderDirectX11* pGShader = SafeCast<GeometryShaderDirectX11>(desc.pGeometryShader);
+            GeometryShaderD3D11* pGShader = SafeCast<GeometryShaderD3D11>(desc.pGeometryShader);
             GShader = pGShader->GetShader();
         }
 
         ComPtr<ID3D11HullShader> HShader;
         if(desc.pHullShader != nullptr)
         {
-            HullShaderDirectX11* pHShader = SafeCast<HullShaderDirectX11>(desc.pHullShader);
+            HullShaderD3D11* pHShader = SafeCast<HullShaderD3D11>(desc.pHullShader);
             HShader = pHShader->GetShader();
         }
 
         ComPtr<ID3D11DomainShader> DShader;
         if(desc.pDomainShader != nullptr)
         {
-            DomainShaderDirectX11* pDShader = SafeCast<DomainShaderDirectX11>(desc.pDomainShader);
+            DomainShaderD3D11* pDShader = SafeCast<DomainShaderD3D11>(desc.pDomainShader);
             DShader = pDShader->GetShader();
         }
 
@@ -277,47 +277,47 @@ namespace RHI
         return true;
     }
 
-    bool RHIPipelineStateDirectX11::Initialize(Device* device, const ComputePipelineStateDesc& desc)
+    bool RHIPipelineStateD3D11::Initialize(Device* device, const ComputePipelineStateDesc& desc)
     {
         Type = PipelineStateType::Compute;
-        RHIDirectX11* dx11direct = SafeCast<RHIDirectX11>(device);
+        RHID3D11* dx11direct = SafeCast<RHID3D11>(device);
         // TODO: Pipeline state data initialization
         //ComputeDesc.pRootSignature = desc.pRootSignature;
         
-        ComputeShaderDirectX11* pCShader = SafeCast<ComputeShaderDirectX11>(desc.pComputeShader);
+        ComputeShaderD3D11* pCShader = SafeCast<ComputeShaderD3D11>(desc.pComputeShader);
         ComPtr<ID3D11ComputeShader> CShader = pCShader->GetShader();
 
         ComputeDesc.pComputeShader = CShader;
         return true;
     }
 
-    void RHIPipelineStateDirectX11::Shutdown()
+    void RHIPipelineStateD3D11::Shutdown()
     {
     }
 
-    bool RHIPipelineStateDirectX11::IsValid() const
+    bool RHIPipelineStateD3D11::IsValid() const
     {
         return Type != PipelineStateType::Unknown;
     }
 
-    PipelineStateType RHIPipelineStateDirectX11::GetType() const
+    PipelineStateType RHIPipelineStateD3D11::GetType() const
     {
         return Type;
     }
 
-    const GPSDDirectX11& RHIPipelineStateDirectX11::GetGraphicsDesc() const
+    const GPSDD3D11& RHIPipelineStateD3D11::GetGraphicsDesc() const
     {
         return GraphicsDesc;
     }
 
-    const CPSDDirectX11& RHIPipelineStateDirectX11::GetComputeDesc() const
+    const CPSDD3D11& RHIPipelineStateD3D11::GetComputeDesc() const
     {
         return ComputeDesc;
     }
 
-    std::shared_ptr<RHIPipelineState> RHIDirectX11::CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc)
+    std::shared_ptr<RHIPipelineState> RHID3D11::CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc)
     {
-        auto pipelineState = std::make_shared<RHIPipelineStateDirectX11>();
+        auto pipelineState = std::make_shared<RHIPipelineStateD3D11>();
         if (pipelineState->Initialize(this, desc))
         {
             return pipelineState;
@@ -325,9 +325,9 @@ namespace RHI
         return nullptr;
     }
 
-    std::shared_ptr<RHIPipelineState> RHIDirectX11::CreateComputePipelineState(const ComputePipelineStateDesc& desc)
+    std::shared_ptr<RHIPipelineState> RHID3D11::CreateComputePipelineState(const ComputePipelineStateDesc& desc)
     {
-        auto pipelineState = std::make_shared<RHIPipelineStateDirectX11>();
+        auto pipelineState = std::make_shared<RHIPipelineStateD3D11>();
         if (pipelineState->Initialize(this, desc))
         {
             return pipelineState;
@@ -335,11 +335,11 @@ namespace RHI
         return nullptr;
     }
 
-    void RHIDirectX11::DeletePipelineState(std::shared_ptr<RHIPipelineState>& pipelineState)
+    void RHID3D11::DeletePipelineState(std::shared_ptr<RHIPipelineState>& pipelineState)
     {
         if (pipelineState)
         {
-            auto dx11PipelineState = static_cast<RHIPipelineStateDirectX11*>(pipelineState.get());
+            auto dx11PipelineState = static_cast<RHIPipelineStateD3D11*>(pipelineState.get());
             if (dx11PipelineState)
             {
                 dx11PipelineState->Shutdown();

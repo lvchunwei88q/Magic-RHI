@@ -1,8 +1,8 @@
-#include "RHICommandListDirectX11.h"
+#include "RHICommandListD3D11.h"
 
 namespace RHI
 {
-    void CommandListDirectX11::OMSetRenderTargets(uint32_t numRenderTargets, RHIRenderTargetView* const* ppViews, bool RTsSingleHandleToDescriptorRange, RHIDepthStencilView* pDepthStencilView)
+    void CommandListD3D11::OMSetRenderTargets(uint32_t numRenderTargets, RHIRenderTargetView* const* ppViews, bool RTsSingleHandleToDescriptorRange, RHIDepthStencilView* pDepthStencilView)
     {
         #define MAX_RENDER_TARGETS 8 // 最大渲染目标数量
         ThrowIf(numRenderTargets > MAX_RENDER_TARGETS, "numRenderTargets must be less than or equal to 8");
@@ -12,7 +12,7 @@ namespace RHI
         {
             if (ppViews[i])
             {
-                auto* pRTV11 = static_cast<RenderTargetViewDirectX11*>(ppViews[i]);
+                auto* pRTV11 = static_cast<RenderTargetViewD3D11*>(ppViews[i]);
                 pRTViews[i] = pRTV11->GetRTV();
             }
         }
@@ -20,7 +20,7 @@ namespace RHI
         ID3D11DepthStencilView* pDSV = nullptr;
         if (pDepthStencilView)
         {
-            auto* pDSV11 = static_cast<DepthStencilViewDirectX11*>(pDepthStencilView);
+            auto* pDSV11 = static_cast<DepthStencilViewD3D11*>(pDepthStencilView);
             pDSV = pDSV11->GetDSV();
         }
 
@@ -28,12 +28,12 @@ namespace RHI
         m_pDeviceContext->OMSetRenderTargets(numRenderTargets, pRTViews.data(), pDSV);
     }
 
-    void CommandListDirectX11::OMSetBlendState(RHIBlendState* pState, const float* blendFactor, uint32_t sampleMask)
+    void CommandListD3D11::OMSetBlendState(RHIBlendState* pState, const float* blendFactor, uint32_t sampleMask)
     {
         // TODO: 实现混合状态设置
     }
 
-    void CommandListDirectX11::OMSetDepthStencilState(RHIDepthStencilState* pState, uint32_t stencilRef)
+    void CommandListD3D11::OMSetDepthStencilState(RHIDepthStencilState* pState, uint32_t stencilRef)
     {
         // TODO: 实现深度模板状态设置
     }

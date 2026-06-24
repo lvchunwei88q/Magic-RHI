@@ -1,12 +1,12 @@
-#include "RHIDirectX12.h"
-#include "RHIResourceDirectX12.h"
-#include "DescriptorHeapDirectX12.h"
+#include "RHID3D12.h"
+#include "RHIResourceD3D12.h"
+#include "DescriptorHeapD3D12.h"
 
 namespace RHI
 {
-    RHIDescriptorHandle RHIDirectX12::CreateStandardHeapDescriptorView(RHIBuffer* Buffer,DescriptorRangeType Type)
+    RHIDescriptorHandle RHID3D12::CreateStandardHeapDescriptorView(RHIBuffer* Buffer,DescriptorRangeType Type)
     {
-        auto dx12Buffer = SafeCast<BufferDirectX12>(Buffer);
+        auto dx12Buffer = SafeCast<BufferD3D12>(Buffer);
         if (!dx12Buffer || !dx12Buffer->GetResource())
         {
             ThrowErrorMessage("Invalid buffer for descriptor creation");
@@ -39,7 +39,7 @@ namespace RHI
             cbvDesc.SizeInBytes = (UINT)dx12Buffer->GetSize();
             m_pDevice->CreateConstantBufferView(&cbvDesc, cpuHandle);
 
-            ConstantBufferViewDirectX12* pCBView = new ConstantBufferViewDirectX12(GPUVirtualAddress);
+            ConstantBufferViewD3D12* pCBView = new ConstantBufferViewD3D12(GPUVirtualAddress);
             m_pStandardHeap->SetDescriptor(handle, pCBView);
             break;
         }
@@ -57,7 +57,7 @@ namespace RHI
             srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING; 
             m_pDevice->CreateShaderResourceView(dx12Buffer->GetResource(), &srvDesc, cpuHandle);
 
-            ShaderResourceViewDirectX12* pSRVView = new ShaderResourceViewDirectX12(GPUVirtualAddress);
+            ShaderResourceViewD3D12* pSRVView = new ShaderResourceViewD3D12(GPUVirtualAddress);
             m_pStandardHeap->SetDescriptor(handle, pSRVView);
             break;
         }
@@ -74,7 +74,7 @@ namespace RHI
             uavDesc.Buffer.Flags = D3D12_BUFFER_UAV_FLAG_NONE;
             m_pDevice->CreateUnorderedAccessView(dx12Buffer->GetResource(), nullptr, &uavDesc, cpuHandle);
 
-            UnorderedAccessViewDirectX12* pUAVView = new UnorderedAccessViewDirectX12(GPUVirtualAddress);
+            UnorderedAccessViewD3D12* pUAVView = new UnorderedAccessViewD3D12(GPUVirtualAddress);
             m_pStandardHeap->SetDescriptor(handle, pUAVView);
             break;
         }
@@ -88,7 +88,7 @@ namespace RHI
         return handle;
     }
 
-    RHIDescriptorHandle RHIDirectX12::CreateStandardHeapDescriptorView(RHITexture* Texture,DescriptorRangeType Type)
+    RHIDescriptorHandle RHID3D12::CreateStandardHeapDescriptorView(RHITexture* Texture,DescriptorRangeType Type)
     {
         if (!m_pSamplerHeap || m_pSamplerHeap->IsFull())
         {
@@ -98,7 +98,7 @@ namespace RHI
         return m_pSamplerHeap->Allocate();
     }
 
-    RHIDescriptorHandle RHIDirectX12::CreateSamplerHeapDescriptorView(const SamplerStateDesc& /*desc*/)
+    RHIDescriptorHandle RHID3D12::CreateSamplerHeapDescriptorView(const SamplerStateDesc& /*desc*/)
     {
         if (!m_pSamplerHeap || m_pSamplerHeap->IsFull())
         {
@@ -108,7 +108,7 @@ namespace RHI
         return m_pSamplerHeap->Allocate();
     }
 
-    RHIDescriptorHandle RHIDirectX12::CreateRTVHeapDescriptorView(RHIRenderTargetView* /*InView*/)
+    RHIDescriptorHandle RHID3D12::CreateRTVHeapDescriptorView(RHIRenderTargetView* /*InView*/)
     {
         if (!m_pRTVHeap || m_pRTVHeap->IsFull())
         {
@@ -118,7 +118,7 @@ namespace RHI
         return m_pRTVHeap->Allocate();
     }
 
-    RHIDescriptorHandle RHIDirectX12::CreateDSVHeapDescriptorView(RHIDepthStencilView* /*InView*/)
+    RHIDescriptorHandle RHID3D12::CreateDSVHeapDescriptorView(RHIDepthStencilView* /*InView*/)
     {
         if (!m_pDSVHeap || m_pDSVHeap->IsFull())
         {

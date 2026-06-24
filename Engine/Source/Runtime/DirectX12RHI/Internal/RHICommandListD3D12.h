@@ -7,20 +7,20 @@
 #include <Config/ConfigBase.h> // RHI配置
 
 #include <RHICommandList.h>
-#include "RHIResourceDirectX12.h"
+#include "RHIResourceD3D12.h"
 #include <wrl.h>
 
 using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
-    class CommandAllocatorDirectX12 : public RHICommandAllocator
+    class CommandAllocatorD3D12 : public RHICommandAllocator
     {
         public:
-            CommandAllocatorDirectX12(RHICmdType type, ID3D12CommandAllocator* pCmdAllocator)
+            CommandAllocatorD3D12(RHICmdType type, ID3D12CommandAllocator* pCmdAllocator)
                 : RHICommandAllocator(type)
                 , m_pCommandAllocator(pCmdAllocator) {}
-            virtual ~CommandAllocatorDirectX12() = default;
+            virtual ~CommandAllocatorD3D12() = default;
 
             ID3D12CommandAllocator* GetCommandAllocator() const { return m_pCommandAllocator.Get(); }
 
@@ -28,13 +28,13 @@ namespace RHI
             ComPtr<ID3D12CommandAllocator> m_pCommandAllocator;
     };
 
-    class CommandListDirectX12 : public RHICommandList
+    class CommandListD3D12 : public RHICommandList
     {
     public:
-        CommandListDirectX12(RHICommandAllocator* pCmdAllocator, ID3D12GraphicsCommandList* pCmdList)
+        CommandListD3D12(RHICommandAllocator* pCmdAllocator, ID3D12GraphicsCommandList* pCmdList)
             : RHICommandList(pCmdAllocator)
             , m_pCommandList(pCmdList) {}
-        ~CommandListDirectX12() override = default;
+        ~CommandListD3D12() override = default;
 
         void BeginRecording() override;
         void EndRecording() override;
@@ -100,14 +100,14 @@ namespace RHI
         ComPtr<ID3D12GraphicsCommandList> m_pCommandList;
     };
 
-    using GraphicsCommandListDirectX12 = CommandListDirectX12;
-    using ComputeCommandListDirectX12 = CommandListDirectX12;
-    using CopyCommandListDirectX12 = CommandListDirectX12;
+    using GraphicsCommandListD3D12 = CommandListD3D12;
+    using ComputeCommandListD3D12 = CommandListD3D12;
+    using CopyCommandListD3D12 = CommandListD3D12;
 
-    class CommandQueueDirectX12 : public RHICommandQueue
+    class CommandQueueD3D12 : public RHICommandQueue
     {
     public:
-        CommandQueueDirectX12(RHICmdType InType, ID3D12CommandQueue* pQueue, ID3D12Device* InDevice)
+        CommandQueueD3D12(RHICmdType InType, ID3D12CommandQueue* pQueue, ID3D12Device* InDevice)
             : RHICommandQueue(InType)
             , m_pCommandQueue(pQueue)
             , m_Device(InDevice) {
@@ -117,7 +117,7 @@ namespace RHI
                     ThrowErrorMessage("Failed to create fence event");
                 }
             }
-        ~CommandQueueDirectX12() override {
+        ~CommandQueueD3D12() override {
             CloseHandle(m_fenceEvent);
         };
 
@@ -148,7 +148,7 @@ namespace RHI
         ID3D12Device* m_Device;
     };
 
-    using GraphicsCommandQueueDirectX12 = CommandQueueDirectX12;
-    using ComputeCommandQueueDirectX12 = CommandQueueDirectX12;
-    using CopyCommandQueueDirectX12 = CommandQueueDirectX12;
+    using GraphicsCommandQueueD3D12 = CommandQueueD3D12;
+    using ComputeCommandQueueD3D12 = CommandQueueD3D12;
+    using CopyCommandQueueD3D12 = CommandQueueD3D12;
 }

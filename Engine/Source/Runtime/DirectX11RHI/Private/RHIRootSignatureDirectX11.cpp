@@ -1,29 +1,29 @@
-#include "RHIRootSignatureDirectX11.h"
+#include "RHIRootSignatureD3D11.h"
 // DX11 不需要真正的根签名，返回一个空操作的根签名对象
 
 namespace RHI
 {
-    RHIRootSignatureDirectX11::RHIRootSignatureDirectX11()
+    RHIRootSignatureD3D11::RHIRootSignatureD3D11()
     {
     }
 
-    RHIRootSignatureDirectX11::~RHIRootSignatureDirectX11()
+    RHIRootSignatureD3D11::~RHIRootSignatureD3D11()
     {
         Shutdown();
     }
 
-    bool RHIRootSignatureDirectX11::Initialize(Device* device, const RootSignatureDesc& desc)
+    bool RHIRootSignatureD3D11::Initialize(Device* device, const RootSignatureDesc& desc)
     {
         m_Desc.Flags = desc.Flags;
         // TODO: Root signature data
         return true;
     }
 
-    void RHIRootSignatureDirectX11::Shutdown()
+    void RHIRootSignatureD3D11::Shutdown()
     {
     }
 
-    bool RHIRootSignatureDirectX11::IsValid() const
+    bool RHIRootSignatureD3D11::IsValid() const
     {
         return true;
     }

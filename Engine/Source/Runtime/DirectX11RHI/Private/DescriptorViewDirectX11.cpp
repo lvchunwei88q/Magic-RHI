@@ -1,17 +1,17 @@
 #include <Common/Check.h>
-#include "RHIDirectX11.h"
-#include "RHIResourceDirectX11.h"
+#include "RHID3D11.h"
+#include "RHIResourceD3D11.h"
 
 namespace RHI
 {
-    RHIDescriptorHandle RHIDirectX11::CreateStandardHeapDescriptorView(RHIBuffer* Buffer,DescriptorRangeType Type)
+    RHIDescriptorHandle RHID3D11::CreateStandardHeapDescriptorView(RHIBuffer* Buffer,DescriptorRangeType Type)
     {
         if (!m_pStandardHeap || m_pStandardHeap->IsFull())
         {
             return RHIDescriptorHandle();
         }
 
-        auto dx11Buffer = SafeCast<BufferDirectX11>(Buffer);
+        auto dx11Buffer = SafeCast<BufferD3D11>(Buffer);
         RHIDescriptorHandle handle = m_pStandardHeap->Allocate();
         if (!handle.IsValid())
         {
@@ -29,7 +29,7 @@ namespace RHI
                 if (!dx11Buffer)
                     ThrowErrorMessage("Invalid buffer for CBV");
                 
-                ConstantBufferViewDirectX11* pDX11CBV = new ConstantBufferViewDirectX11(dx11Buffer->GetResource());
+                ConstantBufferViewD3D11* pDX11CBV = new ConstantBufferViewD3D11(dx11Buffer->GetResource());
                 m_pStandardHeap->SetDescriptor(handle, pDX11CBV);
                 break;
             }
@@ -47,7 +47,7 @@ namespace RHI
                 if (FAILED(hr))
                     ThrowIfFailed(hr);
                 
-                ShaderResourceViewDirectX11* pDX11SRV = new ShaderResourceViewDirectX11(pSRV);
+                ShaderResourceViewD3D11* pDX11SRV = new ShaderResourceViewD3D11(pSRV);
                 m_pStandardHeap->SetDescriptor(handle, pDX11SRV);
                 break;
             }
@@ -65,7 +65,7 @@ namespace RHI
                 if (FAILED(hr))
                     ThrowIfFailed(hr);
 
-                UnorderedAccessViewDirectX11* pDX11UAV = new UnorderedAccessViewDirectX11(pUAV);
+                UnorderedAccessViewD3D11* pDX11UAV = new UnorderedAccessViewD3D11(pUAV);
                 m_pStandardHeap->SetDescriptor(handle, pDX11UAV);
                 break;
             }
@@ -78,7 +78,7 @@ namespace RHI
         return handle;
     }
 
-    RHIDescriptorHandle RHIDirectX11::CreateStandardHeapDescriptorView(RHITexture* Texture,DescriptorRangeType Type)
+    RHIDescriptorHandle RHID3D11::CreateStandardHeapDescriptorView(RHITexture* Texture,DescriptorRangeType Type)
     {
         if (!m_pStandardHeap || m_pStandardHeap->IsFull())
         {
@@ -88,7 +88,7 @@ namespace RHI
         return m_pStandardHeap->Allocate();
     }
 
-    RHIDescriptorHandle RHIDirectX11::CreateSamplerHeapDescriptorView(const SamplerStateDesc& /*desc*/)
+    RHIDescriptorHandle RHID3D11::CreateSamplerHeapDescriptorView(const SamplerStateDesc& /*desc*/)
     {
         if (!m_pSamplerHeap || m_pSamplerHeap->IsFull())
         {
@@ -98,7 +98,7 @@ namespace RHI
         return m_pSamplerHeap->Allocate();
     }
 
-    RHIDescriptorHandle RHIDirectX11::CreateRTVHeapDescriptorView(RHIRenderTargetView* /*InView*/)
+    RHIDescriptorHandle RHID3D11::CreateRTVHeapDescriptorView(RHIRenderTargetView* /*InView*/)
     {
         if (!m_pRTVHeap || m_pRTVHeap->IsFull())
         {
@@ -108,7 +108,7 @@ namespace RHI
         return m_pRTVHeap->Allocate();
     }
 
-    RHIDescriptorHandle RHIDirectX11::CreateDSVHeapDescriptorView(RHIDepthStencilView* /*InView*/)
+    RHIDescriptorHandle RHID3D11::CreateDSVHeapDescriptorView(RHIDepthStencilView* /*InView*/)
     {
         if (!m_pDSVHeap || m_pDSVHeap->IsFull())
         {

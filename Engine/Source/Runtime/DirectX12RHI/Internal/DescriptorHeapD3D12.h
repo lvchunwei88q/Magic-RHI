@@ -1,5 +1,5 @@
 #pragma once
-#include <RHIResourceDirectX12.h>
+#include <RHIResourceD3D12.h>
 #include <d3d12.h>
 #include <vector>
 #include <wrl.h> // ComPtr
@@ -9,12 +9,12 @@ namespace RHI
 {
     struct DescriptorData
     {
-        std::unique_ptr<ConstantBufferViewDirectX12> pCBV;
-        std::unique_ptr<ShaderResourceViewDirectX12> pSRV;
-        std::unique_ptr<UnorderedAccessViewDirectX12> pUAV;
-        std::unique_ptr<RenderTargetViewDirectX12> pRTV;
-        std::unique_ptr<DepthStencilViewDirectX12> pDSV;
-        std::unique_ptr<SamplerStateDirectX12> pSampler;
+        std::unique_ptr<ConstantBufferViewD3D12> pCBV;
+        std::unique_ptr<ShaderResourceViewD3D12> pSRV;
+        std::unique_ptr<UnorderedAccessViewD3D12> pUAV;
+        std::unique_ptr<RenderTargetViewD3D12> pRTV;
+        std::unique_ptr<DepthStencilViewD3D12> pDSV;
+        std::unique_ptr<SamplerStateD3D12> pSampler;
         RHIResourceType ViewType;
 
         void Release(){
@@ -25,7 +25,7 @@ namespace RHI
         }
     };
 
-    class DescriptorHeapDirectX12 : public RHIDescriptorHeap
+    class DescriptorHeapD3D12 : public RHIDescriptorHeap
     {
     public:
         // 构造函数
@@ -33,7 +33,7 @@ namespace RHI
         // @param InType: 描述符堆类型
         // @param InCapacity: 描述符堆容量(描述符数量)
         // @param InDescriptorSize: 每个描述符的大小
-        DescriptorHeapDirectX12(ID3D12DescriptorHeap* pHeap, RHIDescriptorHeapType InType, uint32_t InCapacity, uint32_t InDescriptorSize)
+        DescriptorHeapD3D12(ID3D12DescriptorHeap* pHeap, RHIDescriptorHeapType InType, uint32_t InCapacity, uint32_t InDescriptorSize)
             : RHIDescriptorHeap(InType, InCapacity)
             , m_pHeap(pHeap)
             , m_DescriptorSize(InDescriptorSize)
@@ -45,7 +45,7 @@ namespace RHI
                 m_FreeList.push_back(i);
             }
         }
-        ~DescriptorHeapDirectX12() override = default;
+        ~DescriptorHeapD3D12() override = default;
 
         ID3D12DescriptorHeap* GetHeap() const { return m_pHeap.Get(); }
         uint32_t GetDescriptorSize() const { return m_DescriptorSize; }
@@ -54,14 +54,14 @@ namespace RHI
         D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(uint32_t index) const;
         D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(uint32_t index) const;
 
-        void SetDescriptor(RHIDescriptorHandle handle, ConstantBufferViewDirectX12* pCBV);
-        void SetDescriptor(RHIDescriptorHandle handle, ShaderResourceViewDirectX12* pSRV);
-        void SetDescriptor(RHIDescriptorHandle handle, UnorderedAccessViewDirectX12* pUAV);
+        void SetDescriptor(RHIDescriptorHandle handle, ConstantBufferViewD3D12* pCBV);
+        void SetDescriptor(RHIDescriptorHandle handle, ShaderResourceViewD3D12* pSRV);
+        void SetDescriptor(RHIDescriptorHandle handle, UnorderedAccessViewD3D12* pUAV);
         
-        void SetDescriptor(RHIDescriptorHandle handle, RenderTargetViewDirectX12* pRTV);
-        void SetDescriptor(RHIDescriptorHandle handle, DepthStencilViewDirectX12* pDSV);
+        void SetDescriptor(RHIDescriptorHandle handle, RenderTargetViewD3D12* pRTV);
+        void SetDescriptor(RHIDescriptorHandle handle, DepthStencilViewD3D12* pDSV);
         
-        void SetDescriptor(RHIDescriptorHandle handle, SamplerStateDirectX12* pSampler);
+        void SetDescriptor(RHIDescriptorHandle handle, SamplerStateD3D12* pSampler);
 
         const DescriptorData* GetDescriptor(RHIDescriptorHandle handle) const;
 

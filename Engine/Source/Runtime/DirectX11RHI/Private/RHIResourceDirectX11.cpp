@@ -1,5 +1,5 @@
-#include "RHIDirectX11.h"
-#include "RHICommandListDirectX11.h"
+#include "RHID3D11.h"
+#include "RHICommandListD3D11.h"
 
 namespace RHI
 {
@@ -126,7 +126,7 @@ namespace RHI
         }
     }
 
-    void TextureDirectX11::GetDesc(D3D11_TEXTURE2D_DESC& desc) const
+    void TextureD3D11::GetDesc(D3D11_TEXTURE2D_DESC& desc) const
     {
         if (m_pTexture)
         {
@@ -138,21 +138,21 @@ namespace RHI
         }
     }
 
-    uint32_t TextureDirectX11::GetWidth() const
+    uint32_t TextureD3D11::GetWidth() const
     {
         D3D11_TEXTURE2D_DESC desc;
         GetDesc(desc);
         return desc.Width;
     }
 
-    uint32_t TextureDirectX11::GetHeight() const
+    uint32_t TextureD3D11::GetHeight() const
     {
         D3D11_TEXTURE2D_DESC desc;
         GetDesc(desc);
         return desc.Height;
     }
 
-    uint64_t TextureDirectX11::GetSize() const
+    uint64_t TextureD3D11::GetSize() const
     {
         D3D11_TEXTURE2D_DESC desc;
         GetDesc(desc);
@@ -160,7 +160,7 @@ namespace RHI
         return desc.Width * desc.Height * desc.MipLevels * desc.ArraySize * 4;
     }
 
-    std::shared_ptr<RHISamplerState> RHIDirectX11::CreateSamplerState(const SamplerStateDesc& desc)
+    std::shared_ptr<RHISamplerState> RHID3D11::CreateSamplerState(const SamplerStateDesc& desc)
     {
         D3D11_SAMPLER_DESC samplerDesc = {};
         samplerDesc.Filter = ConvertFilter(desc.Filter);
@@ -180,15 +180,15 @@ namespace RHI
         ComPtr<ID3D11SamplerState> pSamplerState;
         ThrowIfFailed(m_pDevice->CreateSamplerState(&samplerDesc, pSamplerState.GetAddressOf()));
 
-        return std::make_shared<SamplerStateDirectX11>(pSamplerState.Get());
+        return std::make_shared<SamplerStateD3D11>(pSamplerState.Get());
     }
 
-    void RHIDirectX11::DeleteSamplerState(std::shared_ptr<RHI::RHISamplerState>& samplerState)
+    void RHID3D11::DeleteSamplerState(std::shared_ptr<RHI::RHISamplerState>& samplerState)
     {
         samplerState.reset();
     }
 
-    std::shared_ptr<RHIBuffer> RHIDirectX11::CreateBuffer(BufferDesc& desc)
+    std::shared_ptr<RHIBuffer> RHID3D11::CreateBuffer(BufferDesc& desc)
     {
         auto isConstantBuffer = [](BufferBindFlag flag) -> bool {
             return flag == BufferBindFlag::ConstantBuffer;
@@ -230,34 +230,34 @@ namespace RHI
             ThrowIfFailed(m_pDevice->CreateBuffer(&bufferDesc, nullptr, pBuffer.GetAddressOf()));
         }
 
-        auto buffer = std::make_shared<BufferDirectX11>(pBuffer.Get(), desc, m_pDeviceContext.Get());
+        auto buffer = std::make_shared<BufferD3D11>(pBuffer.Get(), desc, m_pDeviceContext.Get());
 
         return buffer;
     }
 
-    void RHIDirectX11::DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer)
+    void RHID3D11::DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer)
     {
         buffer.reset();
     }
 
-    void CommandQueueDirectX11::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists){
+    void CommandQueueD3D11::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists){
 
     }
 
-    void CommandQueueDirectX11::BeginFrame()
+    void CommandQueueD3D11::BeginFrame()
     {
         // NOT implemented
     }
-    void CommandQueueDirectX11::EndFrame()
+    void CommandQueueD3D11::EndFrame()
     {
         // NOT implemented
     }
-    void CommandQueueDirectX11::WaitForGPU()
+    void CommandQueueD3D11::WaitForGPU()
     {
         // NOT implemented
     }
 
-    bool CommandQueueDirectX11::GetTimestampFrequency(uint64_t* frequency) {
+    bool CommandQueueD3D11::GetTimestampFrequency(uint64_t* frequency) {
 
         // 开始测量
         m_pDeviceContext->Begin(m_pDisjoint.Get());
