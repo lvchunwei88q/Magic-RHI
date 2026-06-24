@@ -50,7 +50,8 @@ namespace RHI
 
         bool IsFull() const override { return m_FreeList.empty(); }
 
-        // 默认我们的堆是所有的描述符类型都支持的但是为了规范我们也向DX12保持一致
+        // Our DX11 heap by default can store all types of data,
+        // but we should standardize using each heap to store the corresponding data.
         void SetDescriptor(RHIDescriptorHandle handle, ConstantBufferViewD3D11* pCBV);
         void SetDescriptor(RHIDescriptorHandle handle, ShaderResourceViewD3D11* pSRV);
         void SetDescriptor(RHIDescriptorHandle handle, UnorderedAccessViewD3D11* pUAV);
@@ -63,7 +64,7 @@ namespace RHI
         const DescriptorData* GetDescriptor(RHIDescriptorHandle handle) const;
 
     private:
-        std::vector<uint32_t> m_FreeList;  // 空闲的索引
-        std::vector<DescriptorData> m_Descriptors;  // 存储实际的描述符数据
+        std::vector<uint32_t> m_FreeList;  // Free index list
+        std::vector<DescriptorData> m_Descriptors;  // this is the actual descriptor data
     };
 }

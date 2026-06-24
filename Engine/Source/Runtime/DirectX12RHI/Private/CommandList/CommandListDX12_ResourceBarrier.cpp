@@ -1,5 +1,4 @@
-#include <Common/Check.h>
-#include <CoreLogCapture/CoreLogCapture.h>
+#include <CoreMinimal.h>
 #include "RHICommandListD3D12.h"
 
 namespace RHI

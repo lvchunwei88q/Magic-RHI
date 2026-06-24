@@ -1,5 +1,4 @@
 #include "RHILoader.h"
-#include <CoreLogCapture/CoreLogCapture.h>
 #include <RHI.modules.generated.h>
 
 using namespace Core;

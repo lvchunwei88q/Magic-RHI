@@ -60,30 +60,30 @@ namespace RHI
 
     struct RootParameterDesc
     {
-        RootParameterType Type;                             // 根参数类型
-        ShaderVisibility Visibility = ShaderVisibility::All;// 可见性
+        RootParameterType Type;                             // Root parameter type
+        ShaderVisibility Visibility = ShaderVisibility::All;// Visibility
 
         union
         {
-            // ===== 描述符表 =====
+            // ===== Descriptor Table =====
             struct
             {
                 uint32_t NumDescriptorRanges;
                 const DescriptorRangeDesc* pDescriptorRanges;
             } DescriptorTable;
 
-            // ===== 根描述符（CBV / SRV / UAV）=====
+            // ===== Root Descriptor =====
             struct
             {
-                uint32_t ShaderRegister;// 着色器寄存器起始号
-                uint32_t RegisterSpace; // 寄存器空间号(space0 , space1 , space2 , ...)类似命名空间
+                uint32_t ShaderRegister;// Shader register start index
+                uint32_t RegisterSpace; // Register space (space0 , space1 , space2 , ...)
             } Descriptor;
 
-            // ===== 根常量 =====
+            // ===== Root Constants =====
             struct
             {
-                uint32_t ShaderRegister;// 着色器寄存器起始号
-                uint32_t RegisterSpace; // 寄存器空间号(space0 , space1 , space2 , ...)类似命名空间
+                uint32_t ShaderRegister;// Shader register start index
+                uint32_t RegisterSpace; // Register space (space0 , space1 , space2 , ...)
                 uint32_t Num32BitValues;
             } Constants;
         };
@@ -91,7 +91,7 @@ namespace RHI
 
     struct RootSignatureDesc
     {
-        // 一个根签名可以有多个槽位，每个 RootParameterDesc 就是根签名里的一个“槽位”。
+        // A root signature can have multiple slots, and each RootParameterDesc is like a 'slot' in the root signature.
         std::vector<RootParameterDesc> Parameters;
         RootSignatureFlags Flags = RootSignatureFlags::None;
     };

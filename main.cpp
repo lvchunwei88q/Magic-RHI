@@ -1,4 +1,3 @@
-#include <CoreLogCapture/CoreLogCapture.h>
 #include <Subsystem/Subsystem.h>
 #include <iostream>
 #include <windows.h>

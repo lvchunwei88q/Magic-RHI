@@ -31,59 +31,61 @@ namespace RHI
         virtual void BeginRecording() = 0;
         virtual void EndRecording() = 0;
 
-        // 输入装配器
+        // Input assembler
         virtual void IASetPrimitiveTopology(RHIPrimitiveTopology topology, uint32_t controlPointCount = 1) = 0;
         virtual void IASetVertexBuffers(uint32_t startSlot, uint32_t numBuffers, RHIVertexBuffer* const* ppBuffers, const uint64_t* pOffsets = nullptr) = 0;
         virtual void IASetIndexBuffer(RHIIndexBuffer* pIndexBuffer, RHIIndexFormat format, uint64_t offset = 0) = 0;
 
-        // 光栅器
+        // Rasterizer
         virtual void RSSetViewports(uint32_t numViewports, const RHIViewport* pViewports) = 0;
         virtual void RSSetScissorRects(uint32_t numRects, const RHIRect* pRects) = 0;
-
-        // 输出合并器
+        
+        // Output merger state
         virtual void OMSetRenderTargets(uint32_t numRenderTargets, class RHIRenderTargetView* const* ppViews, bool RTsSingleHandleToDescriptorRange, class RHIDepthStencilView* pDepthStencilView = nullptr) = 0;
         virtual void OMSetBlendState(class RHIBlendState* pState, const float* blendFactor = nullptr, uint32_t sampleMask = 0xFFFFFFFF) = 0;
         virtual void OMSetDepthStencilState(class RHIDepthStencilState* pState, uint32_t stencilRef = 0) = 0;
 
-        // 绘制
+        // Draw
         virtual void Draw(uint32_t vertexCount, uint32_t startVertexLocation) = 0;
         virtual void DrawIndexed(uint32_t indexCount, uint32_t startIndexLocation, int32_t baseVertexLocation) = 0;
         virtual void DrawInstanced(uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startVertexLocation, uint32_t startInstanceLocation) = 0;
         virtual void DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation, int32_t baseVertexLocation, uint32_t startInstanceLocation) = 0;
         virtual void Dispatch(uint32_t threadGroupCountX, uint32_t threadGroupCountY, uint32_t threadGroupCountZ) = 0;
 
-        // 清除
+        // Clear
         virtual void ClearRenderTargetView(class RHIRenderTargetView* pView, const float* colorRGBA) = 0;
         virtual void ClearDepthStencilView(class RHIDepthStencilView* pView, RHIClearFlags clearFlags, float depth, uint8_t stencil) = 0;
 
-        // 资源操作
+        // Resource operation
         virtual void CopyResource(RHIResource* pDstResource, RHIResource* pSrcResource) = 0;
         virtual void CopyBufferRegion(RHIBuffer* pDstBuffer, uint64_t dstOffset, RHIBuffer* pSrcBuffer, uint64_t srcOffset, uint64_t numBytes) = 0;
 
-        // 屏障
+        // Resource barrier
         virtual void ResourceBarrier(uint32_t numBarriers, const BarrierDesc* pBarriers) = 0;
 
-        // 根签名设置
+        // Root signature set
         virtual void SetGraphicsRootSignature(RHIRootSignature* pRootSignature) = 0;
         virtual void SetComputeRootSignature(RHIRootSignature* pRootSignature) = 0;
         virtual void SetDescriptorHeaps(uint32_t numHeaps, RHIDescriptorHeap* const* ppHeaps) = 0;
 
-        // PSO设置
+        // Pipeline state set
         virtual void SetPipelineState(RHIPipelineState* pPipelineState, PipelineStateType stateType) = 0;
 
-        // 图形管线绑定
+        // Graphics pipeline binding
         virtual void SetGraphicsRootDescriptorTable(uint32_t rootParameterIndex, RHIDescriptorHeap* pDescriptorHeap, uint32_t offsetInDescriptorsFromTableStart) = 0;
         virtual void SetGraphicsRootConstantBufferView(uint32_t rootParameterIndex, uint64_t gpuVirtualAddress) = 0;
         virtual void SetGraphicsRootShaderResourceView(uint32_t rootParameterIndex, uint64_t gpuVirtualAddress) = 0;
         virtual void SetGraphicsRootUnorderedAccessView(uint32_t rootParameterIndex, uint64_t gpuVirtualAddress) = 0;
+        // The last parameter is to set the offset of your data in the target buffer
         virtual void SetGraphicsRoot32BitConstant(uint32_t rootParameterIndex, uint32_t value, uint32_t destOffsetIn32BitValues) = 0;
         virtual void SetGraphicsRoot32BitConstants(uint32_t rootParameterIndex, uint32_t num32BitValues, const void* pSrcData, uint32_t destOffsetIn32BitValues) = 0;
 
-        // 计算管线绑定
+        // Compute pipeline binding
         virtual void SetComputeRootDescriptorTable(uint32_t rootParameterIndex, RHIDescriptorHeap* pDescriptorHeap, uint32_t offsetInDescriptorsFromTableStart) = 0;
         virtual void SetComputeRootConstantBufferView(uint32_t rootParameterIndex, uint64_t gpuVirtualAddress) = 0;
         virtual void SetComputeRootShaderResourceView(uint32_t rootParameterIndex, uint64_t gpuVirtualAddress) = 0;
         virtual void SetComputeRootUnorderedAccessView(uint32_t rootParameterIndex, uint64_t gpuVirtualAddress) = 0;
+        // The last parameter is to set the offset of your data in the target buffer
         virtual void SetComputeRoot32BitConstant(uint32_t rootParameterIndex, uint32_t value, uint32_t destOffsetIn32BitValues) = 0;
         virtual void SetComputeRoot32BitConstants(uint32_t rootParameterIndex, uint32_t num32BitValues, const void* pSrcData, uint32_t destOffsetIn32BitValues) = 0;
 

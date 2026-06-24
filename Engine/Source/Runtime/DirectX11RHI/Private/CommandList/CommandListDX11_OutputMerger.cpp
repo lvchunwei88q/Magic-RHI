@@ -1,4 +1,4 @@
-#include "CoreLogCapture/CoreLogCapture.h"
+#include <CoreMinimal.h>
 #include "DirectXConfig.h"
 #include "RHICommandListD3D11.h"
 

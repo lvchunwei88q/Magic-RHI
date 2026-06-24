@@ -7,8 +7,6 @@
 
 #include <IO.h>
 
-#include <CoreLogCapture/CoreLogCapture.h>
-
 namespace RHI
 {
     namespace

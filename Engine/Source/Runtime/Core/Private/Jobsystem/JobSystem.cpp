@@ -3,6 +3,7 @@
  * @brief Implementation of the engine-wide C++ worker thread pool.
  */
 
+#include "CoreMinimal.h"
 #include "Jobsystem/JobSystem.h"
 #include <algorithm>
 #include <cassert>
@@ -11,8 +12,6 @@
 #include <queue>
 #include <thread>
 #include <vector>
-
-#include "CoreLogCapture/CoreLogCapture.h"
 
 namespace Core
 {

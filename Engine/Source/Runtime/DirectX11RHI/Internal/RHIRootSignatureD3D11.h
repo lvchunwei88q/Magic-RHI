@@ -18,7 +18,29 @@ namespace RHI
     */
     struct RootParameterD3D11
     {
-        // TODO: Root parameter data
+        RootParameterType Type;                                 // Root parameter type
+        ShaderVisibility Visibility = ShaderVisibility::All;    // Visibility
+
+        union
+        {
+            // ===== Root Descriptor =====
+            struct
+            {
+                uint32_t ShaderRegister;// Shader register start index
+                // We can't support namespaces in DX11 here.
+                //uint32_t RegisterSpace; // Register space (space0 , space1 , space2 , ...)
+            } Descriptor;
+
+            // ===== Root Constants =====
+            struct
+            {
+                uint32_t ShaderRegister;// Shader register start index
+                // We can't support namespaces in DX11 here.
+                //uint32_t RegisterSpace; // Register space (space0 , space1 , space2 , ...)
+            } Constants;
+
+            // TODO: Root parameter data
+        };
     };
     struct RootSignatureDescD3D11
     {
@@ -37,49 +59,51 @@ namespace RHI
         std::array<uint8_t, MAX_BUFFER_SIZE> Cache;
         // Used size of the constant buffer.
         uint32_t                    UsedSize = 0;
+        // Location of the root constant in the root signature.
+        size_t                      Location = 0;
 
         // Create constant buffer for root constants.
-        HRESULT CreateBuffer(ID3D11Device* pDevice)
-        {
-            D3D11_BUFFER_DESC desc = {};
-            desc.ByteWidth = MAX_BUFFER_SIZE;            // 256 bytes
-            desc.Usage = D3D11_USAGE_DYNAMIC;            // Allows CPU update frequently
-            desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-            desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-            desc.MiscFlags = 0;
-
-            HRESULT hr = pDevice->CreateBuffer(&desc, nullptr, ConstantBuffer.GetAddressOf());
-            if (SUCCEEDED(hr))
-                UsedSize = 0;
-            return hr;
-        }
-
+        HRESULT CreateBuffer(ID3D11Device* pDevice);
+        // Update constant buffer with new data.
+        HRESULT UpdateBuffer(ID3D11DeviceContext* pContext, const void* pData, uint32_t sizeInBytes, uint32_t destOffsetIn32BitValues);
+        // Check data if it Consistent with the cache.
+        bool IsConsistentWithCache(const void* pData, uint32_t sizeInBytes, uint32_t destOffsetIn32BitValues) const;
+        
         // Release constant buffer.
         void ReleaseBuffer()
         {
             ConstantBuffer.Reset();
-            UsedSize = 0;
+            UsedSize = 0; Location = 0;
             Cache.fill(0);
         }
 
         // We are just borrowing this device for now, but we can't keep it forever.
         RootConstantDataD3D11() = default;
-        RootConstantDataD3D11(ID3D11Device* pDevice);
+        RootConstantDataD3D11(ID3D11Device* pDevice,size_t location);
         RootConstantDataD3D11(const RootConstantDataD3D11& other) {
-            UsedSize = other.UsedSize;
+            UsedSize = other.UsedSize; Location = other.Location;
             Cache = other.Cache;
             ConstantBuffer = other.ConstantBuffer;
         };
         ~RootConstantDataD3D11();
     };
 
+    // Indicates the position of the root constant in the root signature
+    struct ConstantSignatureLocation
+    {
+        std::vector<size_t> Location;
+    };
+
     class RootConstantPoolD3D11
     {
     public:
         // We are just borrowing this device for now, but we can't keep it forever.
-        RootConstantPoolD3D11(ID3D11Device* pDevice,size_t poolCount);
+        RootConstantPoolD3D11(ID3D11Device* pDevice,ConstantSignatureLocation locations);
         ~RootConstantPoolD3D11();
 
+        size_t GetSize() const { return m_Pools.size(); }
+        const std::vector<RootConstantDataD3D11>& GetPools() const { return m_Pools; }
+        RootConstantDataD3D11* GetRootConstantData(size_t index) { return &m_Pools[index]; }
     private:
         std::vector<RootConstantDataD3D11> m_Pools;
     };
@@ -94,6 +118,10 @@ namespace RHI
         void Shutdown() override;
 
         bool IsValid() const override;
+
+        // Get root constant data for root constants.
+        // @param rootParameterIndex Index of root parameter.
+        RootConstantDataD3D11* GetRootConstantData(uint32_t rootParameterIndex) const;
 
         // Here we set up all the assets in this root signature for it. Generally speaking, we recommend calling it before Draw.
         static void SetRootSignatureResources(RHIRootSignatureD3D11* pRootSignature, ID3D11DeviceContext* pDeviceContext);

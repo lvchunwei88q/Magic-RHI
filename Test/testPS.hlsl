@@ -44,6 +44,6 @@ float4 main(PSInput input) : SV_Target
 #if SHADER_MODEL > 50
     return float4(result1, result2, result3, 1.0f) * SHADER_MODEL / 50.0f * value;
 #else
-    return input.Color;
+    return input.Color * SHADER_MODEL / 50.0f * value;
 #endif
 }

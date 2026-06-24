@@ -67,7 +67,7 @@ constexpr size_t encodeToSizeT(const char* str) {   // Max 10 characters
 struct CAT(T, _AutoRegister)                                                 \
 {                                                                           \
     CAT(T, _AutoRegister)() {                                                \
-        T::Get().Register<T, Core::Priority::Priority_>();\
+        T::Get().Register<T, ::Core::Priority::Priority_>();\
     }                                                                       \
 };                                                                          \
 static CAT(T, _AutoRegister) CAT(s_##T, _AutoRegister);
