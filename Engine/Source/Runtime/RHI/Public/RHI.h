@@ -6,9 +6,12 @@
 #include "Common/RHIPlatformDetection.h"
 #include "Common/RHIDesc.h"
 
+// form core
+#include <CoreMinimal.h>
+
 #include <memory>
 #include <string>
-#include "Config/ConfigBase.h" // RHI配置
+#include "Common/RHIConfig.h" // RHI configuration
 
 
 namespace RHI

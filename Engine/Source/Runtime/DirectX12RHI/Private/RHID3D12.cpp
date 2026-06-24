@@ -264,7 +264,7 @@ namespace RHI
         }
         OutputDebugStringA("The device has been created. You can now find errors through the subsequent output debug information.");
         
-        CreateQueues(); // 创建队列
+        CreateQueues(); // create queues
 
         // -------------------- Create descriptor heaps --------------------
         uint32_t m_StandardDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -395,7 +395,7 @@ namespace RHI
     {
         D3D12_COMMAND_LIST_TYPE d3dType = ConvertRHICmdTypeToD3D12(type);
 
-        // Create command allocator 这是唯一的Com接口没有 1，2，3 等版本的接口
+        // Create command allocator this is the only interface that has no version 1，2，3 etc
         ComPtr<ID3D12CommandAllocator> pAllocator;
         ThrowIfFailed(m_pDevice->CreateCommandAllocator(d3dType, IID_PPV_ARGS(&pAllocator)));
         return std::make_shared<CommandAllocatorD3D12>(type, pAllocator.Get());

@@ -239,8 +239,19 @@ namespace RHI
     {
         buffer.reset();
     }
+    
+    void CommandListD3D11::BeginRecording()
+    {
+    }
 
-    void CommandQueueD3D11::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists){
+    void CommandListD3D11::EndRecording()
+    {
+        // Clear the binding assignment.
+        m_tempBindingAssignment.clear();
+    }
+
+    void CommandQueueD3D11::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists)
+    {
 
     }
 
@@ -253,6 +264,11 @@ namespace RHI
         // NOT implemented
     }
     void CommandQueueD3D11::WaitForGPU()
+    {
+        // NOT implemented
+    }
+
+    void CommandQueueD3D11::Signal(uint64_t fenceValue)
     {
         // NOT implemented
     }
@@ -272,5 +288,15 @@ namespace RHI
             return true;
         }
         return false;
+    }
+
+    bool CommandQueueD3D11::SetEventOnCompletion(uint64_t fenceValue, void* hEvent)
+    {
+        return false;
+    }
+
+    uint64_t CommandQueueD3D11::GetFrameIndex() const
+    {
+        return 0;
     }
 }

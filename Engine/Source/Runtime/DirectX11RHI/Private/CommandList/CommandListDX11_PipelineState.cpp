@@ -3,8 +3,10 @@
 
 namespace RHI
 {
+    // We directly use a static function to set up the pipeline state -> pso
     namespace
     {
+        // Set graphics pipeline state
         void SetGraphicsPipelineState(ID3D11DeviceContext* pDeviceContext,const GPSDD3D11& desc)
         {
             // TODO Set Graphics Pipeline State
@@ -22,6 +24,8 @@ namespace RHI
             pDeviceContext->OMSetBlendState(desc.pBlendState.Get(),nullptr,0xFFFFFFFF);
             pDeviceContext->OMSetDepthStencilState(desc.pDepthStencilState.Get(),0); // TODO Set StencilRef
         }
+
+        // Set compute pipeline state
         void SetComputePipelineState(ID3D11DeviceContext* pDeviceContext,const CPSDD3D11& desc)
         {
             // TODO Set Compute Pipeline State
@@ -30,6 +34,7 @@ namespace RHI
     }
     void CommandListD3D11::SetPipelineState(RHIPipelineState* pPipelineState,PipelineStateType stateType)
     {
+        // Check pipeline state
         if (!pPipelineState)
         {
 #if RHI_ENABLE_RESOURCE_DEBUG_INFO
@@ -38,6 +43,7 @@ namespace RHI
             return;
         }
 
+        // Check pipeline state type
         if(stateType != pPipelineState->GetType()){
 #if RHI_ENABLE_RESOURCE_DEBUG_INFO
             ThrowErrorMessage("This PSO is not as expected");
@@ -45,7 +51,7 @@ namespace RHI
             return;
         }
             
-
+        // Check pipeline state validity
         auto pso = SafeCast<RHIPipelineStateD3D11>(pPipelineState);
         if (!pso->IsValid())
         {
@@ -55,12 +61,16 @@ namespace RHI
             return;           
         }
 
-        // TODO Set Pipeline State
+        // Get device context
+        CommandAllocatorD3D11* dx11CmdAllocator = GetAllocator();
+        ID3D11DeviceContext* pDeviceContext = dx11CmdAllocator->GetDeviceContext();
+
+        // Set Pipeline state
         if(stateType == PipelineStateType::Graphics){
-            SetGraphicsPipelineState(m_pDeviceContext,pso->GetGraphicsDesc());
+            SetGraphicsPipelineState(pDeviceContext,pso->GetGraphicsDesc());
         }
         else if(stateType == PipelineStateType::Compute){
-            SetComputePipelineState(m_pDeviceContext,pso->GetComputeDesc());
+            SetComputePipelineState(pDeviceContext,pso->GetComputeDesc());
         }
     }
 }

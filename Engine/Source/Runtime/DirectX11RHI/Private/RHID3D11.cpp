@@ -129,8 +129,8 @@ namespace RHI
 
     std::shared_ptr<RHICommandList> RHID3D11::CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator)
     {
-        // DX 11 没有列表，使用DeviceContext提交命令
-        return std::make_shared<CommandListD3D11>(allocator.get(), m_pDeviceContext.Get());
+        // Incoming allocator, Responsible for submitting data to the command list in DX11
+        return std::make_shared<CommandListD3D11>(allocator.get());
     }
 
     /*

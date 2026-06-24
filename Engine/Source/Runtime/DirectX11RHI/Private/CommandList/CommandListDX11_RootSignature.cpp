@@ -6,16 +6,22 @@ namespace RHI
 {
     void CommandListD3D11::SetGraphicsRootSignature(RHIRootSignature* pRootSignature)
     {
-        m_pRootSignature = SafeCast<RHIRootSignatureD3D11>(pRootSignature);
+        m_tempBindingAssignment.m_pRootSignature = SafeCast<RHIRootSignatureD3D11>(pRootSignature);
     }
 
     void CommandListD3D11::SetComputeRootSignature(RHIRootSignature* pRootSignature)
     {
-        m_pRootSignature = SafeCast<RHIRootSignatureD3D11>(pRootSignature);
+        m_tempBindingAssignment.m_pRootSignature = SafeCast<RHIRootSignatureD3D11>(pRootSignature);
     }
 
-    void CommandListD3D11::SetDescriptorHeaps(uint32_t /*numHeaps*/, RHIDescriptorHeap* const* /*ppHeaps*/)
+    void CommandListD3D11::SetDescriptorHeaps(uint32_t numHeaps, RHIDescriptorHeap* const* ppHeaps)
     {
+        // Resize the descriptor heap vector.
+        m_tempBindingAssignment.m_ppHeaps.resize(numHeaps);
+        for (uint32_t i = 0; i < numHeaps; ++i)
+        {
+            m_tempBindingAssignment.m_ppHeaps[i] = SafeCast<DescriptorHeapD3D11>(ppHeaps[i]);
+        }
     }
 
     void CommandListD3D11::SetGraphicsRootDescriptorTable(uint32_t /*rootParameterIndex*/, RHIDescriptorHeap* /*pDescriptorHeap*/, uint32_t /*offsetInDescriptorsFromTableStart*/)

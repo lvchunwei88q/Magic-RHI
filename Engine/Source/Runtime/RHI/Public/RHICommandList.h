@@ -88,7 +88,7 @@ namespace RHI
         virtual void SetComputeRoot32BitConstants(uint32_t rootParameterIndex, uint32_t num32BitValues, const void* pSrcData, uint32_t destOffsetIn32BitValues) = 0;
 
     protected:
-        RHICommandAllocator* m_pAllocator; // 命令分配器 占时引用
+        RHICommandAllocator* m_pAllocator; // Command allocator
     };
 
     class RHI_API RHICommandQueue

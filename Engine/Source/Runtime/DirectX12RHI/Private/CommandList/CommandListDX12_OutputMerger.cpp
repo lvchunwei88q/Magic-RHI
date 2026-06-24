@@ -1,3 +1,4 @@
+#include "DirectXConfig.h"
 #include "RHICommandListD3D12.h"
 #include "SwapChainD3D12.h"
 
@@ -5,7 +6,6 @@ namespace RHI
 {
     void CommandListD3D12::OMSetRenderTargets(uint32_t numRenderTargets, RHIRenderTargetView* const* ppViews, bool RTsSingleHandleToDescriptorRange, RHIDepthStencilView* pDepthStencilView)
     {
-        #define MAX_RENDER_TARGETS 8 // 最大渲染目标数量
         ThrowIf(numRenderTargets > MAX_RENDER_TARGETS, "numRenderTargets must be less than or equal to 8");
         
         std::vector<RenderTargetViewD3D12*> pRTViews(numRenderTargets);
@@ -24,7 +24,8 @@ namespace RHI
         DepthStencilViewD3D12* pDepthStencilViewDx12 = SafeCast<DepthStencilViewD3D12>(pDepthStencilView);
         const D3D12_CPU_DESCRIPTOR_HANDLE* pDSVHandle = nullptr;
         if(pDepthStencilViewDx12!=nullptr)
-            pDSVHandle = pDepthStencilViewDx12->GetCPUDescriptorHandle(); // 获取深度模板视图的 CPU 描述符句柄
+            // Get the CPU descriptor handle for the depth stencil view.
+            pDSVHandle = pDepthStencilViewDx12->GetCPUDescriptorHandle(); 
         
         m_pCommandList->OMSetRenderTargets(numRenderTargets, pRTHandles.data(), RTsSingleHandleToDescriptorRange, pDSVHandle);
     }

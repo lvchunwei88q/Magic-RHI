@@ -1,10 +1,11 @@
+#include "CoreLogCapture/CoreLogCapture.h"
+#include "DirectXConfig.h"
 #include "RHICommandListD3D11.h"
 
 namespace RHI
 {
     void CommandListD3D11::OMSetRenderTargets(uint32_t numRenderTargets, RHIRenderTargetView* const* ppViews, bool RTsSingleHandleToDescriptorRange, RHIDepthStencilView* pDepthStencilView)
     {
-        #define MAX_RENDER_TARGETS 8 // 最大渲染目标数量
         ThrowIf(numRenderTargets > MAX_RENDER_TARGETS, "numRenderTargets must be less than or equal to 8");
         
         std::vector<ID3D11RenderTargetView*> pRTViews(numRenderTargets);
@@ -24,8 +25,13 @@ namespace RHI
             pDSV = pDSV11->GetDSV();
         }
 
-        // DX 11 不支持 RTsSingleHandleToDescriptorRange
-        m_pDeviceContext->OMSetRenderTargets(numRenderTargets, pRTViews.data(), pDSV);
+        CommandAllocatorD3D11* dx11CmdAllocator = GetAllocator();
+        // DX 11 not support RTsSingleHandleToDescriptorRange
+        if(RTsSingleHandleToDescriptorRange){
+            // Capture warning message
+            Core::WarningCapture::Capture("DX 11 not support RTsSingleHandleToDescriptorRange");
+        }
+        dx11CmdAllocator->GetDeviceContext()->OMSetRenderTargets(numRenderTargets, pRTViews.data(), pDSV);
     }
 
     void CommandListD3D11::OMSetBlendState(RHIBlendState* pState, const float* blendFactor, uint32_t sampleMask)

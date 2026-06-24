@@ -4,7 +4,9 @@
 #include <d3d11.h>
 #include <Common/Check.h>
 #include <RHICommandList.h>
+
 #include "RHIResourceD3D11.h"
+#include "DescriptorHeapD3D11.h"
 #include "RHIRootSignatureD3D11.h"
 #include <wrl.h>
 
@@ -12,6 +14,8 @@ using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
+    // For DX11, we don't really need an allocator and this concept doesn't even exist,
+    //  but we can mimic the design of modern APIs to carry out some tasks that require 'allocation'.
     class CommandAllocatorD3D11 : public RHICommandAllocator
     {
         public:
@@ -25,59 +29,72 @@ namespace RHI
             ID3D11DeviceContext* m_pDeviceContext;
     };
 
+    // Temporary binding allocation, because in the command list we only handle the current state,
+    // while they are determined by SetRootSignature and SetDescriptorHeaps.
+    struct TempBindingAssignmentD3D11 {
+        TempBindingAssignmentD3D11() = default;
+        TempBindingAssignmentD3D11(RHIRootSignatureD3D11* pRootSignature, std::vector<DescriptorHeapD3D11*> ppHeaps)
+            : m_pRootSignature(pRootSignature), m_ppHeaps(ppHeaps) {}
+        RHIRootSignatureD3D11* m_pRootSignature = nullptr;
+        // Descriptor heaps.
+        std::vector<DescriptorHeapD3D11*> m_ppHeaps;
+
+        // Clear the binding assignment.
+        void clear() { m_pRootSignature = nullptr; m_ppHeaps.clear(); }
+    };
 
     class CommandListD3D11 : public RHICommandList
     {
     public:
-        CommandListD3D11(RHICommandAllocator* pCmdAllocator, ID3D11DeviceContext* pDeviceContext)
-            : RHICommandList(pCmdAllocator), m_pDeviceContext(pDeviceContext) {}
+        CommandListD3D11(RHICommandAllocator* pCmdAllocator)
+            : RHICommandList(pCmdAllocator) {}
         ~CommandListD3D11() override = default;
 
-        /* DX 11 不支持命令列表记录，直接执行命令 */ 
-        void BeginRecording() override {}
-        void EndRecording() override {}
+        // The start and end of the recording
+        void BeginRecording() override;
+        void EndRecording() override;
 
-        // 输入装配器
+        // Input assembler stage
         void IASetPrimitiveTopology(RHIPrimitiveTopology topology, uint32_t controlPointCount = 1) override;
         void IASetVertexBuffers(uint32_t startSlot, uint32_t numBuffers, RHIVertexBuffer* const* ppBuffers, const uint64_t* pOffsets = nullptr) override;
         void IASetIndexBuffer(RHIIndexBuffer* pIndexBuffer, RHIIndexFormat format, uint64_t offset = 0) override;
 
-        // 光栅器
+        // Rasterizer stage
         void RSSetViewports(uint32_t numViewports, const RHIViewport* pViewports) override;
         void RSSetScissorRects(uint32_t numRects, const RHIRect* pRects) override;
 
-        // 输出合并器
+        // Output merger stage
         void OMSetRenderTargets(uint32_t numRenderTargets, RHIRenderTargetView* const* ppViews, bool RTsSingleHandleToDescriptorRange, RHIDepthStencilView* pDepthStencilView = nullptr) override;
         void OMSetBlendState(RHIBlendState* pState, const float* blendFactor = nullptr, uint32_t sampleMask = 0xFFFFFFFF) override;
         void OMSetDepthStencilState(RHIDepthStencilState* pState, uint32_t stencilRef = 0) override;
 
-        // 绘制
+        // Draw
         void Draw(uint32_t vertexCount, uint32_t startVertexLocation) override;
         void DrawIndexed(uint32_t indexCount, uint32_t startIndexLocation, int32_t baseVertexLocation) override;
         void DrawInstanced(uint32_t vertexCountPerInstance, uint32_t instanceCount, uint32_t startVertexLocation, uint32_t startInstanceLocation) override;
         void DrawIndexedInstanced(uint32_t indexCountPerInstance, uint32_t instanceCount, uint32_t startIndexLocation, int32_t baseVertexLocation, uint32_t startInstanceLocation) override;
         void Dispatch(uint32_t threadGroupCountX, uint32_t threadGroupCountY, uint32_t threadGroupCountZ) override;
 
-        // 清除
+        // Clear
         void ClearRenderTargetView(RHIRenderTargetView* pView, const float* colorRGBA) override;
         void ClearDepthStencilView(RHIDepthStencilView* pView, RHIClearFlags clearFlags, float depth, uint8_t stencil) override;
 
-        // 资源操作
+        // Resource operation
         void CopyResource(RHIResource* pDstResource, RHIResource* pSrcResource) override;
         void CopyBufferRegion(RHIBuffer* pDstBuffer, uint64_t dstOffset, RHIBuffer* pSrcBuffer, uint64_t srcOffset, uint64_t numBytes) override;
 
-        // 屏障
+        // Resource barrier
         void ResourceBarrier(uint32_t numBarriers, const BarrierDesc* pBarriers) override;
 
-        // 根签名设置
+        // Root signature
         void SetGraphicsRootSignature(RHIRootSignature* pRootSignature) override;
         void SetComputeRootSignature(RHIRootSignature* pRootSignature) override;
         void SetDescriptorHeaps(uint32_t numHeaps, RHIDescriptorHeap* const* ppHeaps) override;
 
-        // PSO设置
+        // Pipeline state set
         void SetPipelineState(RHIPipelineState* pPipelineState, PipelineStateType stateType) override;
 
-        // 图形管线绑定
+        // Graphics Pipeline binding
         void SetGraphicsRootDescriptorTable(uint32_t rootParameterIndex, RHIDescriptorHeap* pDescriptorHeap, uint32_t offsetInDescriptorsFromTableStart) override;
         void SetGraphicsRootConstantBufferView(uint32_t rootParameterIndex, uint64_t gpuVirtualAddress) override;
         void SetGraphicsRootShaderResourceView(uint32_t rootParameterIndex, uint64_t gpuVirtualAddress) override;
@@ -85,7 +102,7 @@ namespace RHI
         void SetGraphicsRoot32BitConstant(uint32_t rootParameterIndex, uint32_t value, uint32_t destOffsetIn32BitValues) override;
         void SetGraphicsRoot32BitConstants(uint32_t rootParameterIndex, uint32_t num32BitValues, const void* pSrcData, uint32_t destOffsetIn32BitValues) override;
 
-        // 计算管线绑定
+        // Compute Pipeline binding
         void SetComputeRootDescriptorTable(uint32_t rootParameterIndex, RHIDescriptorHeap* pDescriptorHeap, uint32_t offsetInDescriptorsFromTableStart) override;
         void SetComputeRootConstantBufferView(uint32_t rootParameterIndex, uint64_t gpuVirtualAddress) override;
         void SetComputeRootShaderResourceView(uint32_t rootParameterIndex, uint64_t gpuVirtualAddress) override;
@@ -94,10 +111,21 @@ namespace RHI
         void SetComputeRoot32BitConstants(uint32_t rootParameterIndex, uint32_t num32BitValues, const void* pSrcData, uint32_t destOffsetIn32BitValues) override;
 
     private:
-        ID3D11DeviceContext* m_pDeviceContext;
+        // We use allocators to bind various resources
+        //ID3D11DeviceContext* m_pDeviceContext;
+        // Here, use this function to quickly get the allocator
+        CommandAllocatorD3D11* GetAllocator() { 
+            if(m_pAllocator == nullptr){
+#ifdef RHI_ENABLE_RESOURCE_DEBUG_INFO
+                ThrowErrorMessage("CommandAllocatorD3D11 is nullptr");
+#endif
+                return nullptr;
+            }
+            return SafeCast<CommandAllocatorD3D11>(m_pAllocator);
+        }
 
-        // DX11 不支持根签名所以我们需要手动记录签名信息
-        RHIRootSignatureD3D11* m_pRootSignature = nullptr;
+        // This is current binding assignment
+        TempBindingAssignmentD3D11 m_tempBindingAssignment;
     };
 
     class CommandQueueD3D11 : public RHICommandQueue
@@ -121,11 +149,11 @@ namespace RHI
         void EndFrame() override;
         void WaitForGPU() override;
 
-        // 同步操作 但是 DX 11 不支持
-        void Signal(uint64_t fenceValue) override {}
+        // Synchronous operation
+        void Signal(uint64_t fenceValue) override;
         bool GetTimestampFrequency(uint64_t* frequency) override;
-        bool SetEventOnCompletion(uint64_t fenceValue, void* hEvent) override { return false; }
-        uint64_t GetFrameIndex() const override { return 0; }
+        bool SetEventOnCompletion(uint64_t fenceValue, void* hEvent) override;
+        uint64_t GetFrameIndex() const override;
 
     private:
         ID3D11DeviceContext* m_pDeviceContext;

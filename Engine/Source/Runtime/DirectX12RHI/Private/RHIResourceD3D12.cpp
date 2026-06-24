@@ -279,21 +279,18 @@ namespace RHI
 
     void RHID3D12::DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer)
     {
-        // 只有在有描述符句柄时才需要释放
+        // You only need to release it if it's registered in the descriptor heap, meaning you have a descriptor handle.
         if(buffer->HasDescriptorHandle())
             m_pStandardHeap->Free(buffer->GetBindlessHandle());
+        
+        // Release the buffer resource
         buffer.reset();
     }
 
     void CommandListD3D12::BeginRecording()
     {
-        if(m_pAllocator == nullptr){
-#ifdef RHI_ENABLE_RESOURCE_DEBUG_INFO
-            ThrowErrorMessage("CommandAllocatorD3D12 is nullptr");
-#endif
-            return;
-        }
-        CommandAllocatorD3D12* dx12CmdAllocator = SafeCast<CommandAllocatorD3D12>(m_pAllocator);
+        // use command allocator
+        CommandAllocatorD3D12* dx12CmdAllocator = GetAllocator();
 
         if(dx12CmdAllocator == nullptr){
 #ifdef RHI_ENABLE_RESOURCE_DEBUG_INFO

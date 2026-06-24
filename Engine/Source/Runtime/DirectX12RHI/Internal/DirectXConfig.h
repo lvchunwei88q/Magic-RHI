@@ -7,3 +7,4 @@
 #define DXGI_RTV_FORMAT DXGI_FORMAT_R8G8B8A8_UNORM
 #define RHI_RTV_FORMAT RHITextureFormat::R8G8B8A8_UNORM
 
+#define MAX_RENDER_TARGETS 8 // Maximum number of render targets 
