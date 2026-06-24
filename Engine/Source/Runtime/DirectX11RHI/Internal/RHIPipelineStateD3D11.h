@@ -14,7 +14,7 @@ namespace RHI
     * 调用D3D11DeviceContext::SetPipelineState()设置管线状态。
     * 初始化时根据描述创建对应的DX11管线状态对象。
     */
-    struct GPSDD3D11
+    struct GraphicsPipelineStateDataD3D11
     {        
         ComPtr<ID3D11InputLayout> pInputLayout;
         
@@ -33,7 +33,7 @@ namespace RHI
         DXGI_FORMAT DepthStencilFormat = DXGI_FORMAT_UNKNOWN;
     };
 
-    struct CPSDD3D11
+    struct ComputePipelineStateDataD3D11
     {
         ComPtr<ID3D11ComputeShader> pComputeShader;
     };
@@ -51,12 +51,12 @@ namespace RHI
         bool IsValid() const override;
         PipelineStateType GetType() const override;
 
-        const GPSDD3D11& GetGraphicsDesc() const;
-        const CPSDD3D11& GetComputeDesc() const;
+        const GraphicsPipelineStateDataD3D11& GetGraphicsDesc() const;
+        const ComputePipelineStateDataD3D11& GetComputeDesc() const;
     private:
         PipelineStateType Type = PipelineStateType::Unknown;
         // 这里存放的是D3D11的管线状态数据
-        GPSDD3D11 GraphicsDesc;
-        CPSDD3D11 ComputeDesc;
+        GraphicsPipelineStateDataD3D11 GraphicsDesc;
+        ComputePipelineStateDataD3D11 ComputeDesc;
     };
 }

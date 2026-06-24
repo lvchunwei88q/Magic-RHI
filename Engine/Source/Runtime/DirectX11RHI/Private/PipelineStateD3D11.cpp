@@ -305,12 +305,12 @@ namespace RHI
         return Type;
     }
 
-    const GPSDD3D11& RHIPipelineStateD3D11::GetGraphicsDesc() const
+    const GraphicsPipelineStateDataD3D11& RHIPipelineStateD3D11::GetGraphicsDesc() const
     {
         return GraphicsDesc;
     }
 
-    const CPSDD3D11& RHIPipelineStateD3D11::GetComputeDesc() const
+    const ComputePipelineStateDataD3D11& RHIPipelineStateD3D11::GetComputeDesc() const
     {
         return ComputeDesc;
     }

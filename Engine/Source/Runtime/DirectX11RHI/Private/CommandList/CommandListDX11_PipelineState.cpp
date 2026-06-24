@@ -7,7 +7,7 @@ namespace RHI
     namespace
     {
         // Set graphics pipeline state
-        void SetGraphicsPipelineState(ID3D11DeviceContext* pDeviceContext,const GPSDD3D11& desc)
+        void SetGraphicsPipelineState(ID3D11DeviceContext* pDeviceContext,const GraphicsPipelineStateDataD3D11& desc)
         {
             // TODO Set Graphics Pipeline State
             pDeviceContext->IASetInputLayout(desc.pInputLayout.Get());
@@ -26,7 +26,7 @@ namespace RHI
         }
 
         // Set compute pipeline state
-        void SetComputePipelineState(ID3D11DeviceContext* pDeviceContext,const CPSDD3D11& desc)
+        void SetComputePipelineState(ID3D11DeviceContext* pDeviceContext,const ComputePipelineStateDataD3D11& desc)
         {
             // TODO Set Compute Pipeline State
             pDeviceContext->CSSetShader(desc.pComputeShader.Get(),0,0);
