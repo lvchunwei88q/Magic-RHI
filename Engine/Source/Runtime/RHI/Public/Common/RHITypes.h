@@ -431,13 +431,13 @@ enum class DescriptorRangeType : uint32_t
 
 enum class RootSignatureFlags : uint32_t
 {
-	None = 0, // 无特殊标志 - 默认
+	None = 0, // None - default
 
-	// ===== 管线状态控制 =====
+	// ===== Pipeline state control =====
 	AllowInputAssemblerInputLayout = 0x1,
 	AllowStreamOutput = 0x2,
 
-	// ===== 按阶段拒绝访问 - 默认所有阶段都可访问 =====
+	// ===== Stage access control =====
     DenyVertexShaderRootAccess       = 0x4,    // 禁止 VS 
     DenyHullShaderRootAccess         = 0x8,    // 禁止 HS
     DenyDomainShaderRootAccess       = 0x10,   // 禁止 DS
@@ -445,7 +445,7 @@ enum class RootSignatureFlags : uint32_t
     DenyPixelShaderRootAccess        = 0x40,   // 禁止 PS
     DenyComputeShaderRootAccess      = 0x200,  // 禁止 CS
 
-	// ===== 新特性：Mesh Shading 管线 =====
+	// ===== Mesh Shading pipeline =====
 	AllowAmplificationShaderRootAccess  = 0x80, // 允许 AM（放大着色器）
 	AllowMeshShaderRootAccess        	= 0x100, // 允许 MS（网格着色器）
 };

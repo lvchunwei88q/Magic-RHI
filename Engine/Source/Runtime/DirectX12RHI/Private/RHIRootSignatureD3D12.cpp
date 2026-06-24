@@ -10,7 +10,7 @@ namespace RHI
     {
         D3D12_SHADER_VISIBILITY Translate(ShaderVisibility vis)
         {
-            // 单个 bit → 映射
+            // RHI ShaderVisibility → to D3D12_SHADER_VISIBILITY enum
             if (vis == ShaderVisibility::Vertex)   return D3D12_SHADER_VISIBILITY_VERTEX;
             if (vis == ShaderVisibility::Pixel)    return D3D12_SHADER_VISIBILITY_PIXEL;
             if (vis == ShaderVisibility::Hull)     return D3D12_SHADER_VISIBILITY_HULL;
@@ -22,7 +22,7 @@ namespace RHI
             // 对于计算着色器它有自己的 根签名 所有可见性都为 ALL
             if (vis == ShaderVisibility::Compute) return D3D12_SHADER_VISIBILITY_ALL;
 
-            // 组合且不是全部 → 回退 ALL
+            // default → return ALL
             return D3D12_SHADER_VISIBILITY_ALL;
         }
 

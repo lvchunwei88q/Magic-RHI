@@ -7,11 +7,15 @@ namespace RHI
     void CommandListD3D11::SetGraphicsRootSignature(RHIRootSignature* pRootSignature)
     {
         m_tempBindingAssignment.m_pRootSignature = SafeCast<RHIRootSignatureD3D11>(pRootSignature);
+        // Set the root signature draw callback.
+        CommandDrawCallbackD3D11::Get().SetCallback(RHIRootSignatureD3D11::SetRootSignatureResources);
     }
 
     void CommandListD3D11::SetComputeRootSignature(RHIRootSignature* pRootSignature)
     {
         m_tempBindingAssignment.m_pRootSignature = SafeCast<RHIRootSignatureD3D11>(pRootSignature);
+        // Set the root signature draw callback.
+        CommandDrawCallbackD3D11::Get().SetCallback(RHIRootSignatureD3D11::SetRootSignatureResources);
     }
 
     void CommandListD3D11::SetDescriptorHeaps(uint32_t numHeaps, RHIDescriptorHeap* const* ppHeaps)

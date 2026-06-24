@@ -1,8 +1,10 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <d3d11.h>
 #include <Common/Check.h>
+#include <Tools/Singleton.h>
 #include <RHICommandList.h>
 
 #include "RHIResourceD3D11.h"
@@ -14,6 +16,30 @@ using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
+    // Command draw callback.
+    // Since we need to simulate the behavior of signing,
+    // we need a callback function before Draw that allows us to submit our data before submission.
+    using CommandDrawCallback = void (*)(RHIRootSignatureD3D11* pRootSignature, ID3D11DeviceContext* pDeviceContext);
+
+    class CommandDrawCallbackD3D11 : public Singleton<CommandDrawCallbackD3D11>
+    {
+    public:
+        CommandDrawCallbackD3D11() = default;
+        ~CommandDrawCallbackD3D11() = default;
+
+        void SetCallback(CommandDrawCallback callback) { m_Callback = callback; }
+        void ClearCallback() { m_Callback = nullptr; }
+
+        void Execute(RHIRootSignatureD3D11* pRootSignature, ID3D11DeviceContext* pDeviceContext) const
+        {
+            if(m_Callback){
+                m_Callback(pRootSignature, pDeviceContext);
+            }
+        }
+    private:
+        CommandDrawCallback m_Callback = nullptr;
+    };
+
     // For DX11, we don't really need an allocator and this concept doesn't even exist,
     //  but we can mimic the design of modern APIs to carry out some tasks that require 'allocation'.
     class CommandAllocatorD3D11 : public RHICommandAllocator
@@ -41,6 +67,8 @@ namespace RHI
 
         // Clear the binding assignment.
         void clear() { m_pRootSignature = nullptr; m_ppHeaps.clear(); }
+        // Check if the binding assignment is valid.
+        bool IsValid() const { return m_pRootSignature != nullptr && !m_ppHeaps.empty(); }
     };
 
     class CommandListD3D11 : public RHICommandList

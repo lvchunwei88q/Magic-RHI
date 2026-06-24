@@ -2,7 +2,7 @@
 #include "DescriptorHeapD3D11.h"
 #include "RHID3D11.h"
 
-#define IMPLEMENT_SET_DESCRIPTOR(Type, Member, View_Type, ErrorFunc)             \
+#define IMPLEMENT_SET_DESCRIPTOR(Type, Member, View_Type, ErrorFunc)            \
         if (!handle.IsValid() || handle.GetType() != HeapType)                  \
             return;                                                             \
         uint32_t index = handle.GetIndex();                                     \

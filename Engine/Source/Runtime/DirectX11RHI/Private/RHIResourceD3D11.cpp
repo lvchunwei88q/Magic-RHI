@@ -248,6 +248,8 @@ namespace RHI
     {
         // Clear the binding assignment.
         m_tempBindingAssignment.clear();
+        // Clear the draw callbacks.
+        CommandDrawCallbackD3D11::Get().ClearCallback();
     }
 
     void CommandQueueD3D11::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists)

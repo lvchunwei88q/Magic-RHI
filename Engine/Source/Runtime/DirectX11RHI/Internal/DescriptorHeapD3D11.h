@@ -3,10 +3,11 @@
 #include <vector>
 #include <memory>
 
+//We're going to use a design pattern to consolidate all of the program's resources into this heap.
 namespace RHI
 {
     /*
-    * 描述符数据
+    * Descriptor data structure,
     */
     struct DescriptorData
     {
