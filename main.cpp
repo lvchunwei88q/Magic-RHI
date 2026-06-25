@@ -39,6 +39,38 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 #include <random>
 #include <chrono>
 
+void PrintReflection(const RHI::SPIRVReflection& reflection) {
+    std::cout << "\n========== SPIR-V Reflection Info ==========" << std::endl;
+    std::cout << "Entry Point: " << reflection.entryPoint << std::endl;
+    std::cout << "Total Constant Buffer Size: " << reflection.totalConstantBufferSize << " bytes" << std::endl;
+    std::cout << "Total Resources: " << reflection.resources.size() << std::endl;
+    
+    // 按 Space (set) 分组打印
+    for (auto& [set, resources] : reflection.resourcesBySet) {
+        std::cout << "\n  [Space " << set << "] (" << resources.size() << " resources)" << std::endl;
+        for (auto& res : resources) {
+            std::cout << "    - " << res.name << std::endl;
+            std::cout << "      Binding: " << res.binding << std::endl;
+            std::cout << "      Size: " << res.size << " bytes" << std::endl;
+            
+            if (res.isConstantBuffer) {
+                std::cout << "      Type: Constant Buffer" << std::endl;
+                if (!res.members.empty()) {
+                    std::cout << "      Members:" << std::endl;
+                    for (auto& member : res.members) {
+                        std::cout << "        - " << member.first << " @ offset " << member.second << std::endl;
+                    }
+                }
+            } else if (res.isTexture) {
+                std::cout << "      Type: Texture" << std::endl;
+            } else if (res.isSampler) {
+                std::cout << "      Type: Sampler" << std::endl;
+            }
+        }
+    }
+    std::cout << "=============================================\n" << std::endl;
+}
+
 struct Vertex
 {
     float Position[4];  // XYZW
@@ -80,6 +112,7 @@ std::vector<Vertex> GenerateRandomVertices(size_t targetSize)
     return vertices;
 }
 
+// 是的你没看错这是一个屎山代码😀
 int main(int argc, char* argv[])
 {
     std::cout << "Engine Version: " << Core::Core::GetVersion() << std::endl;
@@ -141,6 +174,15 @@ int main(int argc, char* argv[])
     std::cout << "Initializing Device..." << std::endl;
 
     RHI::IRHILoader* loader = RHIModule::GetRHILoader();
+
+    SPIRVProcessor* compiler = RHIModule::GetSPIRVCompiler();
+    SPIRVProcessor* reflector = RHIModule::GetSPIRVReflection();
+
+    if (!compiler || !reflector) {
+        std::cerr << "Failed to get SPIR-V processor!" << std::endl;
+        return 1;
+    }
+
     loader->Load(type);
     std::cout << "Is Multi-Threading Supported: " << (RHI::IsMultiThreadingSupported(loader->GetRHIType()) ? "Yes" : "No") << std::endl;
     
@@ -212,9 +254,10 @@ int main(int argc, char* argv[])
             std::string versionStr = std::to_string(ShaderModelToNumber(device->GetShaderModelVersion()));
             // 从文件编译顶点着色器
             std::string exePath = IO::ToNarrowString(IO::AbsolutePath::Get().GetExecutableDirectory());
-            std::string vsshaderPath = exePath + "\\..\\..\\Test\\testVS.hlsl"; // 你知道的这只是一个测试示例
-            std::string psshaderPath = exePath + "\\..\\..\\Test\\testPS.hlsl";
-            std::string csshaderPath = exePath + "\\..\\..\\Test\\testCS.hlsl";
+            std::string ShaderPath = exePath + "\\..\\..\\Test";
+            std::string vsshaderPath = ShaderPath + "\\testVS.hlsl"; // 你知道的这只是一个测试示例
+            std::string psshaderPath = ShaderPath + "\\testPS.hlsl";
+            std::string csshaderPath = ShaderPath + "\\testCS.hlsl";
             RHI::ShaderCompileDesc vsDesc{};
             vsDesc.Type = RHI::ShaderType::Vertex;
             vsDesc.EnableDebugInfo = true;
@@ -236,6 +279,33 @@ int main(int argc, char* argv[])
             auto vertexShader = device->CompileVertexShader(vsDesc);
             auto pixelShader = device->CompilePixelShader(psDesc);
             auto computeShader = device->CompileComputeShader(csDesc);
+
+            // 现在测试编译 SPIR-V
+            RHI::SPIRVCompileOptions options;
+            options.entryPoint = "main";
+            options.targetProfile = "ps_6_0";
+            options.optimize = true;
+            options.debugInfo = true;
+            options.hlslVersion = "2021";
+            options.defines.push_back({"SHADER_MODEL", 
+                versionStr.c_str()});
+            options.includePaths.push_back(std::string(ShaderPath + "\\"));
+
+            RHI::SPIRVCompileResult result = compiler->CompileFromFile(psshaderPath, options);
+
+            if (!result.success) {
+                std::cerr << "\n❌ Compilation failed!" << std::endl;
+                std::cerr << "Error: " << result.errorMessage << std::endl;
+                return 1;
+            }
+            // 打印警告信息 之后继续执行
+            if (!result.warningMessage.empty()) {
+                std::cout << "Warnings: " << result.warningMessage << std::endl;
+            }
+
+            std::cout << "\nExtracting reflection information..." << std::endl;
+            RHI::SPIRVReflection reflection = reflector->ExtractReflection(result.spirv);
+            PrintReflection(reflection);
 
             if (vertexShader && pixelShader && computeShader)
             {

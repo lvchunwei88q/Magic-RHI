@@ -63,26 +63,24 @@ private:
     // Internal compile function
     SPIRVCompileResult CompileInternal(
         const std::string& hlslSource,
-        const std::string& sourcePath,   // Optional, used for error reporting
         const SPIRVCompileOptions& options
     );
 
     // Build DXC arguments
     std::vector<const wchar_t*> BuildArguments(
         const SPIRVCompileOptions& options,
-        const std::string& sourcePath,
         std::vector<std::wstring>& m_ArgStorage
     );
 
     // Get SPIR-V target env (call external function)
     std::string GetSPIRVTargetEnv() const {
         switch (GetBestAvailableRHI()) {
-            case RHIType::D3D12:
-                return "spv1.6";
-            case RHIType::D3D11:
-                return "spv1.0";
-            default:
-                return "spv1.0";
+        case RHIType::D3D12:
+            return "vulkan1.3";
+        case RHIType::D3D11:
+            return "vulkan1.0";
+        default:
+            return "vulkan1.0";
         }
     }
 

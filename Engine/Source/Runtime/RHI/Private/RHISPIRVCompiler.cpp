@@ -31,7 +31,7 @@ namespace RHI
     SPIRVCompileResult HLSLToSPIRVCompiler::CompileFromString(
         const std::string& hlslSource,
         const SPIRVCompileOptions& options) {
-        return CompileInternal(hlslSource, "", options);
+        return CompileInternal(hlslSource, options);
     }
 
     // ========== Compile from file ==========
@@ -48,13 +48,12 @@ namespace RHI
         }
 
         std::string content = IO::ReadAllText(filePathW);
-        return CompileInternal(content, filePath, options);
+        return CompileInternal(content, options);
     }
 
     // ========== Internal compile core function ==========
     SPIRVCompileResult HLSLToSPIRVCompiler::CompileInternal(
         const std::string& hlslSource,
-        const std::string& sourcePath,
         const SPIRVCompileOptions& options) {
 
         SPIRVCompileResult result;
@@ -71,7 +70,7 @@ namespace RHI
         HRESULT hr = m_Context->utils->CreateBlob(
             wSource.c_str(),
             static_cast<UINT32>(wSource.size() * sizeof(wchar_t)),
-            CP_UTF8,
+            DXC_CP_WIDE,
             &pSourceBlob
         );
         if (FAILED(hr)) {
@@ -83,11 +82,11 @@ namespace RHI
         DxcBuffer sourceBuffer;
         sourceBuffer.Ptr = pSourceBlob->GetBufferPointer();
         sourceBuffer.Size = pSourceBlob->GetBufferSize();
-        sourceBuffer.Encoding = 0;
+        sourceBuffer.Encoding = DXC_CP_WIDE;
 
         // Build argument list
         std::vector<std::wstring> m_ArgTempStorage;
-        auto args = BuildArguments(options, sourcePath,m_ArgTempStorage);
+        auto args = BuildArguments(options,m_ArgTempStorage);
 
         // Execute compilation
         ComPtr<IDxcResult> pResult;
@@ -146,14 +145,19 @@ namespace RHI
     // ========== Build DXC arguments ==========
     std::vector<const wchar_t*> HLSLToSPIRVCompiler::BuildArguments(
         const SPIRVCompileOptions& options,
-        const std::string& sourcePath,
         std::vector<std::wstring>& m_ArgStorage) {
         
         std::vector<const wchar_t*> args;
+        // Because vector reallocates memory every time we push_back, 
+        // we just record the index of each parameter, and at the end we give all the parameter pointers to args.
+        std::vector<size_t> indexs;
 
         auto addArg = [&](const std::string& str) {
+            // Record the index of the next parameter
+            indexs.push_back(args.size());
             m_ArgStorage.push_back(IO::ToWideString(str));
-            args.push_back(m_ArgStorage.back().c_str());  
+            // At this point, we're just declaring a placeholder
+            args.push_back(nullptr);  
         };
 
         // Base arguments
@@ -170,10 +174,18 @@ namespace RHI
             args.push_back(L"-O0");
         }
 
-        // Debug information
+        // Enable debug information for the shader
         if (options.debugInfo) {
+            // DXC_ARG_DEBUG = "-Zi" : Generate debug info for PDB (DXIL debug)
             args.push_back(DXC_ARG_DEBUG);
+            
+            // Embed source file name, line numbers and column numbers into SPIR-V
+            // Allows RenderDoc/NSight to display HLSL source instead of disassembly
             args.push_back(L"-fspv-debug=vulkan-with-source");
+            
+            // Enable SPV_KHR_non_semantic_info extension
+            // Allows debug metadata to be embedded without affecting shader execution
+            // (GPU drivers ignore these, debugging tools read them)
             args.push_back(L"-fspv-extension=SPV_KHR_non_semantic_info");
         }
 
@@ -181,10 +193,12 @@ namespace RHI
         args.push_back(L"-HV");
         addArg(options.hlslVersion);
 
-        // SPIR-V target environment (GetSPIRVTargetEnv)
+        // SPIR-V target environment
         std::string targetEnv = GetSPIRVTargetEnv();
-        args.push_back(L"-fspv-target-env");
-        addArg(targetEnv);
+        if (!targetEnv.empty()) {
+            std::string envArg = "-fspv-target-env=" + targetEnv;  // ← append targetEnv to "-fspv-target-env="
+            addArg(envArg);  // add "-fspv-target-env=vulkan1.3"
+        }
 
         // 16-bit types enabled
         if (options.enable16BitTypes) {
@@ -216,9 +230,11 @@ namespace RHI
         args.push_back(L"-no-warn");  // Reduce warnings
 #endif
 
-        // Add source path if provided
-        if (!sourcePath.empty()) {
-            addArg(sourcePath);
+        for (size_t i = 0; i < indexs.size(); i++)
+        {
+            size_t arg_index = indexs[i];
+            const std::wstring& Arg = m_ArgStorage[i];
+            args[arg_index] = Arg.c_str();
         }
 
         return args;
