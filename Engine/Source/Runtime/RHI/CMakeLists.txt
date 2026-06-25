@@ -17,13 +17,24 @@ target_include_directories(RHI PUBLIC ${CMAKE_GENERATE_OUTPUT_DIRECTORY}/RHI)
 
 target_include_directories(RHI
     PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/Public # 别的项目也可以访问
+        ${CMAKE_CURRENT_SOURCE_DIR}/Public # Other projects can also access it
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/Internal # 别的项目不可以访问
+        ${CMAKE_CURRENT_SOURCE_DIR}/Internal # Other projects cannot access it
         ${DXC_ROOT} # include DXC headers
 )
 
 target_compile_definitions(RHI PRIVATE RHI_EXPORTS)
 
 target_link_libraries(RHI PRIVATE Core)
+# SPI SPIRV-Cross
+target_link_libraries(RHI PRIVATE spirv-cross-core)
+target_link_libraries(RHI PRIVATE spirv-cross-backend)
+# dx shader compiler
 target_link_libraries(RHI PRIVATE ${DXC_ROOT}/dxcompiler.lib)
+
+# copy dxcompiler.dll to build directory
+add_custom_command(TARGET RHI POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${DXC_ROOT}/dll/dxcompiler.dll
+        $<TARGET_FILE_DIR:RHI>
+)

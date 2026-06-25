@@ -16,7 +16,7 @@ add_engine_external_library(spirv-cross-core STATIC ${CORE_SOURCES})
 
 target_include_directories(spirv-cross-core
     PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/Public # 别的项目也可以访问
+        ${CMAKE_CURRENT_SOURCE_DIR}/Public # Other projects can also access it
 )
 
 # =====================================================
@@ -31,5 +31,5 @@ add_engine_external_library(spirv-cross-backend STATIC
 
 target_include_directories(spirv-cross-backend
     PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/Public # 别的项目也可以访问
+        ${CMAKE_CURRENT_SOURCE_DIR}/Public # Other projects can also access it
 )

@@ -5,7 +5,6 @@
 #include <d3d12.h>
 #include <dxgi1_6.h>
 // Shader Compiler
-#include <include/d3d12shader.h>
 #include <include/dxcapi.h>
 
 // DescriptorHeap

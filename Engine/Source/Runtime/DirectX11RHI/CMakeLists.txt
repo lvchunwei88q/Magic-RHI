@@ -9,10 +9,10 @@ add_engine_library(D3D11RHI SHARED
 
 target_include_directories(D3D11RHI
     PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/Public # 别的项目也可以访问
+        ${CMAKE_CURRENT_SOURCE_DIR}/Public # Other projects can also access it
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/Internal # 别的项目不可以访问
-        ${CMAKE_CURRENT_SOURCE_DIR}/../RHI/Public # 包含RHI的头文件
+        ${CMAKE_CURRENT_SOURCE_DIR}/Internal # Other projects cannot access it
+        ${CMAKE_CURRENT_SOURCE_DIR}/../RHI/Public # include RHI headers
 )
 
 target_compile_definitions(D3D11RHI PRIVATE D3D11RHI_EXPORTS)
@@ -26,7 +26,7 @@ target_link_libraries(D3D11RHI
         d3d11.lib
         dxgi.lib
         dxguid.lib
-        d3dcompiler.lib # 使用默认的d3d编译器
+        d3dcompiler.lib # use default d3d compiler
 )
 
 target_link_libraries(D3D11RHI PRIVATE RHI)

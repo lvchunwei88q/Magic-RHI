@@ -223,9 +223,4 @@ namespace RHI
 
         return args;
     }
-
-    SPIRVReflection SPIRVGenerationReflection::ExtractReflection(const std::vector<uint32_t>& spirv){
-        SPIRVReflection reflection;
-        return reflection;
-    }
 }
