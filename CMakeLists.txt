@@ -8,8 +8,8 @@ include(${PROJECT_SOURCE_DIR}/Engine/Cmake/macro.cmake)
 ThirdPartyModule(SPIRV-Cross)
 
 RuntimeModule(Core)
-RuntimeModule(DirectX11RHI)
-RuntimeModule(DirectX12RHI)
+RuntimeModule(D3D11RHI)
+RuntimeModule(D3D12RHI)
 RuntimeModule(RHI)
 
 add_executable(${PROJECT_NAME} main.cpp)
