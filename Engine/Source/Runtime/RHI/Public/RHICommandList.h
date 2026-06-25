@@ -2,7 +2,7 @@
 
 #include "Common/RHI_API.h"
 #include "RHIResource.h"
-#include "Common/RHIDesc.h"
+#include "Common/RHIDefinitions.h"
 #include "RHIRootSignature.h" // RootSignatureDesc
 #include "RHIPipelineState.h" // GraphicsPipelineStateDesc, ComputePipelineStateDesc
 

@@ -392,7 +392,7 @@ int main(int argc, char* argv[])
 
                                         RHI::BarrierDesc barrier = {};
                                         barrier.Type                        = RHI::ResourceBarrierType::Transition;
-                                        barrier.ResourceType                = RHI::ResourceType::Texture;
+                                        barrier.ResourceType                = RHI::BarrierResourceType::Texture;
                                         barrier.Flags                       = RHI::ResourceBarrierFlags::None;
                                         barrier.Transition.pResource        = BackBufferTexture;
                                         barrier.Transition.Subresource      = 0;
@@ -439,7 +439,7 @@ int main(int argc, char* argv[])
 
                                         RHI::BarrierDesc barrierToPresent = {};
                                         barrierToPresent.Type                        = RHI::ResourceBarrierType::Transition;
-                                        barrierToPresent.ResourceType                = RHI::ResourceType::Texture;
+                                        barrierToPresent.ResourceType                = RHI::BarrierResourceType::Texture;
                                         barrierToPresent.Flags                       = RHI::ResourceBarrierFlags::None;
                                         barrierToPresent.Transition.pResource        = BackBufferTexture;
                                         barrierToPresent.Transition.Subresource      = 0;

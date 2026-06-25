@@ -227,7 +227,7 @@ namespace RHI
             // Default 资源初始状态是 COMMON，需要转换到 COPY_DEST
             RHI::BarrierDesc barrier = {};
             barrier.Type                        = RHI::ResourceBarrierType::Transition;
-            barrier.ResourceType                = ResourceType::Buffer;
+            barrier.ResourceType                = BarrierResourceType::Buffer;
             barrier.Flags                       = RHI::ResourceBarrierFlags::None;
             barrier.Transition.pResource        = buffer.get();
             barrier.Transition.Subresource      = ~0u;  // 所有子资源
@@ -246,7 +246,7 @@ namespace RHI
 
             RHI::BarrierDesc finalBarrier = {};
             finalBarrier.Type                        = RHI::ResourceBarrierType::Transition;
-            finalBarrier.ResourceType                = ResourceType::Buffer;
+            finalBarrier.ResourceType                = BarrierResourceType::Buffer;
             finalBarrier.Flags                       = RHI::ResourceBarrierFlags::None;
             finalBarrier.Transition.pResource        = buffer.get();
             finalBarrier.Transition.Subresource      = ~0u;

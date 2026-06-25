@@ -1,6 +1,6 @@
 #pragma once
 #include "Common/RHI_API.h"
-#include "Common/RHIDesc.h"
+#include "Common/RHIDefinitions.h"
 #include <cstdint>
 
 namespace RHI

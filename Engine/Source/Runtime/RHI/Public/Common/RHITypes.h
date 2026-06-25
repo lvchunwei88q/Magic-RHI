@@ -385,9 +385,9 @@ struct RHIViewport
 enum class RHIClearFlags : uint8_t
 {
     None = 0,
-    Depth = 1 << 0,      // 0b0001 (1)
-    Stencil = 1 << 1,    // 0b0010 (2)
-    DepthStencil = Depth | Stencil // 0b0011 (3)
+    Depth = 1 << 0,      			// 0b0001 (1)
+    Stencil = 1 << 1,    			// 0b0010 (2)
+    DepthStencil = Depth | Stencil  // 0b0011 (3)
 };
 ENUM_CLASS_FLAGS(RHIClearFlags);
 
@@ -464,4 +464,29 @@ enum class ShaderVisibility : uint8_t
     Mesh        = 8,    // 仅网格着色器
     Compute     = 9,    // 仅计算着色器
 };
+
+// Resource Barrier Type
+enum class ResourceBarrierType : uint8_t
+{
+	Transition,  // Transition Barrier
+	Aliasing,    // Aliasing Barrier
+	UAV          // UAVBarrier
+};
+
+// Resource Type
+enum class BarrierResourceType : uint8_t
+{
+	Texture, // Texture
+	Buffer  // Buffer
+};
+
+// Resource Barrier Flags
+enum class ResourceBarrierFlags : uint8_t
+{
+	None       = 0,
+	BeginOnly  = 0x1,  // Begin Only Barrier
+	EndOnly    = 0x2   // End Only Barrier
+};
+ENUM_CLASS_FLAGS(ResourceBarrierFlags);
+
 }

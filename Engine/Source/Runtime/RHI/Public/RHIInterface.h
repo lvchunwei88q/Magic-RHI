@@ -4,7 +4,7 @@
 #include "Common/RHITypes.h"
 #include "Common/RHIFeatureLevel.h"
 #include "Common/RHIPlatformDetection.h"
-#include "Common/RHIDesc.h"
+#include "Common/RHIDefinitions.h"
 
 // form core minimal
 #include <CoreMinimal.h>

@@ -1,5 +1,5 @@
 #include "RHIResourceD3D11.h"
-#include <Common/RHIDesc.h>
+#include <Common/RHIDefinitions.h>
 #include <Common/Check.h>
 #include "RHID3D11.h"
 #include <d3dcompiler.h>

@@ -1,4 +1,4 @@
-// ========== D3D12RHI/Private/D3D12RHI.cpp ==========
+// ========== D3D11RHI/Private/D3D11RHI.cpp ==========
 
 #include <RHIDynamicLoader.h>
 #include "RHID3D11.h"

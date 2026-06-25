@@ -1,0 +1,100 @@
+// RHI/SPIRVHelper.h
+#pragma once
+
+#include "Common/RHIDefinitions.h"
+#include "Common/RHIPlatformDetection.h"
+#include <CoreMinimal.h>
+#include <windows.h>
+#include <cstdint>
+#include <memory>
+
+// DXC headers
+#include <include/dxcapi.h>
+// COM headers
+#include <wrl/client.h>
+using namespace Microsoft::WRL;
+
+namespace RHI {
+
+// Shader compiler context
+struct ShaderCompilerContext {
+    ComPtr<IDxcCompiler3> compiler;
+    ComPtr<IDxcUtils> utils;
+    ComPtr<IDxcIncludeHandler> includeHandler;
+
+    bool Initialize() {
+        // Create DXC compiler and utils
+        if (FAILED(::DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler)))) {
+            return false;
+        }
+        if (FAILED(::DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils)))) {
+            return false;
+        }
+        if (FAILED(utils->CreateDefaultIncludeHandler(&includeHandler))) {
+            return false;
+        }
+        return true;
+    }
+};
+
+// HLSL → SPIR-V Compiler
+class HLSLToSPIRVCompiler {
+public:
+    HLSLToSPIRVCompiler();
+    ~HLSLToSPIRVCompiler();
+
+    // Compile from source string
+    SPIRVCompileResult CompileFromString(
+        const std::string& hlslSource,
+        const SPIRVCompileOptions& options
+    );
+
+    // Compile from file
+    SPIRVCompileResult CompileFromFile(
+        const std::string& filePath,
+        const SPIRVCompileOptions& options
+    );
+
+private:
+    // Internal compile function
+    SPIRVCompileResult CompileInternal(
+        const std::string& hlslSource,
+        const std::string& sourcePath,   // Optional, used for error reporting
+        const SPIRVCompileOptions& options
+    );
+
+    // Build DXC arguments
+    std::vector<const wchar_t*> BuildArguments(
+        const SPIRVCompileOptions& options,
+        const std::string& sourcePath,
+        std::vector<std::wstring>& m_ArgStorage
+    );
+
+    // Get SPIR-V target env (call external function)
+    std::string GetSPIRVTargetEnv() const {
+        switch (GetBestAvailableRHI()) {
+            case RHIType::D3D12:
+                return "spv1.6";
+            case RHIType::D3D11:
+                return "spv1.0";
+            default:
+                return "spv1.0";
+        }
+    }
+
+private:
+    std::unique_ptr<ShaderCompilerContext> m_Context;
+    bool m_Initialized = false;
+};
+
+/*
+ * @brief SPIR-V Loader
+ * This class is used to load SPIR-V files from disk or memory
+*/
+class SPIRVGenerationReflection {
+public:
+    // Extract reflection information (using SPIRV-Cross)
+    SPIRVReflection ExtractReflection(const std::vector<uint32_t>& spirv);
+};
+
+} // namespace RHI

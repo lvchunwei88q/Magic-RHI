@@ -1,11 +1,11 @@
 #pragma once
-// 现在只支持Windows 平台 因为MagicToonEngine支持Windows平台
+// Windows is the only platform
 #include <cstdint>
 #include "Common/RHI_API.h"
 
 namespace RHI
 {
-    // RHI 类型枚举
+    // RHI Type Enum
     enum class RHIType : uint8_t
     {
         Unknown = 0,

@@ -2,7 +2,7 @@
 
 #include "Common/RHI_API.h"
 #include "Common/RHITypes.h"
-#include "Common/RHIDesc.h"
+#include "Common/RHIDefinitions.h"
 #include <Common/Check.h>
 #include <string>
 #include <memory>

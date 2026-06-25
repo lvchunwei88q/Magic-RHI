@@ -62,14 +62,14 @@ namespace RHI
             }
         }
 
-        ID3D12Resource* GetD3D12Resource(RHIResource* pResource, ResourceType type)
+        ID3D12Resource* GetD3D12Resource(RHIResource* pResource, BarrierResourceType type)
         {
             switch(type){
-                case ResourceType::Texture:
+                case BarrierResourceType::Texture:
                 {
                     return SafeCast<TextureD3D12>(pResource)->GetResource();
                 }
-                case ResourceType::Buffer:
+                case BarrierResourceType::Buffer:
                 {
                     return SafeCast<BufferD3D12>(pResource)->GetResource();
                 }
