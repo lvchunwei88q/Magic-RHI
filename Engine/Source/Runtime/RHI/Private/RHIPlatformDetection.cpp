@@ -4,7 +4,7 @@
 #include <windows.h>
 
 /*
-* 这里我们直接检查目标平台是否有对应的API库就可以了
+* Because we only serve Windows, we just implement it right here.
 **/
 
 static bool IsD3D11Available()

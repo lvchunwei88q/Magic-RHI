@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Common/D3D12RHI_API.h"
-#include <RHI.h>
+#include <RHIInterface.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
 // Shader Compiler

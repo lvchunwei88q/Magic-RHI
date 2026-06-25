@@ -5,14 +5,24 @@
 #include "Common/RHI_API.h"
 #include "Common/RHIPlatformDetection.h"
 
-// 需要预先包含 Device 和 SwapChain 类，否则会报错
+// Forward Declaration
 class Device;
 class SwapChain;
-struct SwapChainDesc;
 
 namespace RHI
 {
     // RHI Loader Interface
+    class IRHILoader;
+
+    // RHI Module Interface
+    class RHI_API IRHIModule
+    {
+    public:
+        virtual ~IRHIModule() = default;
+
+        static IRHILoader* GetRHILoader();
+    };
+
     class RHI_API IRHILoader
     {
     public:
@@ -27,7 +37,4 @@ namespace RHI
         virtual bool IsLoaded() const = 0;
         virtual RHIType GetRHIType() const = 0;
     };
-
-    RHI_API IRHILoader* GetLoader();
-
 } // namespace RHI

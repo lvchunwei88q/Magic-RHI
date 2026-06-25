@@ -2,8 +2,8 @@
 
 /*
 * RHI Header File 
-* 包含 RHI 相关的头文件 并且这个顺序是不可以改变的否则依赖关系错误
+* Include the RHI-related header files, and this order can't be changed, otherwise there will be dependency errors.
 **/
 #include "RHICommandList.h"
-#include "RHI.h"
-#include "IRHILoader.h"
+#include "RHIInterface.h"
+#include "IRHIModule.h"

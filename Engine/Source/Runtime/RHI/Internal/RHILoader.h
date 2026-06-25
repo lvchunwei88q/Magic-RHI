@@ -4,8 +4,8 @@
 #include <windows.h>
 #include <Subsystem/SubsystemTemplate.h>
 #include "RHIDynamicLoader.h"
-#include "RHI.h"
-#include "IRHILoader.h"
+#include "RHIInterface.h"
+#include "IRHIModule.h"
 
 namespace RHI
 {
@@ -28,7 +28,6 @@ namespace RHI
         RHIType GetRHIType() const override { return m_loadedType; }
         
     private:
-        
         HMODULE m_hModule = nullptr;
         PFN_CreateDevice m_CreateDevice = nullptr;
         PFN_CreateSwapChain m_CreateSwapChain = nullptr;

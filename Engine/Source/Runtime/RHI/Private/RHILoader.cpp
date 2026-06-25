@@ -6,7 +6,7 @@ namespace RHI
 {
     AUTO_REGISTER(RHILoader);
     
-    IRHILoader* GetLoader(){
+    IRHILoader* IRHIModule::GetRHILoader(){
         return &RHILoader::Get();
     }
 

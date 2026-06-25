@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Common/D3D11RHI_API.h"
-#include <RHI.h>
+#include <RHIInterface.h>
 #include <d3d11.h>
 #include <dxgi.h>
 

@@ -6,7 +6,7 @@
 #include "Common/RHIPlatformDetection.h"
 #include "Common/RHIDesc.h"
 
-// form core
+// form core minimal
 #include <CoreMinimal.h>
 
 #include <memory>

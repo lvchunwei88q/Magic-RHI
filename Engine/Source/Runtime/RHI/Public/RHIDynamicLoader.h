@@ -2,7 +2,7 @@
 
 #pragma once
 #include <memory>
-#include "RHI.h"
+#include "RHIInterface.h"
 
 /*
 *注意这里使用def+cmake的方式保证C++的名称修饰，否则会导致函数调用时的名称修饰与DLL导出的
