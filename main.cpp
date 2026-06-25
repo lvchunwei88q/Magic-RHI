@@ -165,327 +165,299 @@ int main(int argc, char* argv[])
             uint64_t frequency = 0;
             device->GetCommandQueue(RHI::RHICmdType::Graphics)->GetTimestampFrequency(&frequency);
             std::cout << "Timestamp Frequency: " << frequency << std::endl;
+
+            Vertex tvertices[] = {
+                { { 0.0f,  0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },  // 顶点0: 顶部，红色
+                { { 0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },  // 顶点1: 右下，绿色
+                { {-0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }   // 顶点2: 左下，蓝色
+            };
+
+            std::vector<Vertex> cvertices = GenerateRandomVertices(2 * 1024);  // 2 KB
             
-            // 现在测试创建采样器
-            RHI::SamplerStateDesc desc{};
-            desc.Filter = RHI::SamplerFilter::Trilinear;
-            desc.AddressU = RHI::SamplerAddressMode::Clamp;
-            std::shared_ptr<RHI::RHISamplerState> sampler = device->CreateSamplerState(desc);
-            device->DeleteSamplerState(sampler);
-            std::shared_ptr<RHI::RHISamplerState> sampler1 = device->CreateSamplerState(desc);
-            std::shared_ptr<RHI::RHISamplerState> sampler2 = device->CreateSamplerState(desc);
-            if (sampler2 && sampler1)
+            auto CreateBuffer = [&](RHI::BufferHeapType t,RHI::BufferBindFlag f,RHI::DescriptorRangeType rt) {
+                RHI::BufferDesc desc;
+                desc.SizeInBytes = sizeof(Vertex) * cvertices.size();
+                desc.Stride = sizeof(Vertex);
+                desc.InitialData = cvertices.data();
+                desc.HeapType = t;
+                desc.BindFlags = f;
+
+                auto buffer = device->CreateBuffer(desc);
+                device->CreateStandardHeapDescriptorView(buffer.get(), rt);
+                return buffer;
+            };
+
+            std::shared_ptr<RHI::RHIConstantBuffer> constantBuffer = CreateBuffer(RHI::BufferHeapType::Default,RHI::BufferBindFlag::UnorderedAccess,RHI::DescriptorRangeType::UAV);
+            std::cout << "UnorderedAccess created successfully!" << std::endl;
+            std::cout << "UnorderedAccess Handle: " << constantBuffer->GetBindlessHandle().GetIndex() << std::endl;
+            
+            std::shared_ptr<RHI::RHIConstantBuffer> constantBuffer1 = CreateBuffer(RHI::BufferHeapType::Default,RHI::BufferBindFlag::ConstantBuffer,RHI::DescriptorRangeType::CBV);
+            std::cout << "ConstantBuffer created successfully!" << std::endl;
+            std::cout << "ConstantBuffer Handle: " << constantBuffer1->GetBindlessHandle().GetIndex() << std::endl;
+
+            auto cbv = device->GetDescriptorHeap(RHI::RHIDescriptorHeapType::Standard)->GetDescriptorHeapView(constantBuffer1->GetBindlessHandle());
+            RHI::RHIConstantBufferView* cbvView = SafeCast<RHI::RHIConstantBufferView>(cbv);
+            std::cout << "ConstantBuffer View: " << cbvView->GetGPUVirtualAddress() << std::endl;
+
+            RHI::BufferDesc vbdesc;
+            vbdesc.SizeInBytes = sizeof(Vertex) * 3;
+            vbdesc.Stride = sizeof(Vertex);
+            vbdesc.InitialData = tvertices;
+            vbdesc.HeapType = RHI::BufferHeapType::Default;
+            vbdesc.BindFlags = RHI::BufferBindFlag::VertexBuffer;
+            std::shared_ptr<RHI::RHIVertexBuffer> vertexBuffer = device->CreateBuffer(vbdesc);
+            std::cout << "VertexBuffer created successfully!" << std::endl;
+            
+            std::cout << "Shader compilation..." << std::endl;
+            std::string versionStr = std::to_string(ShaderModelToNumber(device->GetShaderModelVersion()));
+            // 从文件编译顶点着色器
+            std::string exePath = IO::ToNarrowString(IO::AbsolutePath::Get().GetExecutableDirectory());
+            std::string vsshaderPath = exePath + "\\..\\..\\Test\\testVS.hlsl"; // 你知道的这只是一个测试示例
+            std::string psshaderPath = exePath + "\\..\\..\\Test\\testPS.hlsl";
+            std::string csshaderPath = exePath + "\\..\\..\\Test\\testCS.hlsl";
+            RHI::ShaderCompileDesc vsDesc{};
+            vsDesc.Type = RHI::ShaderType::Vertex;
+            vsDesc.EnableDebugInfo = true;
+            vsDesc.FilePath = vsshaderPath.c_str();
+
+            RHI::ShaderCompileDesc psDesc{};
+            psDesc.Type = RHI::ShaderType::Pixel;
+            // Set shader model macro
+            psDesc.Macros.push_back({"SHADER_MODEL", 
+                versionStr.c_str()});
+            psDesc.EnableDebugInfo = true;
+            psDesc.FilePath = psshaderPath.c_str();
+
+            RHI::ShaderCompileDesc csDesc{};
+            csDesc.Type = RHI::ShaderType::Compute;
+            csDesc.EnableDebugInfo = true;
+            csDesc.FilePath = csshaderPath.c_str();
+
+            auto vertexShader = device->CompileVertexShader(vsDesc);
+            auto pixelShader = device->CompilePixelShader(psDesc);
+            auto computeShader = device->CompileComputeShader(csDesc);
+
+            if (vertexShader && pixelShader && computeShader)
             {
-                std::cout << "SamplerState created successfully!" << std::endl;
+                std::cout << "VertexShader, PixelShader, ComputeShader compiled successfully!" << std::endl;
 
-                Vertex tvertices[] = {
-                    { { 0.0f,  0.5f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f, 1.0f } },  // 顶点0: 顶部，红色
-                    { { 0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f, 1.0f } },  // 顶点1: 右下，绿色
-                    { {-0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }   // 顶点2: 左下，蓝色
-                };
+                // 创建根签名：包含一个 DescriptorTable + 一个 Root CBV
+                RHI::RootSignatureDesc rootDesc;
 
-                std::vector<Vertex> cvertices = GenerateRandomVertices(2 * 1024);  // 2 KB
+                // ===== 参数 0：描述符表（含 2 个 Range）=====
+                RHI::DescriptorRangeDesc ranges[1];
+
+                // Range 0：CBV × 2，从 b0 开始
+                ranges[0].RangeType      = RHI::DescriptorRangeType::CBV;
+                ranges[0].NumDescriptors = 2;
+                ranges[0].ShaderRegister = 0;
+                ranges[0].RegisterSpace  = 0;
+
+                RHI::RootParameterDesc tableParam = {};
+                tableParam.Type                            = RHI::RootParameterType::DescriptorTable;
+                tableParam.Visibility                      = RHI::ShaderVisibility::All;
+                tableParam.DescriptorTable.NumDescriptorRanges = 1;
+                tableParam.DescriptorTable.pDescriptorRanges   = ranges;
+
+                // ===== 参数 1：Root CBV，绑定到 b2 =====
+                RHI::RootParameterDesc cbvParam = {};
+                cbvParam.Type                         = RHI::RootParameterType::CBV;
+                cbvParam.Visibility                   = RHI::ShaderVisibility::All;
+                cbvParam.Descriptor.ShaderRegister    = 2;  // b2（b0~b1 已被描述符表中的 CBV Range 占用）
+                cbvParam.Descriptor.RegisterSpace     = 0;
+
+                // ===== 参数 2：Root Constants，1 个 32 位值，绑定到 b3 =====
+                RHI::RootParameterDesc constParam = {};
+                constParam.Type                       = RHI::RootParameterType::Constants;
+                constParam.Visibility                 = RHI::ShaderVisibility::Pixel;
+                constParam.Constants.ShaderRegister   = 3;  // b3（b0~b2 已被前面的 CBV Range + Root CBV 占用）
+                constParam.Constants.RegisterSpace    = 0;
+                constParam.Constants.Num32BitValues   = 1;  // 1 个 float
+
+                // ===== 组装根签名 =====
+                rootDesc.Parameters.push_back(tableParam);
+                rootDesc.Parameters.push_back(cbvParam);
+                rootDesc.Parameters.push_back(constParam);
+                rootDesc.Flags = RHI::RootSignatureFlags::AllowInputAssemblerInputLayout;
                 
-                auto CreateBuffer = [&](RHI::BufferHeapType t,RHI::BufferBindFlag f,RHI::DescriptorRangeType rt) {
-                    RHI::BufferDesc desc;
-                    desc.SizeInBytes = sizeof(Vertex) * cvertices.size();
-                    desc.Stride = sizeof(Vertex);
-                    desc.InitialData = cvertices.data();
-                    desc.HeapType = t;
-                    desc.BindFlags = f;
-    
-                    auto buffer = device->CreateBuffer(desc);
-                    device->CreateStandardHeapDescriptorView(buffer.get(), rt);
-                    return buffer;
-                };
+                RHI::RootSignatureDesc rootUavDesc;
+                // ===== 参数 0：描述符表（含 2 个 Range）=====
+                RHI::DescriptorRangeDesc uavranges[1];
 
-                std::shared_ptr<RHI::RHIConstantBuffer> constantBuffer = CreateBuffer(RHI::BufferHeapType::Default,RHI::BufferBindFlag::UnorderedAccess,RHI::DescriptorRangeType::UAV);
-                std::cout << "UnorderedAccess created successfully!" << std::endl;
-                std::cout << "UnorderedAccess Handle: " << constantBuffer->GetBindlessHandle().GetIndex() << std::endl;
-                
-                std::shared_ptr<RHI::RHIConstantBuffer> constantBuffer1 = CreateBuffer(RHI::BufferHeapType::Default,RHI::BufferBindFlag::ConstantBuffer,RHI::DescriptorRangeType::CBV);
-                std::cout << "ConstantBuffer created successfully!" << std::endl;
-                std::cout << "ConstantBuffer Handle: " << constantBuffer1->GetBindlessHandle().GetIndex() << std::endl;
+                // Range 0：UAV × 1，从 t0 开始
+                uavranges[0].RangeType      = RHI::DescriptorRangeType::UAV;
+                uavranges[0].NumDescriptors = 1;
+                uavranges[0].ShaderRegister = 0;
+                uavranges[0].RegisterSpace  = 0;
+                // OffsetInDescriptorsFromTableStart 默认为 ~0u (APPEND)
 
-                 auto cbv = device->GetDescriptorHeap(RHI::RHIDescriptorHeapType::Standard)->GetDescriptorHeapView(constantBuffer1->GetBindlessHandle());
-                 RHI::RHIConstantBufferView* cbvView = SafeCast<RHI::RHIConstantBufferView>(cbv);
-                 std::cout << "ConstantBuffer View: " << cbvView->GetGPUVirtualAddress() << std::endl;
-                
-                std::shared_ptr<RHI::RHIConstantBuffer> constantBuffer2 = CreateBuffer(RHI::BufferHeapType::Upload,RHI::BufferBindFlag::ShaderResource,RHI::DescriptorRangeType::SRV);
-                std::cout << "ShaderResource created successfully!" << std::endl;
-                std::cout << "ShaderResource Handle: " << constantBuffer2->GetBindlessHandle().GetIndex() << std::endl;
+                RHI::RootParameterDesc uavtableParam = {};
+                uavtableParam.Type                            = RHI::RootParameterType::DescriptorTable;
+                uavtableParam.Visibility                      = RHI::ShaderVisibility::Compute;
+                uavtableParam.DescriptorTable.NumDescriptorRanges = 1;
+                uavtableParam.DescriptorTable.pDescriptorRanges   = uavranges;
+                rootUavDesc.Parameters.push_back(uavtableParam);
 
-                RHI::BufferDesc vbdesc;
-                vbdesc.SizeInBytes = sizeof(Vertex) * 3;
-                vbdesc.Stride = sizeof(Vertex);
-                vbdesc.InitialData = tvertices;
-                vbdesc.HeapType = RHI::BufferHeapType::Default;
-                vbdesc.BindFlags = RHI::BufferBindFlag::VertexBuffer;
-                std::shared_ptr<RHI::RHIVertexBuffer> vertexBuffer = device->CreateBuffer(vbdesc);
-                std::cout << "VertexBuffer created successfully!" << std::endl;
-                
-                std::cout << "Shader compilation..." << std::endl;
-                std::string versionStr = std::to_string(ShaderModelToNumber(device->GetShaderModelVersion()));
-                // 从文件编译顶点着色器
-                std::string exePath = IO::ToNarrowString(IO::AbsolutePath::Get().GetExecutableDirectory());
-                std::string vsshaderPath = exePath + "\\..\\..\\Test\\testVS.hlsl"; // 你知道的这只是一个测试示例
-                std::string psshaderPath = exePath + "\\..\\..\\Test\\testPS.hlsl";
-                std::string csshaderPath = exePath + "\\..\\..\\Test\\testCS.hlsl";
-                RHI::ShaderCompileDesc vsDesc{};
-                vsDesc.Type = RHI::ShaderType::Vertex;
-                vsDesc.EnableDebugInfo = true;
-                vsDesc.FilePath = vsshaderPath.c_str();
-
-                RHI::ShaderCompileDesc psDesc{};
-                psDesc.Type = RHI::ShaderType::Pixel;
-                // Set shader model macro
-                psDesc.Macros.push_back({"SHADER_MODEL", 
-                    versionStr.c_str()});
-                psDesc.EnableDebugInfo = true;
-                psDesc.FilePath = psshaderPath.c_str();
-
-                RHI::ShaderCompileDesc csDesc{};
-                csDesc.Type = RHI::ShaderType::Compute;
-                csDesc.EnableDebugInfo = true;
-                csDesc.FilePath = csshaderPath.c_str();
-
-                auto vertexShader = device->CompileVertexShader(vsDesc);
-                auto pixelShader = device->CompilePixelShader(psDesc);
-                auto computeShader = device->CompileComputeShader(csDesc);
-
-                if (vertexShader && pixelShader && computeShader)
+                // 创建根签名
+                auto rootSignature = device->CreateRootSignature(rootDesc);
+                auto rootUAVSignature = device->CreateRootSignature(rootUavDesc);
+                if (rootSignature && rootSignature->IsValid() && rootUAVSignature && rootUAVSignature->IsValid())
                 {
-                    std::cout << "VertexShader, PixelShader, ComputeShader compiled successfully!" << std::endl;
-
-                    // 创建根签名：包含一个 DescriptorTable + 一个 Root CBV
-                    RHI::RootSignatureDesc rootDesc;
-
-                    // ===== 参数 0：描述符表（含 2 个 Range）=====
-                    RHI::DescriptorRangeDesc ranges[2];
-
-                    // Range 0：SRV × 4，从 t0 开始
-                    ranges[0].RangeType      = RHI::DescriptorRangeType::SRV;
-                    ranges[0].NumDescriptors = 4;
-                    ranges[0].ShaderRegister = 0;
-                    ranges[0].RegisterSpace  = 0;
-                    // OffsetInDescriptorsFromTableStart 默认为 ~0u (APPEND)
-
-                    // Range 1：CBV × 2，从 b0 开始
-                    ranges[1].RangeType      = RHI::DescriptorRangeType::CBV;
-                    ranges[1].NumDescriptors = 2;
-                    ranges[1].ShaderRegister = 0;
-                    ranges[1].RegisterSpace  = 0;
-
-                    RHI::RootParameterDesc tableParam = {};
-                    tableParam.Type                            = RHI::RootParameterType::DescriptorTable;
-                    tableParam.Visibility                      = RHI::ShaderVisibility::All;
-                    tableParam.DescriptorTable.NumDescriptorRanges = 2;
-                    tableParam.DescriptorTable.pDescriptorRanges   = ranges;
-
-                    // ===== 参数 1：Root CBV，绑定到 b2 =====
-                    RHI::RootParameterDesc cbvParam = {};
-                    cbvParam.Type                         = RHI::RootParameterType::CBV;
-                    cbvParam.Visibility                   = RHI::ShaderVisibility::All;
-                    cbvParam.Descriptor.ShaderRegister    = 2;  // b2（b0~b1 已被描述符表中的 CBV Range 占用）
-                    cbvParam.Descriptor.RegisterSpace     = 0;
-
-                    // ===== 参数 2：Root Constants，1 个 32 位值，绑定到 b3 =====
-                    RHI::RootParameterDesc constParam = {};
-                    constParam.Type                       = RHI::RootParameterType::Constants;
-                    constParam.Visibility                 = RHI::ShaderVisibility::Pixel;
-                    constParam.Constants.ShaderRegister   = 3;  // b3（b0~b2 已被前面的 CBV Range + Root CBV 占用）
-                    constParam.Constants.RegisterSpace    = 0;
-                    constParam.Constants.Num32BitValues   = 1;  // 1 个 float
-
-                    // ===== 组装根签名 =====
-                    rootDesc.Parameters.push_back(tableParam);
-                    rootDesc.Parameters.push_back(cbvParam);
-                    rootDesc.Parameters.push_back(constParam);
-                    rootDesc.Flags = RHI::RootSignatureFlags::AllowInputAssemblerInputLayout;
+                    std::cout << "RootSignature created successfully!" << std::endl;
                     
-                    RHI::RootSignatureDesc rootUavDesc;
-                    // ===== 参数 0：描述符表（含 2 个 Range）=====
-                    RHI::DescriptorRangeDesc uavranges[1];
-
-                    // Range 0：UAV × 1，从 t0 开始
-                    uavranges[0].RangeType      = RHI::DescriptorRangeType::UAV;
-                    uavranges[0].NumDescriptors = 1;
-                    uavranges[0].ShaderRegister = 0;
-                    uavranges[0].RegisterSpace  = 0;
-                    // OffsetInDescriptorsFromTableStart 默认为 ~0u (APPEND)
-
-                    RHI::RootParameterDesc uavtableParam = {};
-                    uavtableParam.Type                            = RHI::RootParameterType::DescriptorTable;
-                    uavtableParam.Visibility                      = RHI::ShaderVisibility::Compute;
-                    uavtableParam.DescriptorTable.NumDescriptorRanges = 1;
-                    uavtableParam.DescriptorTable.pDescriptorRanges   = uavranges;
-                    rootUavDesc.Parameters.push_back(uavtableParam);
-
-                    // 创建根签名
-                    auto rootSignature = device->CreateRootSignature(rootDesc);
-                    auto rootUAVSignature = device->CreateRootSignature(rootUavDesc);
-                    if (rootSignature && rootSignature->IsValid() && rootUAVSignature && rootUAVSignature->IsValid())
+                    // 定义输入布局描述
+                    RHI::InputElementDesc inputLayout[] = 
                     {
-                        std::cout << "RootSignature created successfully!" << std::endl;
-                        
-                        // 定义输入布局描述
-                        RHI::InputElementDesc inputLayout[] = 
+                        { "POSITION", 0, RHI::RHITextureFormat::R32G32B32_FLOAT, 0, RHI::InputElementDesc::APPEND_ALIGNED_ELEMENT,
+                            RHI::InputClassification::PerVertexData, 0 },
+                            { "COLOR", 0, RHI::RHITextureFormat::R32G32B32A32_FLOAT, 0, RHI::InputElementDesc::APPEND_ALIGNED_ELEMENT,
+                            RHI::InputClassification::PerVertexData, 0 },
+                    };
+
+                    RHI::GraphicsPipelineStateDesc graphicsDesc = {};
+                    graphicsDesc.pRootSignature = rootSignature.get();
+                    graphicsDesc.pInputElementDesc = inputLayout;
+                    graphicsDesc.NumInputElements = sizeof(inputLayout) / sizeof(inputLayout[0]);
+                    graphicsDesc.pVertexShader = vertexShader.get();
+                    graphicsDesc.pPixelShader = pixelShader.get();
+                    graphicsDesc.NumRenderTargets = 1;
+                    graphicsDesc.RenderTargetFormats[0] = RHI::RHITextureFormat::R8G8B8A8_UNORM;
+                    graphicsDesc.DepthStencilFormat = RHI::RHITextureFormat::Unknown;       // 绘制三角形不使用深度测试，所以这里设置为 Unknown
+
+                    RHI::ComputePipelineStateDesc computeDesc = {};
+                    computeDesc.pRootSignature = rootUAVSignature.get();
+                    computeDesc.pComputeShader = computeShader.get();
+
+                    auto computePSO = device->CreateComputePipelineState(computeDesc);
+                    auto graphicsPSO = device->CreateGraphicsPipelineState(graphicsDesc);
+
+                    if (graphicsPSO && graphicsPSO->IsValid())
+                    {
+                        std::cout << "GraphicsPipelineState created successfully!" << std::endl;
+
+                        if (computePSO && computePSO->IsValid())
                         {
-                            { "POSITION", 0, RHI::RHITextureFormat::R32G32B32_FLOAT, 0, RHI::InputElementDesc::APPEND_ALIGNED_ELEMENT,
-                                RHI::InputClassification::PerVertexData, 0 },
-                                { "COLOR", 0, RHI::RHITextureFormat::R32G32B32A32_FLOAT, 0, RHI::InputElementDesc::APPEND_ALIGNED_ELEMENT,
-                                RHI::InputClassification::PerVertexData, 0 },
-                        };
+                            std::cout << "ComputePipelineState created successfully!" << std::endl;
 
-                        RHI::GraphicsPipelineStateDesc graphicsDesc = {};
-                        graphicsDesc.pRootSignature = rootSignature.get();
-                        graphicsDesc.pInputElementDesc = inputLayout;
-                        graphicsDesc.NumInputElements = sizeof(inputLayout) / sizeof(inputLayout[0]);
-                        graphicsDesc.pVertexShader = vertexShader.get();
-                        graphicsDesc.pPixelShader = pixelShader.get();
-                        graphicsDesc.NumRenderTargets = 1;
-                        graphicsDesc.RenderTargetFormats[0] = RHI::RHITextureFormat::R8G8B8A8_UNORM;
-						graphicsDesc.DepthStencilFormat = RHI::RHITextureFormat::Unknown;       // 绘制三角形不使用深度测试，所以这里设置为 Unknown
+                            auto cmdAllocator = device->CreateCommandAllocator(RHI::RHICmdType::Graphics);
+                            auto cmdList = device->CreateCommandList(cmdAllocator);
 
-                        RHI::ComputePipelineStateDesc computeDesc = {};
-                        computeDesc.pRootSignature = rootUAVSignature.get();
-                        computeDesc.pComputeShader = computeShader.get();
+                            if(cmdList && cmdList.get() != nullptr){
+                                std::cout << "CommandList created successfully!" << std::endl;
 
-                        auto computePSO = device->CreateComputePipelineState(computeDesc);
-                        auto graphicsPSO = device->CreateGraphicsPipelineState(graphicsDesc);
+                                // 获取描述符堆
+                                auto descriptorHeap = device->GetDescriptorHeap(RHI::RHIDescriptorHeapType::Standard);
+                                auto descriptorSamplerHeap = device->GetDescriptorHeap(RHI::RHIDescriptorHeapType::Sampler);
 
-                        if (graphicsPSO && graphicsPSO->IsValid())
-                        {
-                            std::cout << "GraphicsPipelineState created successfully!" << std::endl;
+                                std::cout << "DescriptorHeaps Get successfully!" << std::endl;
 
-                            if (computePSO && computePSO->IsValid())
-                            {
-                                std::cout << "ComputePipelineState created successfully!" << std::endl;
-
-                                auto cmdAllocator = device->CreateCommandAllocator(RHI::RHICmdType::Graphics);
-                                auto cmdList = device->CreateCommandList(cmdAllocator);
-
-                                if(cmdList && cmdList.get() != nullptr){
-                                    std::cout << "CommandList created successfully!" << std::endl;
-
-                                    // 获取描述符堆
-                                    auto descriptorHeap = device->GetDescriptorHeap(RHI::RHIDescriptorHeapType::Standard);
-                                    auto descriptorSamplerHeap = device->GetDescriptorHeap(RHI::RHIDescriptorHeapType::Sampler);
-
-                                    std::cout << "DescriptorHeaps Get successfully!" << std::endl;
-
-                                    MSG msg = {};
-                                    while (GetMessage(&msg, nullptr, 0, 0))
-                                    {
-                                        if (msg.message == WM_QUIT){
-                                            break;
-                                        }
-                                        TranslateMessage(&msg);
-                                        DispatchMessage(&msg);
-                                        
-                                        // 开启帧
-                                        device->GetCommandQueue(RHI::RHICmdType::Graphics)->BeginFrame();
-                                        // 开始记录命令
-                                        cmdList->BeginRecording();
-                                        uint32_t currentIndex = swapChain->GetFrameIndex();
-                                        RHI::RHITexture* BackBufferTexture = swapChain->GetBackBuffer(currentIndex);
-
-                                        RHI::BarrierDesc barrier = {};
-                                        barrier.Type                        = RHI::ResourceBarrierType::Transition;
-                                        barrier.ResourceType                = RHI::BarrierResourceType::Texture;
-                                        barrier.Flags                       = RHI::ResourceBarrierFlags::None;
-                                        barrier.Transition.pResource        = BackBufferTexture;
-                                        barrier.Transition.Subresource      = 0;
-                                        barrier.Transition.StateBefore      = RHI::RHIResourceState::Present;
-                                        barrier.Transition.StateAfter       = RHI::RHIResourceState::RenderTarget;
-                                        
-                                        cmdList->ResourceBarrier(1, &barrier);
-                                        // 设置渲染目标视图
-                                        RHI::RHIRenderTargetView* pRTV = swapChain->GetRenderTargetView(currentIndex);
-                                        cmdList->OMSetRenderTargets(1, &pRTV, false, nullptr);
-                                        // 清除渲染目标视图
-                                        float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-                                        cmdList->ClearRenderTargetView(pRTV, clearColor);
-
-                                        cmdList->SetGraphicsRootSignature(rootSignature.get());
-                                        cmdList->SetPipelineState(graphicsPSO.get(), RHI::PipelineStateType::Graphics);
-                                        
-                                        RHI::RHIDescriptorHeap* heaps[] = {descriptorHeap, descriptorSamplerHeap};
-                                        cmdList->SetDescriptorHeaps(2, heaps);
-
-                                        float floatValue = 0.5f; uint32_t intValue;
-                                        memcpy(&intValue, &floatValue, sizeof(float));
-                                        cmdList->SetGraphicsRootDescriptorTable(0, descriptorHeap, 0);
-                                        cmdList->SetGraphicsRootConstantBufferView(1, cbvView->GetGPUVirtualAddress());
-                                        cmdList->SetGraphicsRoot32BitConstant(2, intValue, 0);
-                                        
-                                        // 设置拓扑类型
-                                        cmdList->IASetPrimitiveTopology(RHI::RHIPrimitiveTopology::TriangleList);
-                                        // 设置顶点缓冲区
-                                        RHI::RHIVertexBuffer* pRawBuffers[] = {vertexBuffer.get()};
-                                        cmdList->IASetVertexBuffers(0, 1, pRawBuffers,0);
-
-                                        uint32_t width = swapChain->GetWidth();
-                                        uint32_t height = swapChain->GetHeight();
-
-                                        RHI::RHIViewport viewport = {0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f};
-                                        cmdList->RSSetViewports(1, &viewport);
-
-                                        RHI::RHIRect scissorRect = {0, 0, (float)width, (float)height};
-                                        cmdList->RSSetScissorRects(1, &scissorRect);
-
-                                        // 绘制三角形
-                                        cmdList->Draw(3, 0);
-
-                                        RHI::BarrierDesc barrierToPresent = {};
-                                        barrierToPresent.Type                        = RHI::ResourceBarrierType::Transition;
-                                        barrierToPresent.ResourceType                = RHI::BarrierResourceType::Texture;
-                                        barrierToPresent.Flags                       = RHI::ResourceBarrierFlags::None;
-                                        barrierToPresent.Transition.pResource        = BackBufferTexture;
-                                        barrierToPresent.Transition.Subresource      = 0;
-                                        barrierToPresent.Transition.StateBefore      = RHI::RHIResourceState::RenderTarget;
-                                        barrierToPresent.Transition.StateAfter       = RHI::RHIResourceState::Present;
-                                        cmdList->ResourceBarrier(1, &barrierToPresent);
-                                        cmdList->EndRecording();
-                                        
-                                        // run command list
-                                        device->GetCommandQueue(RHI::RHICmdType::Graphics)->ExecuteCommandLists({cmdList});
-                                        swapChain->Present(1, 0);
-
-                                        // 结束帧
-                                        device->GetCommandQueue(RHI::RHICmdType::Graphics)->EndFrame();
-                                        device->GetCommandQueue(RHI::RHICmdType::Graphics)->WaitForGPU();
-                                        
-                                        if (ExeSetSize) {
-                                            ExeSetSize = false;
-                                            swapChain->Resize(x, y);
-                                        }
+                                MSG msg = {};
+                                while (GetMessage(&msg, nullptr, 0, 0))
+                                {
+                                    if (msg.message == WM_QUIT){
+                                        break;
                                     }
-                                }else{
-                                    std::cout << "Failed to create CommandList!" << std::endl;
+                                    TranslateMessage(&msg);
+                                    DispatchMessage(&msg);
+                                    
+                                    // 开启帧
+                                    device->GetCommandQueue(RHI::RHICmdType::Graphics)->BeginFrame();
+                                    // 开始记录命令
+                                    cmdList->BeginRecording();
+                                    uint32_t currentIndex = swapChain->GetFrameIndex();
+                                    RHI::RHITexture* BackBufferTexture = swapChain->GetBackBuffer(currentIndex);
+
+                                    RHI::BarrierDesc barrier = {};
+                                    barrier.Type                        = RHI::ResourceBarrierType::Transition;
+                                    barrier.ResourceType                = RHI::BarrierResourceType::Texture;
+                                    barrier.Flags                       = RHI::ResourceBarrierFlags::None;
+                                    barrier.Transition.pResource        = BackBufferTexture;
+                                    barrier.Transition.Subresource      = 0;
+                                    barrier.Transition.StateBefore      = RHI::RHIResourceState::Present;
+                                    barrier.Transition.StateAfter       = RHI::RHIResourceState::RenderTarget;
+                                    
+                                    cmdList->ResourceBarrier(1, &barrier);
+                                    // 设置渲染目标视图
+                                    RHI::RHIRenderTargetView* pRTV = swapChain->GetRenderTargetView(currentIndex);
+                                    cmdList->OMSetRenderTargets(1, &pRTV, false, nullptr);
+                                    // 清除渲染目标视图
+                                    float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+                                    cmdList->ClearRenderTargetView(pRTV, clearColor);
+
+                                    cmdList->SetGraphicsRootSignature(rootSignature.get());
+                                    cmdList->SetPipelineState(graphicsPSO.get(), RHI::PipelineStateType::Graphics);
+                                    
+                                    RHI::RHIDescriptorHeap* heaps[] = {descriptorHeap, descriptorSamplerHeap};
+                                    cmdList->SetDescriptorHeaps(2, heaps);
+
+                                    float floatValue = 0.5f; uint32_t intValue;
+                                    memcpy(&intValue, &floatValue, sizeof(float));
+                                    cmdList->SetGraphicsRootDescriptorTable(0, descriptorHeap, 0);
+                                    cmdList->SetGraphicsRootConstantBufferView(1, cbvView->GetGPUVirtualAddress());
+                                    cmdList->SetGraphicsRoot32BitConstant(2, intValue, 0);
+                                    
+                                    // 设置拓扑类型
+                                    cmdList->IASetPrimitiveTopology(RHI::RHIPrimitiveTopology::TriangleList);
+                                    // 设置顶点缓冲区
+                                    RHI::RHIVertexBuffer* pRawBuffers[] = {vertexBuffer.get()};
+                                    cmdList->IASetVertexBuffers(0, 1, pRawBuffers,0);
+
+                                    uint32_t width = swapChain->GetWidth();
+                                    uint32_t height = swapChain->GetHeight();
+
+                                    RHI::RHIViewport viewport = {0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f};
+                                    cmdList->RSSetViewports(1, &viewport);
+
+                                    RHI::RHIRect scissorRect = {0, 0, (float)width, (float)height};
+                                    cmdList->RSSetScissorRects(1, &scissorRect);
+
+                                    // 绘制三角形
+                                    cmdList->Draw(3, 0);
+
+                                    RHI::BarrierDesc barrierToPresent = {};
+                                    barrierToPresent.Type                        = RHI::ResourceBarrierType::Transition;
+                                    barrierToPresent.ResourceType                = RHI::BarrierResourceType::Texture;
+                                    barrierToPresent.Flags                       = RHI::ResourceBarrierFlags::None;
+                                    barrierToPresent.Transition.pResource        = BackBufferTexture;
+                                    barrierToPresent.Transition.Subresource      = 0;
+                                    barrierToPresent.Transition.StateBefore      = RHI::RHIResourceState::RenderTarget;
+                                    barrierToPresent.Transition.StateAfter       = RHI::RHIResourceState::Present;
+                                    cmdList->ResourceBarrier(1, &barrierToPresent);
+                                    cmdList->EndRecording();
+                                    
+                                    // run command list
+                                    device->GetCommandQueue(RHI::RHICmdType::Graphics)->ExecuteCommandLists({cmdList});
+                                    swapChain->Present(1, 0);
+
+                                    // 结束帧
+                                    device->GetCommandQueue(RHI::RHICmdType::Graphics)->EndFrame();
+                                    device->GetCommandQueue(RHI::RHICmdType::Graphics)->WaitForGPU();
+                                    
+                                    if (ExeSetSize) {
+                                        ExeSetSize = false;
+                                        swapChain->Resize(x, y);
+                                    }
                                 }
-                            }
-                            else
-                            {
-                                std::cout << "Failed to create ComputePipelineState!" << std::endl;
+                            }else{
+                                std::cout << "Failed to create CommandList!" << std::endl;
                             }
                         }
                         else
                         {
-                            std::cout << "Failed to create GraphicsPipelineState!" << std::endl;
+                            std::cout << "Failed to create ComputePipelineState!" << std::endl;
                         }
                     }
                     else
                     {
-                        std::cout << "Failed to create RootSignature!" << std::endl;
+                        std::cout << "Failed to create GraphicsPipelineState!" << std::endl;
                     }
-                }else{
-                    std::cout << "Failed to compile VertexShader!" << std::endl;
                 }
-            }
-            else
-            {
-                std::cout << "Failed to create SamplerState!" << std::endl;
+                else
+                {
+                    std::cout << "Failed to create RootSignature!" << std::endl;
+                }
+            }else{
+                std::cout << "Failed to compile VertexShader!" << std::endl;
             }
         }
         else
