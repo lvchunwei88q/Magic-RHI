@@ -264,7 +264,7 @@ namespace RHI
             // return buffer
             return buffer;
         }
-#if RHI_ENABLE_RESOURCE_DEBUG_INFO
+#if RHI_ENABLE_DEBUG_INFO
         else if(desc.HeapType == BufferHeapType::Default && desc.InitialData == nullptr) 
             ThrowErrorMessage("Creating D3D12_HEAP_TYPE_DEFAULT requires providing heap data");
 #endif
@@ -293,7 +293,7 @@ namespace RHI
         CommandAllocatorD3D12* dx12CmdAllocator = GetAllocator();
 
         if(dx12CmdAllocator == nullptr){
-#ifdef RHI_ENABLE_RESOURCE_DEBUG_INFO
+#if RHI_ENABLE_DEBUG_INFO
             ThrowErrorMessage("CommandAllocatorD3D12 is nullptr");
 #endif
             return;

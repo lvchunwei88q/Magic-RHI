@@ -3,6 +3,7 @@
 #pragma once
 #include <memory>
 #include "Common/RHI_API.h"
+#include "Common/RHIDefinitions.h"
 #include "Common/RHIPlatformDetection.h"
 
 // Forward Declaration
@@ -13,6 +14,8 @@ namespace RHI
 {
     // RHI Loader Interface
     class IRHILoader;
+    // SPIRV Processor Interface
+    class SPIRVProcessor;
 
     // RHI Module Interface
     class RHI_API IRHIModule
@@ -21,6 +24,8 @@ namespace RHI
         virtual ~IRHIModule() = default;
 
         static IRHILoader* GetRHILoader();
+        static SPIRVProcessor* GetSPIRVCompiler();
+        static SPIRVProcessor* GetSPIRVReflection();
     };
 
     class RHI_API IRHILoader
@@ -37,4 +42,22 @@ namespace RHI
         virtual bool IsLoaded() const = 0;
         virtual RHIType GetRHIType() const = 0;
     };
+
+    class RHI_API SPIRVProcessor 
+    {
+    public:
+        virtual ~SPIRVProcessor () = default;
+
+        // Compile HLSL → SPIR-V
+        virtual SPIRVCompileResult CompileFromString(const std::string& hlslSource, const SPIRVCompileOptions& options) { return SPIRVCompileResult {}; }
+        virtual SPIRVCompileResult CompileFromFile(const std::string& filePath, const SPIRVCompileOptions& options) { return SPIRVCompileResult {}; };
+        
+        // Extract reflection information
+        virtual SPIRVReflection ExtractReflection(const std::vector<uint32_t>& spirv) { return SPIRVReflection {}; }
+    };
+
 } // namespace RHI
+
+using RHIModule = RHI::IRHIModule;
+using RHIAPILoader = RHI::IRHILoader;
+using SPIRVProcessor = RHI::SPIRVProcessor;

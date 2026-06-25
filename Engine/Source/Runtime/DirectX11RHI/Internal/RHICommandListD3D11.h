@@ -144,7 +144,7 @@ namespace RHI
         // Here, use this function to quickly get the allocator
         CommandAllocatorD3D11* GetAllocator() { 
             if(m_pAllocator == nullptr){
-#ifdef RHI_ENABLE_RESOURCE_DEBUG_INFO
+#if RHI_ENABLE_DEBUG_INFO
                 ThrowErrorMessage("CommandAllocatorD3D11 is nullptr");
 #endif
                 return nullptr;

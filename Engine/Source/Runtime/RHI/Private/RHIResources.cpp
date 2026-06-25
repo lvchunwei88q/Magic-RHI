@@ -2,9 +2,11 @@
 
 namespace RHI
 {       
-#if RHI_ENABLE_RESOURCE_DEBUG_INFO
-        void RHIResource::GetInfo(RHIResourceInfo& OutInfo) const{
-            OutInfo = RHIResourceInfo{ /* NOT */ };
+#if RHI_ENABLE_DEBUG_INFO
+        RHIResourceDebugInfo RHIResource::GetInfo() const
+        {
+            RHIResourceDebugInfo info{ /* NOT */ };
+            return info;
         }
 #endif
 }

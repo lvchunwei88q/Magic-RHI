@@ -4,6 +4,18 @@
 
 namespace RHI
 {
+    // ========== SPIR-V Compiler ==========
+    // Get SPIR-V compiler instance
+    SPIRVProcessor* IRHIModule::GetSPIRVCompiler(){
+        return &HLSLToSPIRVCompiler::Get();
+    }
+
+    // ========== SPIR-V Reflection ==========
+    // Get SPIR-V reflection instance
+    SPIRVProcessor* IRHIModule::GetSPIRVReflection(){
+        return &SPIRVGenerationReflection::Get();
+    }
+
     HLSLToSPIRVCompiler::HLSLToSPIRVCompiler() {
         m_Context = std::make_unique<ShaderCompilerContext>();
         m_Initialized = m_Context->Initialize();
@@ -198,7 +210,7 @@ namespace RHI
         }
 
         // Other common flags
-#if RHI_ENABLE_RESOURCE_DEBUG_INFO
+#if RHI_ENABLE_DEBUG_INFO
         args.push_back(DXC_ARG_WARNINGS_ARE_ERRORS);       // Warning as error
 #else
         args.push_back(L"-no-warn");  // Reduce warnings
@@ -210,5 +222,10 @@ namespace RHI
         }
 
         return args;
+    }
+
+    SPIRVReflection SPIRVGenerationReflection::ExtractReflection(const std::vector<uint32_t>& spirv){
+        SPIRVReflection reflection;
+        return reflection;
     }
 }

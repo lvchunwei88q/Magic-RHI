@@ -1,23 +1,16 @@
 #pragma once
 
 #include "Common/RHI_API.h"
+#include "Common/RHIConfig.h"
 #include "Common/RHITypes.h"
 #include "Common/RHIDefinitions.h"
 #include <Common/Check.h>
 #include <string>
 #include <memory>
 
-#ifndef RHI_ENABLE_RESOURCE_DEBUG_INFO // 开启调试信息
-    #ifdef _DEBUG
-        #define RHI_ENABLE_RESOURCE_DEBUG_INFO 1   // Debug: Run
-    #else
-        #define RHI_ENABLE_RESOURCE_DEBUG_INFO 0   // Release: Close
-    #endif
-#endif
-
 namespace RHI
 {  
-    // 对齐 Up Down
+    // Align Up Down
     inline uint64_t AlignUp(uint64_t Value, uint64_t Alignment)
     {
         return (Value + Alignment - 1) & ~(Alignment - 1);
@@ -28,7 +21,8 @@ namespace RHI
         return Value & ~(Alignment - 1);
     }
 
-    struct GPUVRamAllocation
+    // GPU VRAM allocation descriptor
+    struct GPUVRamAllocation 
     {
         GPUVRamAllocation() = default;
         GPUVRamAllocation(uint64_t InAllocationStart, uint64_t InAllocationSize)
@@ -45,7 +39,7 @@ namespace RHI
         uint64_t AllocationSize{};
     };
 
-    struct RHIResourceInfo
+    struct RHIResourceDebugInfo
     {
         std::string Name;
         RHIResourceType Type{ RRT_None };
@@ -66,10 +60,11 @@ namespace RHI
         RHIResource& operator=(const RHIResource&) = delete;
 
         RHIResourceType GetType() const { return Type; }
-        //virtual void* GetResource() const { return nullptr; } 这里不应该获取到资源我们要对用户隐藏起来
+        // We probably shouldn’t provide an interface to access resources here because this class itself is a resource.
+        //virtual void* GetResource() const { return nullptr; } 
 
-#if RHI_ENABLE_RESOURCE_DEBUG_INFO
-        virtual void GetInfo(RHIResourceInfo& OutInfo) const;
+#if RHI_ENABLE_DEBUG_INFO
+        virtual RHIResourceDebugInfo GetInfo() const;
 #endif
 
         // get shared_ptr
@@ -138,7 +133,7 @@ namespace RHI
     // State blocks
     //
 
-    struct SamplerStateDesc // 采样器状态描述符
+    struct SamplerStateDesc // Sampler state descriptor
     {
         SamplerFilter Filter = SamplerFilter::Bilinear;
         SamplerAddressMode AddressU = SamplerAddressMode::Wrap;

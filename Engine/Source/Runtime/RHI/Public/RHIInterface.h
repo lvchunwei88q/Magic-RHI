@@ -17,8 +17,9 @@
 namespace RHI
 {
     /*
-     * 使用前向声明时尤其对于C++智能指针来说我们应该将构造与构析函数放置在有完整类型的文件中，否则将会出现类型不匹配，
-     * 因为智能指针需要了解这个Type的内存布局
+     * We used smart pointers in the class, so when defining the pointers,
+     * we must already have complete information about these forward-declared classes,
+     * otherwise it will cause undefined issues.
      */
     // CommandList & CommandQueue Forward Declaration
     class RHICommandAllocator;

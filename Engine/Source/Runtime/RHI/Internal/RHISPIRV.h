@@ -1,10 +1,14 @@
 // RHI/SPIRVHelper.h
 #pragma once
 
-#include "Common/RHIDefinitions.h"
-#include "Common/RHIPlatformDetection.h"
+#include "IRHIModule.h"
 #include <CoreMinimal.h>
+#include <Tools/Singleton.h>
+
+// Windows headers
 #include <windows.h>
+
+// Standard headers
 #include <cstdint>
 #include <memory>
 
@@ -38,7 +42,7 @@ struct ShaderCompilerContext {
 };
 
 // HLSL → SPIR-V Compiler
-class HLSLToSPIRVCompiler {
+class HLSLToSPIRVCompiler : public SPIRVProcessor , public Singleton<HLSLToSPIRVCompiler> {
 public:
     HLSLToSPIRVCompiler();
     ~HLSLToSPIRVCompiler();
@@ -47,13 +51,13 @@ public:
     SPIRVCompileResult CompileFromString(
         const std::string& hlslSource,
         const SPIRVCompileOptions& options
-    );
+    ) override;
 
     // Compile from file
     SPIRVCompileResult CompileFromFile(
         const std::string& filePath,
         const SPIRVCompileOptions& options
-    );
+    ) override;
 
 private:
     // Internal compile function
@@ -91,10 +95,10 @@ private:
  * @brief SPIR-V Loader
  * This class is used to load SPIR-V files from disk or memory
 */
-class SPIRVGenerationReflection {
+class SPIRVGenerationReflection : public SPIRVProcessor , public Singleton<SPIRVGenerationReflection> {
 public:
     // Extract reflection information (using SPIRV-Cross)
-    SPIRVReflection ExtractReflection(const std::vector<uint32_t>& spirv);
+    SPIRVReflection ExtractReflection(const std::vector<uint32_t>& spirv) override;
 };
 
 } // namespace RHI

@@ -64,7 +64,7 @@ namespace RHI
             m_pSwapChain3 = swapChain3;  // 支持现代接口
             m_pSwapChain1 = swapChain1;  // 降级到基础接口
         } else {
-#ifdef RHI_ENABLE_RESOURCE_DEBUG_INFO
+#if RHI_ENABLE_DEBUG_INFO
             ThrowErrorMessage("SwapChain3 is not supported on this device.");
 #endif
             m_pSwapChain1 = swapChain1;  // 降级到基础接口

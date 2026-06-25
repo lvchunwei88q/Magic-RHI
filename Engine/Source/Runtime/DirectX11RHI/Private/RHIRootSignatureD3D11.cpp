@@ -110,7 +110,7 @@ namespace RHI
     bool RHIRootSignatureD3D11::Initialize(Device* device, const RootSignatureDesc& desc)
     {
         if (device == nullptr){
-#ifdef RHI_ENABLE_RESOURCE_DEBUG_INFO
+#if RHI_ENABLE_DEBUG_INFO
                 ThrowErrorMessage("Device is nullptr");
 #endif
             return false;

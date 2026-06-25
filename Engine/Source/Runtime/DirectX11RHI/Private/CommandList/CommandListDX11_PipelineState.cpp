@@ -37,7 +37,7 @@ namespace RHI
         // Check pipeline state
         if (!pPipelineState)
         {
-#if RHI_ENABLE_RESOURCE_DEBUG_INFO
+#if RHI_ENABLE_DEBUG_INFO
             ThrowErrorMessage("This PSO is empty");
 #endif
             return;
@@ -45,7 +45,7 @@ namespace RHI
 
         // Check pipeline state type
         if(stateType != pPipelineState->GetType()){
-#if RHI_ENABLE_RESOURCE_DEBUG_INFO
+#if RHI_ENABLE_DEBUG_INFO
             ThrowErrorMessage("This PSO is not as expected");
 #endif
             return;
@@ -55,7 +55,7 @@ namespace RHI
         auto pso = SafeCast<RHIPipelineStateD3D11>(pPipelineState);
         if (!pso->IsValid())
         {
-#if RHI_ENABLE_RESOURCE_DEBUG_INFO
+#if RHI_ENABLE_DEBUG_INFO
             ThrowErrorMessage("This PSO cannot be converted");
 #endif
             return;           

@@ -36,3 +36,12 @@
 #ifndef RHI_MULTI_BUFFERING
 #define RHI_MULTI_BUFFERING 2
 #endif
+
+// Enable resource debug info
+#ifndef RHI_ENABLE_DEBUG_INFO 
+    #ifdef _DEBUG
+        #define RHI_ENABLE_DEBUG_INFO 1   // Debug: Run
+    #else
+        #define RHI_ENABLE_DEBUG_INFO 0   // Release: Close
+    #endif
+#endif

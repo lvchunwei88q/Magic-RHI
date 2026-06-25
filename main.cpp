@@ -140,7 +140,7 @@ int main(int argc, char* argv[])
     
     std::cout << "Initializing Device..." << std::endl;
 
-    RHI::IRHILoader* loader = RHI::IRHIModule::GetRHILoader();
+    RHI::IRHILoader* loader = RHIModule::GetRHILoader();
     loader->Load(type);
     std::cout << "Is Multi-Threading Supported: " << (RHI::IsMultiThreadingSupported(loader->GetRHIType()) ? "Yes" : "No") << std::endl;
     
