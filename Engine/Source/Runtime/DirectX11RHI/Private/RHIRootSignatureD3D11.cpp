@@ -182,7 +182,8 @@ namespace RHI
             pool_loction++;
         }
         if (!existence) {
-            //Core::Error
+            //Core::Error("Root constant index is out of range.");
+            Core::ErrorCapture::Capture("Root constant index is out of range.");
             return nullptr;
         };
         return m_Pool->GetRootConstantData(pool_loction);
@@ -195,11 +196,20 @@ namespace RHI
         for (size_t i = 0; i < Desc.RootParameters.size(); ++i)
         {
             const auto& param = Desc.RootParameters[i];
-            if (param.Type == RootParameterType::Constants)
-            {
-                // Set the root constant. TODO: Set root constants for other shaders.
-                RootConstantDataD3D11* pRootConstantData = pRootSignature->GetRootConstantData(i);
-                pDeviceContext->PSSetConstantBuffers(param.Constants.ShaderRegister,1 ,pRootConstantData->ConstantBuffer.GetAddressOf());
+            switch (param.Type) {
+                case RootParameterType::Constants:
+                    {
+                        // Set the root constant. TODO: Set root constants for other shaders.
+                        RootConstantDataD3D11* pRootConstantData = pRootSignature->GetRootConstantData(i);
+                        pDeviceContext->PSSetConstantBuffers(param.Constants.ShaderRegister,1 ,pRootConstantData->ConstantBuffer.GetAddressOf());
+                    }
+                    break;
+                case RootParameterType::CBV:
+                case RootParameterType::SRV:
+                case RootParameterType::UAV:
+                    break;
+                default: // Unsupported root parameter type
+                    break;
             }
         }
 
