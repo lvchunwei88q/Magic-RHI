@@ -5,6 +5,8 @@ include(${PROJECT_SOURCE_DIR}/Engine/Cmake/common.cmake)
 include(${PROJECT_SOURCE_DIR}/Engine/Cmake/macro.cmake)
 
 # add engine modules
+ThirdPartyModule(SPIRV-Cross)
+
 RuntimeModule(Core)
 RuntimeModule(DirectX11RHI)
 RuntimeModule(DirectX12RHI)

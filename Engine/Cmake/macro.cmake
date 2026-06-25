@@ -43,6 +43,13 @@ function(add_engine_library name)
     )
 endfunction()
 
+function(add_engine_external_library name)
+    add_library(${name} ${ARGN})
+    set_target_properties(${name} PROPERTIES 
+        PREFIX "Magic-External-"
+    )
+endfunction()
+
 function(apply_mht_generate_path)
     foreach(module ${GENERATE_HEADER_MODEL})
         message(STATUS " This module will use the MHT tool: ${module}")
