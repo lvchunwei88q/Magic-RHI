@@ -90,6 +90,27 @@ public:
         std::unique_ptr<ShaderCompilerContext> m_Context;
 };
 
+// Get local thread compiler context
+[[nodiscard]] inline const ShaderCompilerContext* GetLocalThreadCompilerContext(const IShaderCompiler* compilerContext) {
+    const CompilerContextController* controller = SafeCast<const CompilerContextController>(compilerContext);
+    if (controller == nullptr) {
+        // Compiler context not initialized, return error
+#if RHI_ENABLE_DEBUG_INFO
+        ThrowErrorMessage("Shader compiler context not initialized!");
+#endif
+        return nullptr;
+    }
+    const ShaderCompilerContext* context = controller->GetCompilerContext();
+    if (context == nullptr) {
+        // Compiler context not initialized, return error
+#if RHI_ENABLE_DEBUG_INFO
+        ThrowErrorMessage("Shader compiler context not initialized!");
+#endif
+        return nullptr;
+    }
+    return context;
+}
+
 // HLSL → SPIR-V Compiler
 class HLSLToSPIRVCompiler : public IShaderCompiler , public Singleton<HLSLToSPIRVCompiler> {
 public:

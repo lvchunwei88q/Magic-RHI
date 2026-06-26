@@ -4,14 +4,6 @@
 namespace RHI
 {
     namespace {
-        const ShaderCompilerContext* GetCompilerContext() {
-            const ShaderCompilerContext* context = CompilerContextController::Get().GetCompilerContext();
-            if (context == nullptr) {
-                // Compiler context not initialized, return error
-                return nullptr;
-            }
-            return context;
-        }
     }
     // ========== SPIR-V Compiler ==========
     // Get SPIR-V compiler instance
@@ -31,7 +23,8 @@ namespace RHI
         localOptions.targetCompilerMode = "-spirv";
         localOptions.SPIR_V_TargetEnv = GetSPIRVTargetEnv();
 
-        const ShaderCompilerContext* context = GetCompilerContext();
+        const IShaderCompiler* compilerContext = GetCompilerContext();
+        const ShaderCompilerContext* context = GetLocalThreadCompilerContext(compilerContext);
         if (context == nullptr) {
             // Compiler context not initialized, return error
             ShaderCompileResult result;
@@ -61,8 +54,9 @@ namespace RHI
         LocalShaderCompileOption localOptions = options;
         localOptions.targetCompilerMode = "-spirv";
         localOptions.SPIR_V_TargetEnv = GetSPIRVTargetEnv();
-
-        const ShaderCompilerContext* context = GetCompilerContext();
+        
+        const IShaderCompiler* compilerContext = GetCompilerContext();
+        const ShaderCompilerContext* context = GetLocalThreadCompilerContext(compilerContext);
         if (context == nullptr) {
             // Compiler context not initialized, return error
             ShaderCompileResult result;

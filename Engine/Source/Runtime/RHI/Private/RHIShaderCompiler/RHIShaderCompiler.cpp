@@ -19,12 +19,18 @@ namespace RHI {
             // init shader compiler failed
             Core::ErrorCapture::Capture("Failed to initialize shader compiler!");
         }
+
+        // Set compiler context to this controller
+        SetCompilerContext(this);
+        // Return if initialized
         return m_Context != nullptr && isInitialized;
     }
 
     void CompilerContextController::ShutdownCompilerContext() {
         // Shutdown DXC compiler
         m_Context.reset();
+        // Set compiler context to nullptr
+        SetCompilerContext(nullptr);
     }
 
     // ========== Internal compile core function ==========

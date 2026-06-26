@@ -67,6 +67,17 @@ namespace RHI
         
         // Extract reflection information
         virtual SPIRVReflection ExtractReflection(const std::vector<uint32_t>& spirv) { return SPIRVReflection {}; }
+
+        // Compiler Context
+        void SetCompilerContext(IShaderCompiler* compilerContext) { GetSharedCompilerContext() = compilerContext; }
+        const IShaderCompiler* GetCompilerContext() const { return GetSharedCompilerContext(); }
+
+    private:
+        static IShaderCompiler*& GetSharedCompilerContext() {
+            // thread_local Independent copy for each thread
+            static thread_local IShaderCompiler* compiler_context = nullptr; 
+            return compiler_context;
+        }
     };
 
 } // namespace RHI

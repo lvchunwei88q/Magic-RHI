@@ -3,14 +3,6 @@
 
 namespace RHI {
     namespace {
-        const ShaderCompilerContext* GetCompilerContext() {
-            const ShaderCompilerContext* context = CompilerContextController::Get().GetCompilerContext();
-            if (context == nullptr) {
-                // Compiler context not initialized, return error
-                return nullptr;
-            }
-            return context;
-        }
     }
 
     // ========== HLSL Compiler ==========
@@ -31,8 +23,9 @@ namespace RHI {
         LocalShaderCompileOption localOptions = options;
         // Set default target compiler mode to HLSL
         localOptions.targetCompilerMode = "-fcgl";
-
-        const ShaderCompilerContext* context = GetCompilerContext();
+        
+        const IShaderCompiler* compilerContext = GetCompilerContext();
+        const ShaderCompilerContext* context = GetLocalThreadCompilerContext(compilerContext);
         if (context == nullptr) {
             // Compiler context not initialized, return error
             ShaderCompileResult result;
@@ -63,8 +56,9 @@ namespace RHI {
         }
 
         std::string content = IO::ReadAllText(filePathW);
-
-        const ShaderCompilerContext* context = GetCompilerContext();
+        
+        const IShaderCompiler* compilerContext = GetCompilerContext();
+        const ShaderCompilerContext* context = GetLocalThreadCompilerContext(compilerContext);
         if (context == nullptr) {
             // Compiler context not initialized, return error
             ShaderCompileResult result;
