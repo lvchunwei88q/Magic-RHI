@@ -24,6 +24,9 @@ namespace RHI
         virtual ~IRHIModule() = default;
 
         static IRHILoader* GetRHILoader();
+
+        static IShaderCompiler* GetCompilerContextController();
+        static IShaderCompiler* GetHLSLCompiler();
         static IShaderCompiler* GetSPIRVCompiler();
         static IShaderCompiler* GetSPIRVReflection();
     };
@@ -48,9 +51,15 @@ namespace RHI
     public:
         virtual ~IShaderCompiler () = default;
 
+        // Compiler Context Controller
+        virtual bool InitializeCompilerContext() { return false; }
+        virtual void ShutdownCompilerContext() {}
+
+        // ----------------------------------------------------------------- Compiler Functions Start
+
         // Compile HLSL
-        virtual ShaderCompileResult CompileFromString(const std::string& hlslSource, const ShaderCompileOptions& options) { return ShaderCompileResult {}; }
-        virtual ShaderCompileResult CompileFromFile(const std::string& filePath, const ShaderCompileOptions& options) { return ShaderCompileResult {}; };
+        virtual ShaderCompileResult HLSLCompileFromString(const std::string& hlslSource, const ShaderCompileOptions& options) { return ShaderCompileResult {}; }
+        virtual ShaderCompileResult HLSLCompileFromFile(const std::string& filePath, const ShaderCompileOptions& options) { return ShaderCompileResult {}; };
 
         // Compile HLSL → SPIR-V
         virtual ShaderCompileResult SPIRVCompileFromString(const std::string& hlslSource, const ShaderCompileOptions& options) { return ShaderCompileResult {}; }

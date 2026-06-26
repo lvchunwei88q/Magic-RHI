@@ -2,6 +2,31 @@
 #include "IO.h"
 
 namespace RHI {
+    // ========== Compiler Context Controller ==========
+    // Get compiler context controller instance
+    IShaderCompiler* IRHIModule::GetCompilerContextController(){
+        return &CompilerContextController::Get();
+    }
+
+    CompilerContextController::CompilerContextController() = default;
+    CompilerContextController::~CompilerContextController() = default;
+
+    // Initialize Compiler context instance
+    bool CompilerContextController::InitializeCompilerContext() {
+        m_Context = std::make_unique<ShaderCompilerContext>();
+        bool isInitialized = m_Context->Initialize();
+        if (!isInitialized) {
+            // init shader compiler failed
+            Core::ErrorCapture::Capture("Failed to initialize shader compiler!");
+        }
+        return m_Context != nullptr && isInitialized;
+    }
+
+    void CompilerContextController::ShutdownCompilerContext() {
+        // Shutdown DXC compiler
+        m_Context.reset();
+    }
+
     // ========== Internal compile core function ==========
     ShaderCompileResult CompileInternal(
         const std::string& hlslSource,
@@ -183,6 +208,7 @@ namespace RHI {
         // print warnings in release
 #endif
 
+        // Fill in the parameter pointers to args
         for (size_t i = 0; i < indexs.size(); i++)
         {
             size_t arg_index = indexs[i];

@@ -3,21 +3,23 @@
 
 namespace RHI
 {
+    namespace {
+        const ShaderCompilerContext* GetCompilerContext() {
+            const ShaderCompilerContext* context = CompilerContextController::Get().GetCompilerContext();
+            if (context == nullptr) {
+                // Compiler context not initialized, return error
+                return nullptr;
+            }
+            return context;
+        }
+    }
     // ========== SPIR-V Compiler ==========
     // Get SPIR-V compiler instance
     IShaderCompiler* IRHIModule::GetSPIRVCompiler(){
         return &HLSLToSPIRVCompiler::Get();
     }
 
-    HLSLToSPIRVCompiler::HLSLToSPIRVCompiler() {
-        m_Context = std::make_unique<ShaderCompilerContext>();
-        m_Initialized = m_Context->Initialize();
-        if (!m_Initialized) {
-            // init shader compiler failed
-            Core::ErrorCapture::Capture("Failed to initialize shader compiler!");
-        }
-    }
-
+    HLSLToSPIRVCompiler::HLSLToSPIRVCompiler() {}
     HLSLToSPIRVCompiler::~HLSLToSPIRVCompiler() = default;
 
     // ========== Compile from source string ==========
@@ -28,7 +30,17 @@ namespace RHI
         LocalShaderCompileOption localOptions = options;
         localOptions.targetCompilerMode = "-spirv";
         localOptions.targetEnv = GetSPIRVTargetEnv();
-        return CompileInternal(hlslSource, localOptions, *m_Context);
+
+        const ShaderCompilerContext* context = GetCompilerContext();
+        if (context == nullptr) {
+            // Compiler context not initialized, return error
+            ShaderCompileResult result;
+            result.success = false;
+            result.errorMessage = "Shader compiler context not initialized!";
+            return result;
+        }
+
+        return CompileInternal(hlslSource, localOptions, *context);
     }
 
     // ========== Compile from file ==========
@@ -49,6 +61,16 @@ namespace RHI
         LocalShaderCompileOption localOptions = options;
         localOptions.targetCompilerMode = "-spirv";
         localOptions.targetEnv = GetSPIRVTargetEnv();
-        return CompileInternal(content, localOptions, *m_Context);
+
+        const ShaderCompilerContext* context = GetCompilerContext();
+        if (context == nullptr) {
+            // Compiler context not initialized, return error
+            ShaderCompileResult result;
+            result.success = false;
+            result.errorMessage = "Shader compiler context not initialized!";
+            return result;
+        }
+
+        return CompileInternal(content, localOptions, *context);
     }
 }

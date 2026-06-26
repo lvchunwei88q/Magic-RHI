@@ -175,8 +175,15 @@ int main(int argc, char* argv[])
 
     RHIAPILoader* loader = RHIModule::GetRHILoader();
 
+    RHIShaderCompiler* compilerContextController = RHIModule::GetCompilerContextController();
     RHIShaderCompiler* compiler = RHIModule::GetSPIRVCompiler();
     RHIShaderCompiler* reflector = RHIModule::GetSPIRVReflection();
+
+    bool isInitialized = compilerContextController->InitializeCompilerContext();
+    if (!isInitialized) {
+        std::cerr << "Failed to initialize shader compiler context!" << std::endl;
+        return 1;
+    }
 
     if (!compiler || !reflector) {
         std::cerr << "Failed to get SPIR-V processor!" << std::endl;
@@ -539,6 +546,7 @@ int main(int argc, char* argv[])
         std::cout << "Failed to initialize Device!" << std::endl;
     }
     
+    compilerContextController->ShutdownCompilerContext();
     device.reset(); 
     
     Core::SubsystemControl::Uninstall();

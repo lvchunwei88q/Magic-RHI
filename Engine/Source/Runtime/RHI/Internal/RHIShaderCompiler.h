@@ -76,6 +76,20 @@ struct LocalShaderCompileOption : public ShaderCompileOptions {
 
 // ----------------------------------------------------------------- Compiler Functions End
 
+class CompilerContextController : public IShaderCompiler , public Singleton<CompilerContextController> {
+public:
+    CompilerContextController();
+    ~CompilerContextController();
+
+    // Compiler Context Controller
+    bool InitializeCompilerContext() override;
+    void ShutdownCompilerContext() override;
+
+    const ShaderCompilerContext* GetCompilerContext() const { return m_Context.get(); }
+    private:
+        std::unique_ptr<ShaderCompilerContext> m_Context;
+};
+
 // HLSL → SPIR-V Compiler
 class HLSLToSPIRVCompiler : public IShaderCompiler , public Singleton<HLSLToSPIRVCompiler> {
 public:
@@ -108,8 +122,26 @@ private:
     }
 
 private:
-    std::unique_ptr<ShaderCompilerContext> m_Context;
-    bool m_Initialized = false;
+};
+
+// HLSL Compiler
+class HLSLCompiler : public IShaderCompiler , public Singleton<HLSLCompiler> {
+public:
+    HLSLCompiler();
+    ~HLSLCompiler();
+
+    // Compile from source string
+    ShaderCompileResult HLSLCompileFromString(
+        const std::string& hlslSource,
+        const ShaderCompileOptions& options
+    ) override;
+
+    // Compile from file
+    ShaderCompileResult HLSLCompileFromFile(
+        const std::string& filePath,
+        const ShaderCompileOptions& options
+    ) override;
+private:
 };
 
 /*
