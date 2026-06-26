@@ -191,7 +191,7 @@ namespace RHI
 
         // HLSL version
         args.push_back(L"-HV");
-        addArg(options.hlslVersion);
+        addArg(options.DEFAULT_HLSL_VERSION);
 
         // SPIR-V target environment
         std::string targetEnv = GetSPIRVTargetEnv();
@@ -211,7 +211,7 @@ namespace RHI
         }
 
         // Macro definitions
-        for (const auto& macro : options.defines) {
+        for (const auto& macro : options.Macros) {
             std::string def = macro.name + "=" + macro.definition;
             args.push_back(L"-D");
             addArg(def);

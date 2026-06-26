@@ -286,8 +286,7 @@ int main(int argc, char* argv[])
             options.targetProfile = "ps_6_0";
             options.optimize = true;
             options.debugInfo = true;
-            options.hlslVersion = "2021";
-            options.defines.push_back({"SHADER_MODEL", 
+            options.Macros.push_back({"SHADER_MODEL", 
                 versionStr.c_str()});
             options.includePaths.push_back(std::string(ShaderPath + "\\"));
 

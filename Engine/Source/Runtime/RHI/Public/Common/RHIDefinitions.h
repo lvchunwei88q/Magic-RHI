@@ -120,11 +120,11 @@ struct SPIRVCompileOptions {
     bool enableMatrixPacking = false;
 
     // Macros to define
-    std::vector<SPIRVShaderMacro> defines;
+    std::vector<SPIRVShaderMacro> Macros;
     // Include Paths - Add some custom paths to include files from
     std::vector<std::string> includePaths;
     // HLSL Version
-    std::string hlslVersion = "2021";
+    static constexpr const char* DEFAULT_HLSL_VERSION = "2021";
 };
 
 // SPIR-V Compile Result
