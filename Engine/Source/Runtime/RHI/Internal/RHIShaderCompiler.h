@@ -19,6 +19,13 @@
 #include <wrl/client.h>
 using namespace Microsoft::WRL;
 
+/*
+ * This is Shader compiler
+ * Our shaders support multithreading, and what we’re doing just works on a single thread. For multithreading,
+ * we use ContextController to manage different compiler contexts for each thread, so you can see I didn’t use any locks,
+ * and we use static thread_local to isolate different threads.
+*/
+
 namespace RHI {
 
 // Shader compiler context
@@ -76,7 +83,7 @@ struct LocalShaderCompileOption : public ShaderCompileOptions {
 
 // ----------------------------------------------------------------- Compiler Functions End
 
-class CompilerContextController : public IShaderCompiler , public Singleton<CompilerContextController> {
+class CompilerContextController : public IShaderCompiler {
 public:
     CompilerContextController();
     ~CompilerContextController();
@@ -86,8 +93,15 @@ public:
     void ShutdownCompilerContext() override;
 
     const ShaderCompilerContext* GetCompilerContext() const { return m_Context.get(); }
-    private:
-        std::unique_ptr<ShaderCompilerContext> m_Context;
+private:
+    enum class CompilerContextState {
+        Initialized,
+        Shutdown
+    };
+
+    CompilerContextState m_State = CompilerContextState::Shutdown;
+
+    std::unique_ptr<ShaderCompilerContext> m_Context;
 };
 
 // Get local thread compiler context

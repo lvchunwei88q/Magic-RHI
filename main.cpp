@@ -175,7 +175,7 @@ int main(int argc, char* argv[])
 
     RHIAPILoader* loader = RHIModule::GetRHILoader();
 
-    RHIShaderCompiler* compilerContextController = RHIModule::GetCompilerContextController();
+    std::unique_ptr<RHIShaderCompiler> compilerContextController = RHIModule::GetCompilerContextController();
     RHIShaderCompiler* SPIRVcompiler = RHIModule::GetSPIRVCompiler();
     RHIShaderCompiler* HLSLCompiler = RHIModule::GetHLSLCompiler();
     RHIShaderCompiler* SPIRVreflector = RHIModule::GetSPIRVReflection();

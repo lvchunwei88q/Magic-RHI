@@ -4,12 +4,17 @@
 namespace RHI {
     // ========== Compiler Context Controller ==========
     // Get compiler context controller instance
-    IShaderCompiler* IRHIModule::GetCompilerContextController(){
-        return &CompilerContextController::Get();
+    std::unique_ptr<IShaderCompiler> IRHIModule::GetCompilerContextController(){
+        return std::make_unique<CompilerContextController>();
     }
 
     CompilerContextController::CompilerContextController() = default;
-    CompilerContextController::~CompilerContextController() = default;
+    CompilerContextController::~CompilerContextController() {
+        // if compiler context is not shutdown, shutdown it
+        if (m_State != CompilerContextState::Shutdown) {
+            ShutdownCompilerContext();
+        }
+    };
 
     // Initialize Compiler context instance
     bool CompilerContextController::InitializeCompilerContext() {
@@ -22,7 +27,8 @@ namespace RHI {
 
         // Set compiler context to this controller
         SetCompilerContext(this);
-        // Return if initialized
+        // Return if initialized and state to initialized
+        m_State = CompilerContextState::Initialized;
         return m_Context != nullptr && isInitialized;
     }
 
@@ -31,6 +37,9 @@ namespace RHI {
         m_Context.reset();
         // Set compiler context to nullptr
         SetCompilerContext(nullptr);
+
+        // Set state to shutdown
+        m_State = CompilerContextState::Shutdown;
     }
 
     // ========== Internal compile core function ==========

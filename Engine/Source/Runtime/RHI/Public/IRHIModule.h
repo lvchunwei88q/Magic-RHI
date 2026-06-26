@@ -25,7 +25,7 @@ namespace RHI
 
         static IRHILoader* GetRHILoader();
 
-        static IShaderCompiler* GetCompilerContextController();
+        static std::unique_ptr<IShaderCompiler> GetCompilerContextController();
         static IShaderCompiler* GetHLSLCompiler();
         static IShaderCompiler* GetSPIRVCompiler();
         static IShaderCompiler* GetSPIRVReflection();
