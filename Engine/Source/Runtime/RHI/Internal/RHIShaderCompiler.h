@@ -2,6 +2,7 @@
 #pragma once
 
 #include "IRHIModule.h"
+#include "Common/RHIConfig.h"
 #include <CoreMinimal.h>
 #include <Tools/Singleton.h>
 

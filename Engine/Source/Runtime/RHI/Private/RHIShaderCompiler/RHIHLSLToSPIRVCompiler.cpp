@@ -1,5 +1,4 @@
 #include "RHIShaderCompiler.h"
-#include "RHIResource.h"
 #include "IO.h"
 
 namespace RHI
