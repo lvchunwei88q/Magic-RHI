@@ -42,33 +42,33 @@ struct ShaderCompilerContext {
 };
 
 // HLSL → SPIR-V Compiler
-class HLSLToSPIRVCompiler : public SPIRVProcessor , public Singleton<HLSLToSPIRVCompiler> {
+class HLSLToSPIRVCompiler : public IShaderCompiler , public Singleton<HLSLToSPIRVCompiler> {
 public:
     HLSLToSPIRVCompiler();
     ~HLSLToSPIRVCompiler();
 
     // Compile from source string
-    SPIRVCompileResult CompileFromString(
+    ShaderCompileResult CompileFromString(
         const std::string& hlslSource,
-        const SPIRVCompileOptions& options
+        const ShaderCompileOptions& options
     ) override;
 
     // Compile from file
-    SPIRVCompileResult CompileFromFile(
+    ShaderCompileResult CompileFromFile(
         const std::string& filePath,
-        const SPIRVCompileOptions& options
+        const ShaderCompileOptions& options
     ) override;
 
 private:
     // Internal compile function
-    SPIRVCompileResult CompileInternal(
+    ShaderCompileResult CompileInternal(
         const std::string& hlslSource,
-        const SPIRVCompileOptions& options
+        const ShaderCompileOptions& options
     );
 
     // Build DXC arguments
     std::vector<const wchar_t*> BuildArguments(
-        const SPIRVCompileOptions& options,
+        const ShaderCompileOptions& options,
         std::vector<std::wstring>& m_ArgStorage
     );
 
@@ -90,10 +90,10 @@ private:
 };
 
 /*
- * @brief SPIR-V Loader
+ * @brief SPIR-V Reflection
  * This class is used to load SPIR-V files from disk or memory
 */
-class SPIRVGenerationReflection : public SPIRVProcessor , public Singleton<SPIRVGenerationReflection> {
+class SPIRVGenerationReflection : public IShaderCompiler , public Singleton<SPIRVGenerationReflection> {
 public:
     // Extract reflection information (using SPIRV-Cross)
     SPIRVReflection ExtractReflection(const std::vector<uint32_t>& spirv) override;

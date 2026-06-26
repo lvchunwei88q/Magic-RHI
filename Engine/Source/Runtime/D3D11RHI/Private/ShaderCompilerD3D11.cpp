@@ -68,7 +68,7 @@ namespace RHI
             std::vector<D3D_SHADER_MACRO> dx11Macros;
             for (const auto& macro : macros)
             {
-                dx11Macros.push_back({macro.Name, macro.Definition});
+                dx11Macros.push_back({macro.name.c_str(), macro.definition.c_str()});
             }
             dx11Macros.push_back({nullptr, nullptr});
 

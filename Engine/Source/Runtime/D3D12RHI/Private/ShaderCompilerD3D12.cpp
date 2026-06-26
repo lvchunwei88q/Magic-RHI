@@ -192,8 +192,8 @@ namespace RHI
 
         for (const auto& macro : macros)
         {
-            std::wstring macroW = IO::ToWideString(macro.Name);
-            macroW += L"=" + IO::ToWideString(macro.Definition);
+            std::wstring macroW = IO::ToWideString(macro.name);
+            macroW += L"=" + IO::ToWideString(macro.definition);
             macroStrings.push_back(macroW); 
             args.push_back(L"-D"); args.push_back(macroStrings.back().c_str());
             //args.push_back(L"-D"); args.push_back(L"SHADER_MODEL=50");

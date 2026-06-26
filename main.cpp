@@ -173,10 +173,10 @@ int main(int argc, char* argv[])
     
     std::cout << "Initializing Device..." << std::endl;
 
-    RHI::IRHILoader* loader = RHIModule::GetRHILoader();
+    RHIAPILoader* loader = RHIModule::GetRHILoader();
 
-    SPIRVProcessor* compiler = RHIModule::GetSPIRVCompiler();
-    SPIRVProcessor* reflector = RHIModule::GetSPIRVReflection();
+    RHIShaderCompiler* compiler = RHIModule::GetSPIRVCompiler();
+    RHIShaderCompiler* reflector = RHIModule::GetSPIRVReflection();
 
     if (!compiler || !reflector) {
         std::cerr << "Failed to get SPIR-V processor!" << std::endl;
@@ -281,7 +281,7 @@ int main(int argc, char* argv[])
             auto computeShader = device->CompileComputeShader(csDesc);
 
             // 现在测试编译 SPIR-V
-            RHI::SPIRVCompileOptions options;
+            RHI::ShaderCompileOptions options;
             options.entryPoint = "main";
             options.targetProfile = "ps_6_0";
             options.optimize = true;
@@ -290,7 +290,7 @@ int main(int argc, char* argv[])
                 versionStr.c_str()});
             options.includePaths.push_back(std::string(ShaderPath + "\\"));
 
-            RHI::SPIRVCompileResult result = compiler->CompileFromFile(psshaderPath, options);
+            RHI::ShaderCompileResult result = compiler->CompileFromFile(psshaderPath, options);
 
             if (!result.success) {
                 std::cerr << "\n❌ Compilation failed!" << std::endl;
@@ -303,7 +303,7 @@ int main(int argc, char* argv[])
             }
 
             std::cout << "\nExtracting reflection information..." << std::endl;
-            RHI::SPIRVReflection reflection = reflector->ExtractReflection(result.spirv);
+            RHI::SPIRVReflection reflection = reflector->ExtractReflection(result.byteCode);
             PrintReflection(reflection);
 
             if (vertexShader && pixelShader && computeShader)

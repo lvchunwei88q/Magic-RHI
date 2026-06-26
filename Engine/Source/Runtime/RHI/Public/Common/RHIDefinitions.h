@@ -95,7 +95,7 @@ struct SPIRVReflection {
  * @brief Shader Macro Description
  * This struct is used to describe the shader macro
 */
-struct SPIRVShaderMacro
+struct ShaderMacro
 {
     // Macro Name
     std::string name;
@@ -104,10 +104,10 @@ struct SPIRVShaderMacro
 };
 
 /*
- * @brief SPIR-V Compile Options
- * This struct is used to store the compile options of SPIR-V
+ * @brief Shader Compile Options
+ * This struct is used to store the compile options of shader
 */
-struct SPIRVCompileOptions {
+struct ShaderCompileOptions {
     std::string entryPoint = "main";
     std::string targetProfile = "vs_6_0";  // vs_6_0, ps_6_0, cs_6_0
     // Whether to optimize the shader
@@ -120,27 +120,20 @@ struct SPIRVCompileOptions {
     bool enableMatrixPacking = false;
 
     // Macros to define
-    std::vector<SPIRVShaderMacro> Macros;
+    std::vector<ShaderMacro> Macros;
     // Include Paths - Add some custom paths to include files from
     std::vector<std::string> includePaths;
     // HLSL Version
     static constexpr const char* DEFAULT_HLSL_VERSION = "2021";
 };
 
-// SPIR-V Compile Result
-struct SPIRVCompileResult {
+// Shader Compile Result
+struct ShaderCompileResult {
     bool success = false;           // compile success
-    std::vector<uint32_t> spirv;    // SPIR-V byte code
+    std::vector<uint32_t> byteCode;    // shader byte code
     std::string errorMessage;       // error msg
     std::string warningMessage;     // warning msg
     size_t bytecodeSize = 0;        // bytecode size
-};
-
-// Shader Macro Description
-struct ShaderMacro
-{
-    const char* Name;
-    const char* Definition;
 };
 
 // Shader Compile Description

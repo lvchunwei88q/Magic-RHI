@@ -1,4 +1,4 @@
-#include "RHISPIRV.h"
+#include "RHIShaderCompiler.h"
 #include "RHIResource.h"
 #include "IO.h"
 
@@ -6,13 +6,13 @@ namespace RHI
 {
     // ========== SPIR-V Compiler ==========
     // Get SPIR-V compiler instance
-    SPIRVProcessor* IRHIModule::GetSPIRVCompiler(){
+    IShaderCompiler* IRHIModule::GetSPIRVCompiler(){
         return &HLSLToSPIRVCompiler::Get();
     }
 
     // ========== SPIR-V Reflection ==========
     // Get SPIR-V reflection instance
-    SPIRVProcessor* IRHIModule::GetSPIRVReflection(){
+    IShaderCompiler* IRHIModule::GetSPIRVReflection(){
         return &SPIRVGenerationReflection::Get();
     }
 
@@ -28,20 +28,20 @@ namespace RHI
     HLSLToSPIRVCompiler::~HLSLToSPIRVCompiler() = default;
 
     // ========== Compile from source string ==========
-    SPIRVCompileResult HLSLToSPIRVCompiler::CompileFromString(
+    ShaderCompileResult HLSLToSPIRVCompiler::CompileFromString(
         const std::string& hlslSource,
-        const SPIRVCompileOptions& options) {
+        const ShaderCompileOptions& options) {
         return CompileInternal(hlslSource, options);
     }
 
     // ========== Compile from file ==========
-    SPIRVCompileResult HLSLToSPIRVCompiler::CompileFromFile(
+    ShaderCompileResult HLSLToSPIRVCompiler::CompileFromFile(
         const std::string& filePath,
-        const SPIRVCompileOptions& options) {
+        const ShaderCompileOptions& options) {
         std::wstring filePathW = IO::ToWideString(filePath);
         if (!IO::Exists(filePathW)) {
             // File not found, return error
-            SPIRVCompileResult result;
+            ShaderCompileResult result;
             result.success = false;
             result.errorMessage = "Shader file not found: " + filePath;
             return result;
@@ -52,11 +52,11 @@ namespace RHI
     }
 
     // ========== Internal compile core function ==========
-    SPIRVCompileResult HLSLToSPIRVCompiler::CompileInternal(
+    ShaderCompileResult HLSLToSPIRVCompiler::CompileInternal(
         const std::string& hlslSource,
-        const SPIRVCompileOptions& options) {
+        const ShaderCompileOptions& options) {
 
-        SPIRVCompileResult result;
+        ShaderCompileResult result;
 
         // Check ShaderCompilerContext is initialized
         if (!m_Initialized) {
@@ -135,7 +135,7 @@ namespace RHI
         // Copy bytecode to result
         const uint32_t* data = reinterpret_cast<const uint32_t*>(pBytecode->GetBufferPointer());
         size_t wordCount = pBytecode->GetBufferSize() / sizeof(uint32_t);
-        result.spirv.assign(data, data + wordCount);
+        result.byteCode.assign(data, data + wordCount);
         result.bytecodeSize = wordCount * sizeof(uint32_t);
         result.success = true;
 
@@ -144,7 +144,7 @@ namespace RHI
 
     // ========== Build DXC arguments ==========
     std::vector<const wchar_t*> HLSLToSPIRVCompiler::BuildArguments(
-        const SPIRVCompileOptions& options,
+        const ShaderCompileOptions& options,
         std::vector<std::wstring>& m_ArgStorage) {
         
         std::vector<const wchar_t*> args;

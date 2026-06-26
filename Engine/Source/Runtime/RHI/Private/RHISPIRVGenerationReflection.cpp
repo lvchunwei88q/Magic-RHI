@@ -1,6 +1,6 @@
 // RHI/Private/RHISPIRVGenerationReflection.cpp
 #include "CoreMinimal.h"
-#include "RHISPIRV.h"
+#include "RHIShaderCompiler.h"
 
 // SPI SPIRV-Cross headers
 #include <spirv_cross.hpp>

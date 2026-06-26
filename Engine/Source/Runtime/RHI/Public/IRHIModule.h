@@ -15,7 +15,7 @@ namespace RHI
     // RHI Loader Interface
     class IRHILoader;
     // SPIRV Processor Interface
-    class SPIRVProcessor;
+    class IShaderCompiler;
 
     // RHI Module Interface
     class RHI_API IRHIModule
@@ -24,8 +24,8 @@ namespace RHI
         virtual ~IRHIModule() = default;
 
         static IRHILoader* GetRHILoader();
-        static SPIRVProcessor* GetSPIRVCompiler();
-        static SPIRVProcessor* GetSPIRVReflection();
+        static IShaderCompiler* GetSPIRVCompiler();
+        static IShaderCompiler* GetSPIRVReflection();
     };
 
     class RHI_API IRHILoader
@@ -43,14 +43,14 @@ namespace RHI
         virtual RHIType GetRHIType() const = 0;
     };
 
-    class RHI_API SPIRVProcessor 
+    class RHI_API IShaderCompiler 
     {
     public:
-        virtual ~SPIRVProcessor () = default;
+        virtual ~IShaderCompiler () = default;
 
         // Compile HLSL → SPIR-V
-        virtual SPIRVCompileResult CompileFromString(const std::string& hlslSource, const SPIRVCompileOptions& options) { return SPIRVCompileResult {}; }
-        virtual SPIRVCompileResult CompileFromFile(const std::string& filePath, const SPIRVCompileOptions& options) { return SPIRVCompileResult {}; };
+        virtual ShaderCompileResult CompileFromString(const std::string& hlslSource, const ShaderCompileOptions& options) { return ShaderCompileResult {}; }
+        virtual ShaderCompileResult CompileFromFile(const std::string& filePath, const ShaderCompileOptions& options) { return ShaderCompileResult {}; };
         
         // Extract reflection information
         virtual SPIRVReflection ExtractReflection(const std::vector<uint32_t>& spirv) { return SPIRVReflection {}; }
@@ -60,4 +60,4 @@ namespace RHI
 
 using RHIModule = RHI::IRHIModule;
 using RHIAPILoader = RHI::IRHILoader;
-using SPIRVProcessor = RHI::SPIRVProcessor;
+using RHIShaderCompiler = RHI::IShaderCompiler;
