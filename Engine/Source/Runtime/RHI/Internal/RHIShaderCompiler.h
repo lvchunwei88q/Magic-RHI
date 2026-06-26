@@ -37,9 +37,43 @@ struct ShaderCompilerContext {
         if (FAILED(utils->CreateDefaultIncludeHandler(&includeHandler))) {
             return false;
         }
+        
+        // Initialize success
+        m_Initialized = true;
         return true;
     }
+
+    bool IsInitialized() const { return m_Initialized; }
+    private:
+        bool m_Initialized = false;
 };
+
+struct LocalShaderCompileOption : public ShaderCompileOptions {
+    // Target Compiler mode (SPIR-V or HLSL)
+    std::string targetCompilerMode = "-spirv";
+    // Target SPIR-V environment (vulkan1.0 or vulkan1.3)
+    std::string targetEnv = "vulkan1.0";
+
+    LocalShaderCompileOption() = default;
+    LocalShaderCompileOption(const ShaderCompileOptions& options) : ShaderCompileOptions(options) {}
+};
+
+// ----------------------------------------------------------------- Compiler Functions
+
+// Internal compile function
+[[nodiscard]] ShaderCompileResult CompileInternal(
+    const std::string& hlslSource,
+    const LocalShaderCompileOption& options,
+    const ShaderCompilerContext& context
+);
+
+// Build DXC arguments
+[[nodiscard]] std::vector<const wchar_t*> BuildArguments(
+    const LocalShaderCompileOption& options,
+    std::vector<std::wstring>& m_ArgStorage
+);
+
+// ----------------------------------------------------------------- Compiler Functions End
 
 // HLSL → SPIR-V Compiler
 class HLSLToSPIRVCompiler : public IShaderCompiler , public Singleton<HLSLToSPIRVCompiler> {
@@ -48,30 +82,18 @@ public:
     ~HLSLToSPIRVCompiler();
 
     // Compile from source string
-    ShaderCompileResult CompileFromString(
+    ShaderCompileResult SPIRVCompileFromString(
         const std::string& hlslSource,
         const ShaderCompileOptions& options
     ) override;
 
     // Compile from file
-    ShaderCompileResult CompileFromFile(
+    ShaderCompileResult SPIRVCompileFromFile(
         const std::string& filePath,
         const ShaderCompileOptions& options
     ) override;
 
 private:
-    // Internal compile function
-    ShaderCompileResult CompileInternal(
-        const std::string& hlslSource,
-        const ShaderCompileOptions& options
-    );
-
-    // Build DXC arguments
-    std::vector<const wchar_t*> BuildArguments(
-        const ShaderCompileOptions& options,
-        std::vector<std::wstring>& m_ArgStorage
-    );
-
     // Get SPIR-V target env (call external function)
     std::string GetSPIRVTargetEnv() const {
         switch (GetBestAvailableRHI()) {

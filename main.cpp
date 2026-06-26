@@ -290,7 +290,7 @@ int main(int argc, char* argv[])
                 versionStr.c_str()});
             options.includePaths.push_back(std::string(ShaderPath + "\\"));
 
-            RHI::ShaderCompileResult result = compiler->CompileFromFile(psshaderPath, options);
+            RHI::ShaderCompileResult result = compiler->SPIRVCompileFromFile(psshaderPath, options);
 
             if (!result.success) {
                 std::cerr << "\n❌ Compilation failed!" << std::endl;

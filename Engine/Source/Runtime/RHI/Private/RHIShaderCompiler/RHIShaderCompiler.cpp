@@ -1,65 +1,17 @@
 #include "RHIShaderCompiler.h"
-#include "RHIResource.h"
 #include "IO.h"
 
-namespace RHI
-{
-    // ========== SPIR-V Compiler ==========
-    // Get SPIR-V compiler instance
-    IShaderCompiler* IRHIModule::GetSPIRVCompiler(){
-        return &HLSLToSPIRVCompiler::Get();
-    }
-
-    // ========== SPIR-V Reflection ==========
-    // Get SPIR-V reflection instance
-    IShaderCompiler* IRHIModule::GetSPIRVReflection(){
-        return &SPIRVGenerationReflection::Get();
-    }
-
-    HLSLToSPIRVCompiler::HLSLToSPIRVCompiler() {
-        m_Context = std::make_unique<ShaderCompilerContext>();
-        m_Initialized = m_Context->Initialize();
-        if (!m_Initialized) {
-            // init shader compiler failed
-            Core::ErrorCapture::Capture("Failed to initialize shader compiler!");
-        }
-    }
-
-    HLSLToSPIRVCompiler::~HLSLToSPIRVCompiler() = default;
-
-    // ========== Compile from source string ==========
-    ShaderCompileResult HLSLToSPIRVCompiler::CompileFromString(
-        const std::string& hlslSource,
-        const ShaderCompileOptions& options) {
-        return CompileInternal(hlslSource, options);
-    }
-
-    // ========== Compile from file ==========
-    ShaderCompileResult HLSLToSPIRVCompiler::CompileFromFile(
-        const std::string& filePath,
-        const ShaderCompileOptions& options) {
-        std::wstring filePathW = IO::ToWideString(filePath);
-        if (!IO::Exists(filePathW)) {
-            // File not found, return error
-            ShaderCompileResult result;
-            result.success = false;
-            result.errorMessage = "Shader file not found: " + filePath;
-            return result;
-        }
-
-        std::string content = IO::ReadAllText(filePathW);
-        return CompileInternal(content, options);
-    }
-
+namespace RHI {
     // ========== Internal compile core function ==========
-    ShaderCompileResult HLSLToSPIRVCompiler::CompileInternal(
+    ShaderCompileResult CompileInternal(
         const std::string& hlslSource,
-        const ShaderCompileOptions& options) {
+        const LocalShaderCompileOption& options,
+        const ShaderCompilerContext& context) {
 
         ShaderCompileResult result;
 
         // Check ShaderCompilerContext is initialized
-        if (!m_Initialized) {
+        if (!context.IsInitialized()) {
             result.errorMessage = "Shader compiler context not initialized!";
             return result;
         }
@@ -67,7 +19,7 @@ namespace RHI
         // Create source Blob
         std::wstring wSource = IO::ToWideString(hlslSource);
         ComPtr<IDxcBlobEncoding> pSourceBlob;
-        HRESULT hr = m_Context->utils->CreateBlob(
+        HRESULT hr = context.utils->CreateBlob(
             wSource.c_str(),
             static_cast<UINT32>(wSource.size() * sizeof(wchar_t)),
             DXC_CP_WIDE,
@@ -90,11 +42,11 @@ namespace RHI
 
         // Execute compilation
         ComPtr<IDxcResult> pResult;
-        hr = m_Context->compiler->Compile(
+        hr = context.compiler->Compile(
             &sourceBuffer,
             args.data(),
             static_cast<UINT32>(args.size()),
-            m_Context->includeHandler.Get(),
+            context.includeHandler.Get(),
             IID_PPV_ARGS(&pResult)
         );
         if (FAILED(hr)) {
@@ -143,8 +95,8 @@ namespace RHI
     }
 
     // ========== Build DXC arguments ==========
-    std::vector<const wchar_t*> HLSLToSPIRVCompiler::BuildArguments(
-        const ShaderCompileOptions& options,
+    std::vector<const wchar_t*> BuildArguments(
+        const LocalShaderCompileOption& options,
         std::vector<std::wstring>& m_ArgStorage) {
         
         std::vector<const wchar_t*> args;
@@ -161,7 +113,7 @@ namespace RHI
         };
 
         // Base arguments
-        args.push_back(L"-spirv");                  // Output SPIR-V bytecode
+        addArg(options.targetCompilerMode);  // Output User Selected Compiler mode
         args.push_back(L"-E");
         addArg(options.entryPoint);
         args.push_back(L"-T");
@@ -194,7 +146,7 @@ namespace RHI
         addArg(options.DEFAULT_HLSL_VERSION);
 
         // SPIR-V target environment
-        std::string targetEnv = GetSPIRVTargetEnv();
+        std::string targetEnv = options.targetEnv;
         if (!targetEnv.empty()) {
             std::string envArg = "-fspv-target-env=" + targetEnv;  // ← append targetEnv to "-fspv-target-env="
             addArg(envArg);  // add "-fspv-target-env=vulkan1.3"
@@ -225,9 +177,10 @@ namespace RHI
 
         // Other common flags
 #if RHI_ENABLE_DEBUG_INFO
+        // warnings in debug mode is error
         args.push_back(DXC_ARG_WARNINGS_ARE_ERRORS);       // Warning as error
 #else
-        args.push_back(L"-no-warn");  // Reduce warnings
+        // print warnings in release
 #endif
 
         for (size_t i = 0; i < indexs.size(); i++)

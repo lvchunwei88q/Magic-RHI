@@ -48,9 +48,13 @@ namespace RHI
     public:
         virtual ~IShaderCompiler () = default;
 
-        // Compile HLSL → SPIR-V
+        // Compile HLSL
         virtual ShaderCompileResult CompileFromString(const std::string& hlslSource, const ShaderCompileOptions& options) { return ShaderCompileResult {}; }
         virtual ShaderCompileResult CompileFromFile(const std::string& filePath, const ShaderCompileOptions& options) { return ShaderCompileResult {}; };
+
+        // Compile HLSL → SPIR-V
+        virtual ShaderCompileResult SPIRVCompileFromString(const std::string& hlslSource, const ShaderCompileOptions& options) { return ShaderCompileResult {}; }
+        virtual ShaderCompileResult SPIRVCompileFromFile(const std::string& filePath, const ShaderCompileOptions& options) { return ShaderCompileResult {}; };
         
         // Extract reflection information
         virtual SPIRVReflection ExtractReflection(const std::vector<uint32_t>& spirv) { return SPIRVReflection {}; }
