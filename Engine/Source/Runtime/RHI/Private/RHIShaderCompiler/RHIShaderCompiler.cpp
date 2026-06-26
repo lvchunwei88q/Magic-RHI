@@ -170,11 +170,14 @@ namespace RHI {
         args.push_back(L"-HV");
         addArg(options.DEFAULT_HLSL_VERSION);
 
-        // SPIR-V target environment
-        std::string targetEnv = options.targetEnv;
-        if (!targetEnv.empty()) {
-            std::string envArg = "-fspv-target-env=" + targetEnv;  // ← append targetEnv to "-fspv-target-env="
-            addArg(envArg);  // add "-fspv-target-env=vulkan1.3"
+        // You only need to enter this parameter when compiling SPIR-V.
+        if(options.targetCompilerMode == "-spirv"){
+            // SPIR-V target environment
+            std::string targetEnv = options.SPIR_V_TargetEnv;
+            if (!targetEnv.empty()) {
+                std::string envArg = "-fspv-target-env=" + targetEnv;  // ← append targetEnv to "-fspv-target-env="
+                addArg(envArg);  // add "-fspv-target-env=vulkan1.3"
+            }
         }
 
         // 16-bit types enabled

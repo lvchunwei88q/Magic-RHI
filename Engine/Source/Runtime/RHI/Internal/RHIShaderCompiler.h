@@ -53,7 +53,7 @@ struct LocalShaderCompileOption : public ShaderCompileOptions {
     // Target Compiler mode (SPIR-V or HLSL)
     std::string targetCompilerMode = "-spirv";
     // Target SPIR-V environment (vulkan1.0 or vulkan1.3)
-    std::string targetEnv = "vulkan1.0";
+    std::string SPIR_V_TargetEnv = "vulkan1.0";
 
     LocalShaderCompileOption() = default;
     LocalShaderCompileOption(const ShaderCompileOptions& options) : ShaderCompileOptions(options) {}

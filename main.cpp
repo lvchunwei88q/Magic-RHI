@@ -176,8 +176,9 @@ int main(int argc, char* argv[])
     RHIAPILoader* loader = RHIModule::GetRHILoader();
 
     RHIShaderCompiler* compilerContextController = RHIModule::GetCompilerContextController();
-    RHIShaderCompiler* compiler = RHIModule::GetSPIRVCompiler();
-    RHIShaderCompiler* reflector = RHIModule::GetSPIRVReflection();
+    RHIShaderCompiler* SPIRVcompiler = RHIModule::GetSPIRVCompiler();
+    RHIShaderCompiler* HLSLCompiler = RHIModule::GetHLSLCompiler();
+    RHIShaderCompiler* SPIRVreflector = RHIModule::GetSPIRVReflection();
 
     bool isInitialized = compilerContextController->InitializeCompilerContext();
     if (!isInitialized) {
@@ -185,8 +186,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    if (!compiler || !reflector) {
-        std::cerr << "Failed to get SPIR-V processor!" << std::endl;
+    if (!SPIRVcompiler || !SPIRVreflector || !HLSLCompiler) {
+        std::cerr << "Failed to get SPIR-V processor or HLSL processor!" << std::endl;
         return 1;
     }
 
@@ -297,20 +298,29 @@ int main(int argc, char* argv[])
                 versionStr.c_str()});
             options.includePaths.push_back(std::string(ShaderPath + "\\"));
 
-            RHI::ShaderCompileResult result = compiler->SPIRVCompileFromFile(psshaderPath, options);
+            RHI::ShaderCompileResult spirvResult = SPIRVcompiler->SPIRVCompileFromFile(psshaderPath, options);
+            RHI::ShaderCompileResult hlslResult = HLSLCompiler->HLSLCompileFromFile(psshaderPath, options);
 
-            if (!result.success) {
+            if (!spirvResult.success || !hlslResult.success) {
                 std::cerr << "\n❌ Compilation failed!" << std::endl;
-                std::cerr << "Error: " << result.errorMessage << std::endl;
+                std::cerr << "Error: " << spirvResult.errorMessage + " or " + hlslResult.errorMessage << std::endl;
                 return 1;
             }
             // 打印警告信息 之后继续执行
-            if (!result.warningMessage.empty()) {
-                std::cout << "Warnings: " << result.warningMessage << std::endl;
+            if (!spirvResult.warningMessage.empty() || !hlslResult.warningMessage.empty()) {
+                std::cout << "Warnings: " << (spirvResult.warningMessage.empty() ? "" : spirvResult.warningMessage) + 
+                            " or " + (hlslResult.warningMessage.empty() ? "" : hlslResult.warningMessage) << std::endl;
+            }
+
+            if (spirvResult.success) {
+                std::cout << "SPIR-V compilation successfully!" << std::endl;
+            }
+            if (hlslResult.success) {
+                std::cout << "HLSL compilation successfully!" << std::endl;
             }
 
             std::cout << "\nExtracting reflection information..." << std::endl;
-            RHI::SPIRVReflection reflection = reflector->ExtractReflection(result.byteCode);
+            RHI::SPIRVReflection reflection = SPIRVreflector->ExtractReflection(spirvResult.byteCode);
             PrintReflection(reflection);
 
             if (vertexShader && pixelShader && computeShader)

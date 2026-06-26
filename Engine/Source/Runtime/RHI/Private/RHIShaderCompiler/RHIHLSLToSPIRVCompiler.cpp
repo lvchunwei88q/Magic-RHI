@@ -29,7 +29,7 @@ namespace RHI
         
         LocalShaderCompileOption localOptions = options;
         localOptions.targetCompilerMode = "-spirv";
-        localOptions.targetEnv = GetSPIRVTargetEnv();
+        localOptions.SPIR_V_TargetEnv = GetSPIRVTargetEnv();
 
         const ShaderCompilerContext* context = GetCompilerContext();
         if (context == nullptr) {
@@ -60,7 +60,7 @@ namespace RHI
         
         LocalShaderCompileOption localOptions = options;
         localOptions.targetCompilerMode = "-spirv";
-        localOptions.targetEnv = GetSPIRVTargetEnv();
+        localOptions.SPIR_V_TargetEnv = GetSPIRVTargetEnv();
 
         const ShaderCompilerContext* context = GetCompilerContext();
         if (context == nullptr) {
