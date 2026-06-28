@@ -120,9 +120,9 @@ namespace RHI
         m_pSwapChain1.Reset();
     }
 
-    bool SwapChainD3D12::IsValid() const
-    {
-        return m_pSwapChain1 != nullptr || m_pSwapChain3 != nullptr && m_Initialization == CoreDeviceInitialization::Initialize;
+    bool SwapChainD3D12::IsValid() const {
+        return (m_pSwapChain1 != nullptr || m_pSwapChain3 != nullptr) 
+            && m_Initialization == CoreDeviceInitialization::Initialize;
     }
 
     void SwapChainD3D12::Present(uint32_t syncInterval, uint32_t presentFlags)
