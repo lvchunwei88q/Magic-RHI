@@ -1,8 +1,7 @@
 /*
 * 因为使用到了前向声明所以需要先引入声明定义
  */
- #include <Common/Check.h>
-#include "SwapChainD3D11.h"
+#include <Common/Check.h>
 #include "RHID3D11.h"
 #include "RHICommandListD3D11.h"
 #include "DirectXConfig.h"
@@ -20,7 +19,8 @@ namespace RHI
 
     bool SwapChainD3D11::Initialize(Device* device, const SwapChainDesc& desc)
     {
-        m_pRHI = static_cast<RHID3D11*>(device);
+        m_Initialization = CoreDeviceInitialization::Initialize;
+        m_pRHI = static_cast<DeviceD3D11*>(device);
         if (!m_pRHI)
         {
             return false;
@@ -82,6 +82,7 @@ namespace RHI
 
     void SwapChainD3D11::Shutdown()
     {
+        m_Initialization = CoreDeviceInitialization::Shutdown;
         m_pBackBuffer.reset();
         m_pRenderTargetView.reset();
         m_pSwapChain.Reset();
@@ -89,7 +90,7 @@ namespace RHI
 
     bool SwapChainD3D11::IsValid() const
     {
-        return m_pSwapChain != nullptr;
+        return m_pSwapChain != nullptr && m_Initialization == CoreDeviceInitialization::Initialize;
     }
 
     void SwapChainD3D11::Present(uint32_t syncInterval, uint32_t presentFlags)

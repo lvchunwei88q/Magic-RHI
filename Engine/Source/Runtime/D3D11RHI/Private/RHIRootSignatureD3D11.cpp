@@ -115,7 +115,7 @@ namespace RHI
 #endif
             return false;
         }
-        RHID3D11* pDevice = SafeCast<RHID3D11>(device);
+        DeviceD3D11* pDevice = SafeCast<DeviceD3D11>(device);
         m_Desc.Flags = desc.Flags;
         // We need to fill in the entire descriptor
         m_Desc.RootParameters.resize(desc.Parameters.size());

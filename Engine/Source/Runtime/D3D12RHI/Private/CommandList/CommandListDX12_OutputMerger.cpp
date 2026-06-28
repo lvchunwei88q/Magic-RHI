@@ -1,6 +1,5 @@
 #include "DirectXConfig.h"
 #include "RHICommandListD3D12.h"
-#include "SwapChainD3D12.h"
 
 namespace RHI
 {

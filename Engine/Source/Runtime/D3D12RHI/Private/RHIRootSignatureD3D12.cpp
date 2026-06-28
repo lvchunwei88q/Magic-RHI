@@ -67,7 +67,7 @@ namespace RHI
 
     bool RHIRootSignatureD3D12::Initialize(Device* device, const RootSignatureDesc& desc)
     {
-        RHID3D12* dx12Device = static_cast<RHID3D12*>(device);
+        DeviceD3D12* dx12Device = static_cast<DeviceD3D12*>(device);
         if (!dx12Device)
         {
             return false;

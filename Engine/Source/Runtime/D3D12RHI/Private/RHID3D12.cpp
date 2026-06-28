@@ -205,17 +205,18 @@ namespace RHI
             }
         }
     }
-    RHID3D12::RHID3D12()
+    DeviceD3D12::DeviceD3D12()
     {
     }
 
-    RHID3D12::~RHID3D12()
+    DeviceD3D12::~DeviceD3D12()
     {
         Shutdown();
     }
 
-    bool RHID3D12::Initialize()
+    bool DeviceD3D12::Initialize()
     {
+        m_Initialization = CoreDeviceInitialization::Initialize;
         UINT dxgiFactoryFlags = 0;
 
 #ifdef _DEBUG
@@ -315,16 +316,12 @@ namespace RHI
             infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
         }
 #endif
-
-        // Init ShaderCompiler
-        ThrowIfFailed(DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&compiler)));
-        ThrowIfFailed(DxcCreateInstance(CLSID_DxcUtils, IID_PPV_ARGS(&utils)));
-        ThrowIfFailed(utils->CreateDefaultIncludeHandler(&includeHandler));
         return true;
     }
 
-    void RHID3D12::Shutdown()
+    void DeviceD3D12::Shutdown()
     {
+        m_Initialization = CoreDeviceInitialization::Shutdown;
         m_pDSVHeap.reset();
         m_pRTVHeap.reset();
         m_pSamplerHeap.reset();
@@ -337,11 +334,11 @@ namespace RHI
         m_pDevice.Reset();
     }
 
-    FeatureLevel RHID3D12::GetFeatureLevel() const{
+    FeatureLevel DeviceD3D12::GetFeatureLevel() const{
         return FromD3DFeatureLevel(m_FeatureLevel);
     }
 
-    void RHID3D12::CreateQueues()
+    void DeviceD3D12::CreateQueues()
     {
         // 创建命令队列 这是唯一的Com接口没有 1，2，3 等版本的接口
         ComPtr<ID3D12CommandQueue> pGraphicsQueue;
@@ -386,12 +383,12 @@ namespace RHI
         );
     }
 
-    bool RHID3D12::IsValid() const
+    bool DeviceD3D12::IsValid() const
     {
-        return m_pDevice != nullptr;
+        return m_pDevice != nullptr && m_Initialization == CoreDeviceInitialization::Initialize;
     }
 
-    std::shared_ptr<RHICommandAllocator> RHID3D12::CreateCommandAllocator(RHICmdType type)
+    std::shared_ptr<RHICommandAllocator> DeviceD3D12::CreateCommandAllocator(RHICmdType type)
     {
         D3D12_COMMAND_LIST_TYPE d3dType = ConvertRHICmdTypeToD3D12(type);
 
@@ -401,7 +398,7 @@ namespace RHI
         return std::make_shared<CommandAllocatorD3D12>(type, pAllocator.Get());
     }
     
-    std::shared_ptr<RHICommandList> RHID3D12::CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator)
+    std::shared_ptr<RHICommandList> DeviceD3D12::CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator)
     {
         CommandAllocatorD3D12* pAllocator = SafeCast<CommandAllocatorD3D12>(allocator.get());
         if (pAllocator == nullptr) {
@@ -429,7 +426,7 @@ namespace RHI
     /*
     * 获取图形命令队列
     */
-    RHICommandQueue* RHID3D12::GetCommandQueue(RHICmdType Type) const
+    RHICommandQueue* DeviceD3D12::GetCommandQueue(RHICmdType Type) const
     {
         switch (Type)
         {
@@ -444,7 +441,7 @@ namespace RHI
         }
     }
 
-    std::shared_ptr<RHIRootSignature> RHID3D12::CreateRootSignature(const RootSignatureDesc& desc)
+    std::shared_ptr<RHIRootSignature> DeviceD3D12::CreateRootSignature(const RootSignatureDesc& desc)
     {
         auto rootSignature = std::make_shared<RHIRootSignatureD3D12>();
         if (rootSignature->Initialize(this, desc))
@@ -454,7 +451,7 @@ namespace RHI
         return nullptr;
     }
 
-    void RHID3D12::DeleteRootSignature(std::shared_ptr<RHIRootSignature>& rootSignature)
+    void DeviceD3D12::DeleteRootSignature(std::shared_ptr<RHIRootSignature>& rootSignature)
     {
         if (rootSignature)
         {
@@ -463,7 +460,7 @@ namespace RHI
         }
     }
 
-    RHIDescriptorHeap* RHID3D12::GetDescriptorHeap(RHIDescriptorHeapType type) const
+    RHIDescriptorHeap* DeviceD3D12::GetDescriptorHeap(RHIDescriptorHeapType type) const
     {
         switch (type)
         {

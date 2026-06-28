@@ -134,7 +134,7 @@ namespace RHI
         }
     }
 
-    std::shared_ptr<RHISamplerState> RHID3D12::CreateSamplerState(const SamplerStateDesc& desc)
+    std::shared_ptr<RHISamplerState> DeviceD3D12::CreateSamplerState(const SamplerStateDesc& desc)
     {
         D3D12_SAMPLER_DESC samplerDesc = {};
         samplerDesc.Filter = ConvertFilter(desc.Filter);
@@ -161,13 +161,13 @@ namespace RHI
         return std::make_shared<SamplerStateD3D12>(samplerDesc, handle);
     }
 
-    void RHID3D12::DeleteSamplerState(std::shared_ptr<RHI::RHISamplerState>& samplerState) 
+    void DeviceD3D12::DeleteSamplerState(std::shared_ptr<RHISamplerState>& samplerState) 
     {
         m_pSamplerHeap->Free(samplerState->GetBindlessHandle());
         samplerState.reset();
     }
 
-    std::shared_ptr<RHIBuffer> RHID3D12::CreateBuffer(BufferDesc& desc)
+    std::shared_ptr<RHIBuffer> DeviceD3D12::CreateBuffer(BufferDesc& desc)
     {
         auto isConstantBuffer = [](BufferBindFlag flag) -> bool {
             return flag == BufferBindFlag::ConstantBuffer;
@@ -276,8 +276,8 @@ namespace RHI
 
         return buffer;
     }
-
-    void RHID3D12::DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer)
+    
+    void DeviceD3D12::DeleteBuffer(std::shared_ptr<RHIBuffer>& buffer)
     {
         // You only need to release it if it's registered in the descriptor heap, meaning you have a descriptor handle.
         if(buffer->HasDescriptorHandle())

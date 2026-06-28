@@ -3,7 +3,6 @@
 #include <Common/Check.h>
 #include "RHID3D11.h"
 #include <d3dcompiler.h>
-#include <regex>
 
 #include <IO.h>
 
@@ -11,47 +10,6 @@ namespace RHI
 {
     namespace
     {
-        std::string ReadFileToString(const std::string& filePath)
-        {
-            // 检查文件是否存在
-            std::wstring filePathW = IO::ToWideString(filePath);
-            if (!IO::Exists(filePathW))
-            {
-                ThrowErrorMessage("Shader file not found: " + filePath);
-                return "";
-            }
-
-            std::string content = IO::ReadAllText(filePathW);
-            return content;
-        }
-
-        std::string ProcessShaderIncludes(const std::string& source, const std::string& basePath)
-        {
-            static std::regex includeRegex(R"(#include\s*["<]([^">]+)[">])");
-            std::string result;
-            size_t pos = 0;
-            std::string temp = source;
-            std::smatch match;
-            
-            while (std::regex_search(temp, match, includeRegex))
-            {
-                // 保留 #include 前面的部分
-                result += match.prefix().str();
-            
-                std::string includePath = match[1].str();
-                std::string fullPath = basePath + "\\" + includePath;
-                std::string includeContent = ReadFileToString(fullPath);
-                
-                result += ProcessShaderIncludes(includeContent, basePath);
-                
-                temp = match.suffix().str();
-            }
-            
-            result += temp;
-            
-            return result;
-        }
-
         bool CompileShaderToBlob(const std::string& source, const std::string& entryPoint, 
                                 const std::string& profile, bool enableDebug,const std::vector<ShaderMacro>& macros,
                                 ComPtr<ID3DBlob>& outBlob)
@@ -119,72 +77,51 @@ namespace RHI
                 }
                 
                 Core::ErrorCapture::Capture(errorMsg.c_str());
-                // ThrowErrorMessage(errorMsg.c_str());   这里不要直接抛出异常，否则会导致程序崩溃
+#if RHI_ENABLE_DEBUG_INFO
+                ThrowErrorMessage(errorMsg.c_str());
+#endif
                 return false;
             }
 
             return true;
         }
 
-        std::string LoadShaderSource(const ShaderCompileDesc& desc, std::string& outBasePath)
-        {
-            if (desc.SourceCode)
-            {
-                return desc.SourceCode;
-            }
-            else if (desc.FilePath)
-            {
-                std::string filePath = desc.FilePath;
-                size_t lastSlash = filePath.find_last_of("/\\");
-                if (lastSlash != std::string::npos)
-                {
-                    outBasePath = filePath.substr(0, lastSlash);
-                }
-                std::string source = ReadFileToString(filePath);
-                return ProcessShaderIncludes(source, outBasePath);
-            }
-            else
-            {
-                ThrowErrorMessage("No shader source or file path provided");
-                return "";
-            }
-        }
-
         template<typename ShaderType, typename CreateFunc>
-        std::shared_ptr<ShaderType> CompileShaderInternal(ID3D11Device* pDevice, const ShaderCompileDesc& desc,
+        std::unique_ptr<ShaderType> CompileShaderInternal(const CreateShaderDesc& desc,
                                                           const char* defaultProfile, CreateFunc createFunc)
         {
-            std::string basePath;
-            std::string source = LoadShaderSource(desc, basePath);
-            if (source.empty())
-                return nullptr;
-
-            std::string profile = desc.Profile ? desc.Profile : defaultProfile;
-            std::string entryPoint = desc.EntryPoint ? desc.EntryPoint : "main";
-
-            ComPtr<ID3DBlob> shaderBlob;
-            if (!CompileShaderToBlob(source, entryPoint, profile, desc.EnableDebugInfo, desc.Macros, shaderBlob))
-                return nullptr;
-
-            auto pShader = createFunc(pDevice, shaderBlob);
-            if (!pShader)
-                return nullptr;
-
-            std::shared_ptr<ShaderType> shader = std::make_shared<ShaderType>(pShader);
-
-            if constexpr (std::is_same_v<ShaderType, VertexShaderD3D11>)
+            // TODO: SPIRV shader type is not supported on D3D11
+            if (desc.shaderType != CreateShaderDesc::ShaderType::SPIRV)
             {
-                shader->SetVSBlob(shaderBlob.Get());
+                ThrowErrorMessage("SPIRV shader type is not supported on D3D11");
             }
-            // ... 其他类型
 
+            std::unique_ptr<ShaderType> shader = std::make_unique<ShaderType>(nullptr);
             return shader;
         }
     }
 
-    std::shared_ptr<RHIVertexShader> RHID3D11::CompileVertexShader(const ShaderCompileDesc& desc)
+    bool CreateShaderD3D11::Initialize(Device* device)
     {
-        return CompileShaderInternal<VertexShaderD3D11>(m_pDevice.Get(), desc, "vs_5_0",
+        m_Initialization = CoreDeviceInitialization::Initialize;
+        m_pRHI = SafeCast<DeviceD3D11>(device);
+        return true;
+    }
+
+    void CreateShaderD3D11::Shutdown()
+    {
+        m_Initialization = CoreDeviceInitialization::Shutdown;
+        m_pRHI = nullptr;
+    }
+
+    bool CreateShaderD3D11::IsValid() const
+    {
+        return m_Initialization == CoreDeviceInitialization::Initialize;
+    }
+
+    std::unique_ptr<RHIVertexShader> CreateShaderD3D11::CreateVertexShader(const CreateShaderDesc& desc)
+    {
+        return CompileShaderInternal<VertexShaderD3D11>(desc, "vs_5_0",
             [](ID3D11Device* device, ComPtr<ID3DBlob>& blob) -> ID3D11VertexShader* {
                 ID3D11VertexShader* pShader = nullptr;
                 if (SUCCEEDED(device->CreateVertexShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pShader)))
@@ -193,9 +130,9 @@ namespace RHI
             });
     }
 
-    std::shared_ptr<RHIPixelShader> RHID3D11::CompilePixelShader(const ShaderCompileDesc& desc)
+    std::unique_ptr<RHIPixelShader> CreateShaderD3D11::CreatePixelShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<PixelShaderD3D11>(m_pDevice.Get(), desc, "ps_5_0",
+        return CompileShaderInternal<PixelShaderD3D11>(desc, "ps_5_0",
             [](ID3D11Device* device, ComPtr<ID3DBlob>& blob) -> ID3D11PixelShader* {
                 ID3D11PixelShader* pShader = nullptr;
                 if (SUCCEEDED(device->CreatePixelShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pShader)))
@@ -204,9 +141,9 @@ namespace RHI
             });
     }
 
-    std::shared_ptr<RHIGeometryShader> RHID3D11::CompileGeometryShader(const ShaderCompileDesc& desc)
+    std::unique_ptr<RHIGeometryShader> CreateShaderD3D11::CreateGeometryShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<GeometryShaderD3D11>(m_pDevice.Get(), desc, "gs_5_0",
+        return CompileShaderInternal<GeometryShaderD3D11>(desc, "gs_5_0",
             [](ID3D11Device* device, ComPtr<ID3DBlob>& blob) -> ID3D11GeometryShader* {
                 ID3D11GeometryShader* pShader = nullptr;
                 if (SUCCEEDED(device->CreateGeometryShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pShader)))
@@ -215,9 +152,9 @@ namespace RHI
             });
     }
 
-    std::shared_ptr<RHIHullShader> RHID3D11::CompileHullShader(const ShaderCompileDesc& desc)
+    std::unique_ptr<RHIHullShader> CreateShaderD3D11::CreateHullShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<HullShaderD3D11>(m_pDevice.Get(), desc, "hs_5_0",
+        return CompileShaderInternal<HullShaderD3D11>(desc, "hs_5_0",
             [](ID3D11Device* device, ComPtr<ID3DBlob>& blob) -> ID3D11HullShader* {
                 ID3D11HullShader* pShader = nullptr;
                 if (SUCCEEDED(device->CreateHullShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pShader)))
@@ -226,9 +163,9 @@ namespace RHI
             });
     }
 
-    std::shared_ptr<RHIDomainShader> RHID3D11::CompileDomainShader(const ShaderCompileDesc& desc)
+    std::unique_ptr<RHIDomainShader> CreateShaderD3D11::CreateDomainShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<DomainShaderD3D11>(m_pDevice.Get(), desc, "ds_5_0",
+        return CompileShaderInternal<DomainShaderD3D11>(desc, "ds_5_0",
             [](ID3D11Device* device, ComPtr<ID3DBlob>& blob) -> ID3D11DomainShader* {
                 ID3D11DomainShader* pShader = nullptr;
                 if (SUCCEEDED(device->CreateDomainShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pShader)))
@@ -237,9 +174,9 @@ namespace RHI
             });
     }
 
-    std::shared_ptr<RHIComputeShader> RHID3D11::CompileComputeShader(const ShaderCompileDesc& desc)
+    std::unique_ptr<RHIComputeShader> CreateShaderD3D11::CreateComputeShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<ComputeShaderD3D11>(m_pDevice.Get(), desc, "cs_5_0",
+        return CompileShaderInternal<ComputeShaderD3D11>(desc, "cs_5_0",
             [](ID3D11Device* device, ComPtr<ID3DBlob>& blob) -> ID3D11ComputeShader* {
                 ID3D11ComputeShader* pShader = nullptr;
                 if (SUCCEEDED(device->CreateComputeShader(blob->GetBufferPointer(), blob->GetBufferSize(), nullptr, &pShader)))
@@ -248,9 +185,9 @@ namespace RHI
             });
     }
 
-    ShaderModelVersion RHID3D11::GetShaderModelVersion() const
+    ShaderModelVersion CreateShaderD3D11::GetShaderModelVersion() const
     {
-        // DX11 最高支持 SM_5_0
+        // For DX11, it only supports SM5.0.
         return ShaderModelVersion::SM_5_0;
     }
 }

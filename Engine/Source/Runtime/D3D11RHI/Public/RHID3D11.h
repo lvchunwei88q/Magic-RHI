@@ -16,16 +16,16 @@ namespace RHI
     // CommandQueue Forward Declaration
     class CommandQueueD3D11;
 
-    class D3D11RHI_API RHID3D11 : public Device
+    class D3D11RHI_API DeviceD3D11 : public Device
     {
     public:
-        RHID3D11();
-        ~RHID3D11() override;
+        DeviceD3D11();
+        ~DeviceD3D11() override;
 
         bool Initialize() override;
         void Shutdown() override;
-
         bool IsValid() const override;
+
         RHIType GetType() const override { return RHIType::D3D11; }
         const std::wstring& GetAdapterName() const override { return m_AdapterName; }
 
@@ -44,14 +44,6 @@ namespace RHI
         [[nodiscard]] std::shared_ptr<RHICommandAllocator> CreateCommandAllocator(RHICmdType type) override;
         [[nodiscard]] std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator) override;
         [[nodiscard]] RHICommandQueue* GetCommandQueue(RHICmdType Type) const override;
-
-        [[nodiscard]] std::shared_ptr<RHIVertexShader> CompileVertexShader(const ShaderCompileDesc& desc) override;
-        [[nodiscard]] std::shared_ptr<RHIPixelShader> CompilePixelShader(const ShaderCompileDesc& desc) override;
-        [[nodiscard]] std::shared_ptr<RHIGeometryShader> CompileGeometryShader(const ShaderCompileDesc& desc) override;
-        [[nodiscard]] std::shared_ptr<RHIHullShader> CompileHullShader(const ShaderCompileDesc& desc) override;
-        [[nodiscard]] std::shared_ptr<RHIDomainShader> CompileDomainShader(const ShaderCompileDesc& desc) override;
-        [[nodiscard]] std::shared_ptr<RHIComputeShader> CompileComputeShader(const ShaderCompileDesc& desc) override;
-        ShaderModelVersion GetShaderModelVersion() const override;
         
         [[nodiscard]] std::shared_ptr<RHIRootSignature> CreateRootSignature(const RootSignatureDesc& desc) override;
         void DeleteRootSignature(std::shared_ptr<RHI::RHIRootSignature>& rootSignature) override;
@@ -82,5 +74,58 @@ namespace RHI
         std::unique_ptr<DescriptorHeapD3D11> m_pSamplerHeap;
         std::unique_ptr<DescriptorHeapD3D11> m_pRTVHeap;
         std::unique_ptr<DescriptorHeapD3D11> m_pDSVHeap;
+    };
+
+    class D3D11RHI_API SwapChainD3D11 : public SwapChain
+    {
+    public:
+        SwapChainD3D11();
+        ~SwapChainD3D11() override;
+
+        bool Initialize(Device* device, const SwapChainDesc& desc) override;
+        void Shutdown() override;
+        bool IsValid() const override;
+
+        void Present(uint32_t syncInterval, uint32_t presentFlags) override;
+        void Resize(uint32_t width, uint32_t height) override;
+        uint32_t GetFrameIndex() const override { return 0; }
+
+        uint32_t GetWidth() const override { return m_desc.Width; }
+        uint32_t GetHeight() const override { return m_desc.Height; }
+        // Get render target view
+        RHIRenderTargetView* GetRenderTargetView(uint32_t index) const override;
+        // Get back buffer
+        RHITexture* GetBackBuffer(uint32_t index) const override;
+        // Get swap chain
+        IDXGISwapChain* GetSwapChain() const { return m_pSwapChain.Get(); }
+
+    private:
+        DeviceD3D11* m_pRHI;
+        
+        ComPtr<IDXGISwapChain> m_pSwapChain;
+        std::unique_ptr<RHITexture> m_pBackBuffer;
+        std::unique_ptr<RHIRenderTargetView> m_pRenderTargetView;
+        SwapChainDesc m_desc;
+    };
+
+    class D3D11RHI_API CreateShaderD3D11 : public CreateShader
+    {
+    public:
+        CreateShaderD3D11() {};
+        ~CreateShaderD3D11() override { Shutdown();  };
+        bool Initialize(Device* device) override;
+        void Shutdown() override;
+        bool IsValid() const override;
+
+        [[nodiscard]] std::unique_ptr<RHIVertexShader> CreateVertexShader(const CreateShaderDesc& desc) override;
+        [[nodiscard]] std::unique_ptr<RHIPixelShader> CreatePixelShader(const CreateShaderDesc& desc) override;
+        [[nodiscard]] std::unique_ptr<RHIGeometryShader> CreateGeometryShader(const CreateShaderDesc& desc) override;
+        [[nodiscard]] std::unique_ptr<RHIHullShader> CreateHullShader(const CreateShaderDesc& desc) override;
+        [[nodiscard]] std::unique_ptr<RHIDomainShader> CreateDomainShader(const CreateShaderDesc& desc) override;
+        [[nodiscard]] std::unique_ptr<RHIComputeShader> CreateComputeShader(const CreateShaderDesc& desc) override;
+        ShaderModelVersion GetShaderModelVersion() const override;
+
+    private:
+        DeviceD3D11* m_pRHI;
     };
 }

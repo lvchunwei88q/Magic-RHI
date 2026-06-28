@@ -6,12 +6,13 @@
 #include "Common/RHIDefinitions.h"
 #include "Common/RHIPlatformDetection.h"
 
-// Forward Declaration
-class Device;
-class SwapChain;
-
 namespace RHI
 {
+    // Forward Declaration
+    class Device;
+    class SwapChain;
+    class CreateShader;
+
     // RHI Loader Interface
     class IRHILoader;
     // SPIRV Processor Interface
@@ -26,9 +27,7 @@ namespace RHI
         static IRHILoader* GetRHILoader();
 
         static std::unique_ptr<IShaderCompiler> GetCompilerContextController();
-        static IShaderCompiler* GetHLSLCompiler();
-        static IShaderCompiler* GetSPIRVCompiler();
-        static IShaderCompiler* GetSPIRVReflection();
+        static IShaderCompiler* GetCompilerPipeline();
     };
 
     class RHI_API IRHILoader
@@ -41,11 +40,14 @@ namespace RHI
         
         virtual std::unique_ptr<Device> CreateDevice() = 0;
         virtual std::unique_ptr<SwapChain> CreateSwapChain() = 0;
+        virtual std::unique_ptr<CreateShader> CreateCreateShader() = 0;
         
         virtual bool IsLoaded() const = 0;
         virtual RHIType GetRHIType() const = 0;
     };
 
+    // Core subclass of IShaderCompiler
+    class CompilerPipeline;
     class RHI_API IShaderCompiler 
     {
     public:
@@ -56,7 +58,21 @@ namespace RHI
         virtual void ShutdownCompilerContext() {}
 
         // ----------------------------------------------------------------- Compiler Functions Start
+        // Compiler Core
+        /*
+        * Because we used some cache optimization tricks,
+        * we adopted a state machine pattern to control buffering—every time we compile,
+        * we have to call BeginCompiler first and then call EndCompiler at the end.
+        */
+        virtual void BeginCompiler() {}
+        virtual void EndCompiler() {}
 
+        // Real work function
+        virtual ShaderCompileResult Compile(const ShaderCompileOptions& options, const ShaderCompileSource& source) { return ShaderCompileResult {}; }
+        virtual SPIRVReflection Reflection() { return SPIRVReflection {}; }
+        virtual CreateShaderDesc CreateShaderDescription() { return CreateShaderDesc {}; }
+        
+    protected:
         // Compile HLSL
         virtual ShaderCompileResult HLSLCompileFromString(const std::string& hlslSource, const ShaderCompileOptions& options) { return ShaderCompileResult {}; }
         virtual ShaderCompileResult HLSLCompileFromFile(const std::string& filePath, const ShaderCompileOptions& options) { return ShaderCompileResult {}; };
@@ -70,7 +86,7 @@ namespace RHI
 
         // Compiler Context
         void SetCompilerContext(IShaderCompiler* compilerContext) { GetSharedCompilerContext() = compilerContext; }
-        const IShaderCompiler* GetCompilerContext() const { return GetSharedCompilerContext(); }
+        IShaderCompiler* GetCompilerContext() const { return GetSharedCompilerContext(); }
 
     private:
         static IShaderCompiler*& GetSharedCompilerContext() {
@@ -78,6 +94,8 @@ namespace RHI
             static thread_local IShaderCompiler* compiler_context = nullptr; 
             return compiler_context;
         }
+
+        friend class CompilerPipeline;
     };
 
 } // namespace RHI

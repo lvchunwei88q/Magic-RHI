@@ -53,9 +53,10 @@ namespace RHI
         // get function pointers
         m_CreateDevice = reinterpret_cast<PFN_CreateDevice>(GetProcAddress(m_hModule, "CreateDevice"));
         m_CreateSwapChain = reinterpret_cast<PFN_CreateSwapChain>(GetProcAddress(m_hModule, "CreateSwapChain"));
+        m_CreateCreateShader = reinterpret_cast<PFN_CreateCreateShader>(GetProcAddress(m_hModule, "CreateCreateShader"));
         m_GetRHIType = reinterpret_cast<PFN_GetRHIType>(GetProcAddress(m_hModule, "GetRHIType"));
         
-        if (!m_CreateDevice || !m_CreateSwapChain || !m_GetRHIType) {
+        if (!m_CreateDevice || !m_CreateSwapChain || !m_CreateCreateShader || !m_GetRHIType) {
             Unload();
             ErrorCapture::Capture("Failed to get RHI function pointers");
             return false;
@@ -83,6 +84,7 @@ namespace RHI
         
         m_CreateDevice = nullptr;
         m_CreateSwapChain = nullptr;
+        m_CreateCreateShader = nullptr;
         m_GetRHIType = nullptr;
     }
 
@@ -98,6 +100,14 @@ namespace RHI
     {
         if (m_CreateSwapChain) {
             return m_CreateSwapChain();
+        }
+        return nullptr;
+    }
+
+    std::unique_ptr<CreateShader> RHILoader::CreateCreateShader()
+    {
+        if (m_CreateCreateShader) {
+            return m_CreateCreateShader();
         }
         return nullptr;
     }

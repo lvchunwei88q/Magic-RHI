@@ -160,7 +160,7 @@ namespace RHI
         return desc.Width * desc.Height * desc.MipLevels * desc.ArraySize * 4;
     }
 
-    std::shared_ptr<RHISamplerState> RHID3D11::CreateSamplerState(const SamplerStateDesc& desc)
+    std::shared_ptr<RHISamplerState> DeviceD3D11::CreateSamplerState(const SamplerStateDesc& desc)
     {
         D3D11_SAMPLER_DESC samplerDesc = {};
         samplerDesc.Filter = ConvertFilter(desc.Filter);
@@ -183,12 +183,12 @@ namespace RHI
         return std::make_shared<SamplerStateD3D11>(pSamplerState.Get());
     }
 
-    void RHID3D11::DeleteSamplerState(std::shared_ptr<RHI::RHISamplerState>& samplerState)
+    void DeviceD3D11::DeleteSamplerState(std::shared_ptr<RHI::RHISamplerState>& samplerState)
     {
         samplerState.reset();
     }
 
-    std::shared_ptr<RHIBuffer> RHID3D11::CreateBuffer(BufferDesc& desc)
+    std::shared_ptr<RHIBuffer> DeviceD3D11::CreateBuffer(BufferDesc& desc)
     {
         auto isConstantBuffer = [](BufferBindFlag flag) -> bool {
             return flag == BufferBindFlag::ConstantBuffer;
@@ -235,7 +235,7 @@ namespace RHI
         return buffer;
     }
 
-    void RHID3D11::DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer)
+    void DeviceD3D11::DeleteBuffer(std::shared_ptr<RHI::RHIBuffer>& buffer)
     {
         buffer.reset();
     }

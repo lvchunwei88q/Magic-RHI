@@ -33,17 +33,18 @@ namespace RHI
         }
     }
     
-    RHID3D11::RHID3D11()
+    DeviceD3D11::DeviceD3D11()
     {
     }
 
-    RHID3D11::~RHID3D11()
+    DeviceD3D11::~DeviceD3D11()
     {
         Shutdown();
     }
 
-    bool RHID3D11::Initialize()
+    bool DeviceD3D11::Initialize()
     {
+        m_Initialization = CoreDeviceInitialization::Initialize;
         UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
 #ifdef _DEBUG
@@ -94,8 +95,9 @@ namespace RHI
         return true;
     }
 
-    void RHID3D11::Shutdown()
+    void DeviceD3D11::Shutdown()
     {
+        m_Initialization = CoreDeviceInitialization::Shutdown;
         if (m_pDeviceContext) {
             m_pDeviceContext->ClearState();
             m_pDeviceContext->Flush();  // 刷新所有待执行的命令
@@ -113,21 +115,21 @@ namespace RHI
         m_pDevice.Reset();
     }
 
-    FeatureLevel RHID3D11::GetFeatureLevel() const{
+    FeatureLevel DeviceD3D11::GetFeatureLevel() const{
         return FromD3DFeatureLevel(m_FeatureLevel);
     }
 
-    bool RHID3D11::IsValid() const
+    bool DeviceD3D11::IsValid() const
     {
-        return m_pDevice != nullptr;
+        return m_pDevice != nullptr && m_Initialization == CoreDeviceInitialization::Initialize;
     }
 
-    std::shared_ptr<RHICommandAllocator> RHID3D11::CreateCommandAllocator(RHICmdType type)
+    std::shared_ptr<RHICommandAllocator> DeviceD3D11::CreateCommandAllocator(RHICmdType type)
     {
         return std::make_shared<CommandAllocatorD3D11>(type, m_pDeviceContext.Get());
     }
 
-    std::shared_ptr<RHICommandList> RHID3D11::CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator)
+    std::shared_ptr<RHICommandList> DeviceD3D11::CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator)
     {
         // Incoming allocator, Responsible for submitting data to the command list in DX11
         return std::make_shared<CommandListD3D11>(allocator.get());
@@ -136,19 +138,19 @@ namespace RHI
     /*
     * 获取图形命令队列 因为DX11 不支持多个命令队列，所以返回的是同一个队列
     */
-    RHICommandQueue* RHID3D11::GetCommandQueue(RHICmdType Type) const
+    RHICommandQueue* DeviceD3D11::GetCommandQueue(RHICmdType Type) const
     {
         return m_CommandQueue.get();
     }
 
-    std::shared_ptr<RHIRootSignature> RHID3D11::CreateRootSignature(const RootSignatureDesc& desc)
+    std::shared_ptr<RHIRootSignature> DeviceD3D11::CreateRootSignature(const RootSignatureDesc& desc)
     {
         auto rootSignature = std::make_shared<RHIRootSignatureD3D11>();
         rootSignature->Initialize(this, desc);
         return rootSignature;
     }
 
-    void RHID3D11::DeleteRootSignature(std::shared_ptr<RHIRootSignature>& rootSignature)
+    void DeviceD3D11::DeleteRootSignature(std::shared_ptr<RHIRootSignature>& rootSignature)
     {
         if (rootSignature)
         {
@@ -157,7 +159,7 @@ namespace RHI
         }
     }
 
-    RHIDescriptorHeap* RHID3D11::GetDescriptorHeap(RHIDescriptorHeapType type) const
+    RHIDescriptorHeap* DeviceD3D11::GetDescriptorHeap(RHIDescriptorHeapType type) const
     {
         switch (type)
         {

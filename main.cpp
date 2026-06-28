@@ -176,9 +176,7 @@ int main(int argc, char* argv[])
     RHIAPILoader* loader = RHIModule::GetRHILoader();
 
     std::unique_ptr<RHIShaderCompiler> compilerContextController = RHIModule::GetCompilerContextController();
-    RHIShaderCompiler* SPIRVcompiler = RHIModule::GetSPIRVCompiler();
-    RHIShaderCompiler* HLSLCompiler = RHIModule::GetHLSLCompiler();
-    RHIShaderCompiler* SPIRVreflector = RHIModule::GetSPIRVReflection();
+    RHIShaderCompiler* Compiler = RHIModule::GetCompilerPipeline();
 
     bool isInitialized = compilerContextController->InitializeCompilerContext();
     if (!isInitialized) {
@@ -186,8 +184,8 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    if (!SPIRVcompiler || !SPIRVreflector || !HLSLCompiler) {
-        std::cerr << "Failed to get SPIR-V processor or HLSL processor!" << std::endl;
+    if (!Compiler) {
+        std::cerr << "Failed to get compiler pipeline!" << std::endl;
         return 1;
     }
 
@@ -195,10 +193,18 @@ int main(int argc, char* argv[])
     std::cout << "Is Multi-Threading Supported: " << (RHI::IsMultiThreadingSupported(loader->GetRHIType()) ? "Yes" : "No") << std::endl;
     
     auto device = loader->CreateDevice();
-    if (device && device->Initialize())
+    
+    
+    if (device && device->Initialize() && device->IsValid())
     {
+        auto createShader = loader->CreateCreateShader();
+        if (!createShader || !createShader->Initialize(device.get()) || !createShader->IsValid())
+        {
+            std::cout << "CreateShader initialized failed!" << std::endl;
+        }
+        
         std::cout << "Feature Level: " << GetFeatureLevelName(device->GetFeatureLevel()) << std::endl;
-        std::cout << "Shader Model Version: " << ShaderModelToString(device->GetShaderModelVersion()) << std::endl;
+        std::cout << "Shader Model Version: " << ShaderModelToString(createShader->GetShaderModelVersion()) << std::endl;
         std::wcout << L"Device initialized successfully: " << device->GetAdapterName() << std::endl;
         
         RHI::SwapChainDesc swapChainDesc = {};
@@ -208,7 +214,7 @@ int main(int argc, char* argv[])
         swapChainDesc.VSync = false;
         
         auto swapChain = loader->CreateSwapChain();
-        if (swapChain && swapChain->Initialize(device.get(), swapChainDesc))
+        if (swapChain && swapChain->Initialize(device.get(), swapChainDesc) && swapChain->IsValid())
         {
             std::cout << "SwapChain created successfully!" << std::endl;
 
@@ -259,69 +265,82 @@ int main(int argc, char* argv[])
             std::cout << "VertexBuffer created successfully!" << std::endl;
             
             std::cout << "Shader compilation..." << std::endl;
-            std::string versionStr = std::to_string(ShaderModelToNumber(device->GetShaderModelVersion()));
+            std::string versionStr = std::to_string(ShaderModelToNumber(createShader->GetShaderModelVersion()));
             // 从文件编译顶点着色器
             std::string exePath = IO::ToNarrowString(IO::AbsolutePath::Get().GetExecutableDirectory());
             std::string ShaderPath = exePath + "\\..\\..\\Test";
             std::string vsshaderPath = ShaderPath + "\\testVS.hlsl"; // 你知道的这只是一个测试示例
             std::string psshaderPath = ShaderPath + "\\testPS.hlsl";
             std::string csshaderPath = ShaderPath + "\\testCS.hlsl";
-            RHI::ShaderCompileDesc vsDesc{};
-            vsDesc.Type = RHI::ShaderType::Vertex;
-            vsDesc.EnableDebugInfo = true;
-            vsDesc.FilePath = vsshaderPath.c_str();
+            RHI::ShaderCompileOptions vsOption{};
+            vsOption.targetProfile = "vs_6_0";
+            vsOption.debugInfo = true;
+            vsOption.optimize = true;
+            vsOption.entryPoint = "main";
+            vsOption.includePaths.push_back(std::string(ShaderPath + "\\"));
 
-            RHI::ShaderCompileDesc psDesc{};
-            psDesc.Type = RHI::ShaderType::Pixel;
+            RHI::ShaderCompileOptions psOption{};
+            psOption.targetProfile = "ps_6_0";
             // Set shader model macro
-            psDesc.Macros.push_back({"SHADER_MODEL", 
+            psOption.Macros.push_back({"SHADER_MODEL", 
                 versionStr.c_str()});
-            psDesc.EnableDebugInfo = true;
-            psDesc.FilePath = psshaderPath.c_str();
+            psOption.debugInfo = true;
+            psOption.optimize = true;
+            psOption.entryPoint = "main";
+            psOption.includePaths.push_back(std::string(ShaderPath + "\\"));
 
-            RHI::ShaderCompileDesc csDesc{};
-            csDesc.Type = RHI::ShaderType::Compute;
-            csDesc.EnableDebugInfo = true;
-            csDesc.FilePath = csshaderPath.c_str();
+            RHI::ShaderCompileOptions csOption{};
+            csOption.targetProfile = "cs_6_0";
+            csOption.debugInfo = true;
+            csOption.optimize = true;
+            csOption.entryPoint = "main";
+            csOption.includePaths.push_back(std::string(ShaderPath + "\\"));
 
-            auto vertexShader = device->CompileVertexShader(vsDesc);
-            auto pixelShader = device->CompilePixelShader(psDesc);
-            auto computeShader = device->CompileComputeShader(csDesc);
+            Compiler->BeginCompiler();
 
-            // 现在测试编译 SPIR-V
-            RHI::ShaderCompileOptions options;
-            options.entryPoint = "main";
-            options.targetProfile = "ps_6_0";
-            options.optimize = true;
-            options.debugInfo = true;
-            options.Macros.push_back({"SHADER_MODEL", 
-                versionStr.c_str()});
-            options.includePaths.push_back(std::string(ShaderPath + "\\"));
+            RHI::ShaderCompileSource Source{};
+            Source.sourceType = RHI::ShaderCompileSource::SourceType::SourcePath;
+            Source.sourceDescription = vsshaderPath;
 
-            RHI::ShaderCompileResult spirvResult = SPIRVcompiler->SPIRVCompileFromFile(psshaderPath, options);
-            RHI::ShaderCompileResult hlslResult = HLSLCompiler->HLSLCompileFromFile(psshaderPath, options);
+            RHI::ShaderCompileResult vsResult = Compiler->Compile(vsOption,Source);
+            RHI::CreateShaderDesc vsDesc = Compiler->CreateShaderDescription();
+            Source.sourceDescription = psshaderPath;
+            RHI::ShaderCompileResult psResult = Compiler->Compile(psOption,Source);
+            RHI::CreateShaderDesc psDesc = Compiler->CreateShaderDescription();
+            RHI::SPIRVReflection psreflection = Compiler->Reflection();
+            Source.sourceDescription = csshaderPath;
+            RHI::ShaderCompileResult csResult = Compiler->Compile(csOption,Source);
+            RHI::CreateShaderDesc csDesc = Compiler->CreateShaderDescription();
 
-            if (!spirvResult.success || !hlslResult.success) {
+            if (!vsResult.success || !psResult.success || !csResult.success) {
                 std::cerr << "\n❌ Compilation failed!" << std::endl;
-                std::cerr << "Error: " << spirvResult.errorMessage + " or " + hlslResult.errorMessage << std::endl;
+                std::cerr << "Error: " << vsResult.errorMessage + " or " + psResult.errorMessage << std::endl;
                 return 1;
             }
             // 打印警告信息 之后继续执行
-            if (!spirvResult.warningMessage.empty() || !hlslResult.warningMessage.empty()) {
-                std::cout << "Warnings: " << (spirvResult.warningMessage.empty() ? "" : spirvResult.warningMessage) + 
-                            " or " + (hlslResult.warningMessage.empty() ? "" : hlslResult.warningMessage) << std::endl;
+            if (!vsResult.warningMessage.empty() || !psResult.warningMessage.empty()) {
+                std::cout << "Warnings: " << (vsResult.warningMessage.empty() ? "" : vsResult.warningMessage) + 
+                            " or " + (psResult.warningMessage.empty() ? "" : psResult.warningMessage) << std::endl;
             }
 
-            if (spirvResult.success) {
-                std::cout << "SPIR-V compilation successfully!" << std::endl;
+            if (vsResult.success) {
+                std::cout << "VertexShader compilation successfully!" << std::endl;
             }
-            if (hlslResult.success) {
-                std::cout << "HLSL compilation successfully!" << std::endl;
+            if (psResult.success) {
+                std::cout << "PixelShader compilation successfully!" << std::endl;
             }
+            if (csResult.success) {
+                std::cout << "ComputeShader compilation successfully!" << std::endl;
+            }
+            
+            PrintReflection(psreflection);
 
-            std::cout << "\nExtracting reflection information..." << std::endl;
-            RHI::SPIRVReflection reflection = SPIRVreflector->ExtractReflection(spirvResult.byteCode);
-            PrintReflection(reflection);
+            // 创建着色器
+            std::shared_ptr<RHI::RHIVertexShader> vertexShader = createShader->CreateVertexShader(vsDesc);
+            std::shared_ptr<RHI::RHIPixelShader> pixelShader = createShader->CreatePixelShader(psDesc);
+            std::shared_ptr<RHI::RHIComputeShader> computeShader = createShader->CreateComputeShader(csDesc);
+
+            Compiler->EndCompiler();
 
             if (vertexShader && pixelShader && computeShader)
             {
@@ -559,6 +578,7 @@ int main(int argc, char* argv[])
     compilerContextController->ShutdownCompilerContext();
     device.reset(); 
     
+    // 注意所有的释放必须在这里之前完成否则将无法释放
     Core::SubsystemControl::Uninstall();
     return 0;
 }

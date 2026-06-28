@@ -7,7 +7,7 @@ namespace RHI {
 
     // ========== HLSL Compiler ==========
     // Get HLSL compiler instance
-    IShaderCompiler* IRHIModule::GetHLSLCompiler(){
+    IShaderCompiler* Internal::GetHLSLCompiler(){
         return &HLSLCompiler::Get();
     }
 
@@ -22,7 +22,7 @@ namespace RHI {
     ) {
         LocalShaderCompileOption localOptions = options;
         // Set default target compiler mode to HLSL
-        localOptions.targetCompilerMode = "-fcgl";
+        localOptions.targetCompilerMode = "";
         
         const IShaderCompiler* compilerContext = GetCompilerContext();
         const ShaderCompilerContext* context = GetLocalThreadCompilerContext(compilerContext);
@@ -44,7 +44,7 @@ namespace RHI {
     ) {
         LocalShaderCompileOption localOptions = options;
         // Set default target compiler mode to HLSL
-        localOptions.targetCompilerMode = "-fcgl";
+        localOptions.targetCompilerMode = "";
 
         std::wstring filePathW = IO::ToWideString(filePath);
         if (!IO::Exists(filePathW)) {

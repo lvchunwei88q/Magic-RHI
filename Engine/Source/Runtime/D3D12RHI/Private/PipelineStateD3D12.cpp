@@ -191,7 +191,7 @@ namespace RHI
         if (!device || !desc.pRootSignature || !desc.pVertexShader || !desc.pPixelShader)
             return false;
 
-        auto dx12Device = static_cast<RHID3D12*>(device);
+        auto dx12Device = static_cast<DeviceD3D12*>(device);
         auto d3dDevice = dx12Device->GetDevice();
         if (!d3dDevice)
             return false;
@@ -269,7 +269,7 @@ namespace RHI
         if (!device || !desc.pRootSignature || !desc.pComputeShader)
             return false;
 
-        auto dx12Device = static_cast<RHID3D12*>(device);
+        auto dx12Device = static_cast<DeviceD3D12*>(device);
         auto d3dDevice = dx12Device->GetDevice();
         if (!d3dDevice)
             return false;
@@ -307,7 +307,7 @@ namespace RHI
         return Type;
     }
 
-    std::shared_ptr<RHIPipelineState> RHID3D12::CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc)
+    std::shared_ptr<RHIPipelineState> DeviceD3D12::CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc)
     {
         auto pipelineState = std::make_shared<RHIPipelineStateD3D12>();
         if (pipelineState->Initialize(this, desc))
@@ -317,7 +317,7 @@ namespace RHI
         return nullptr;
     }
 
-    std::shared_ptr<RHIPipelineState> RHID3D12::CreateComputePipelineState(const ComputePipelineStateDesc& desc)
+    std::shared_ptr<RHIPipelineState> DeviceD3D12::CreateComputePipelineState(const ComputePipelineStateDesc& desc)
     {
         auto pipelineState = std::make_shared<RHIPipelineStateD3D12>();
         if (pipelineState->Initialize(this, desc))
@@ -327,7 +327,7 @@ namespace RHI
         return nullptr;
     }
 
-    void RHID3D12::DeletePipelineState(std::shared_ptr<RHIPipelineState>& pipelineState)
+    void DeviceD3D12::DeletePipelineState(std::shared_ptr<RHIPipelineState>& pipelineState)
     {
         if (pipelineState)
         {

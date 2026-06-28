@@ -18,6 +18,9 @@ namespace RHI {
 
     // Initialize Compiler context instance
     bool CompilerContextController::InitializeCompilerContext() {
+        // Initialize cache
+        m_Cache = std::make_unique<CompilerPipelineCache>();
+        // Initialize shader context
         m_Context = std::make_unique<ShaderCompilerContext>();
         bool isInitialized = m_Context->Initialize();
         if (!isInitialized) {
@@ -35,6 +38,8 @@ namespace RHI {
     void CompilerContextController::ShutdownCompilerContext() {
         // Shutdown DXC compiler
         m_Context.reset();
+        // Reset cache
+        m_Cache.reset();
         // Set compiler context to nullptr
         SetCompilerContext(nullptr);
 
@@ -124,11 +129,11 @@ namespace RHI {
             return result;
         }
 
-        // Copy bytecode to result
-        const uint32_t* data = reinterpret_cast<const uint32_t*>(pBytecode->GetBufferPointer());
-        size_t wordCount = pBytecode->GetBufferSize() / sizeof(uint32_t);
-        result.byteCode.assign(data, data + wordCount);
-        result.bytecodeSize = wordCount * sizeof(uint32_t);
+        // Copy bytecode to result,Here we store everything in a unified format, and later, when using this data, we'll handle any alignment requirements.
+        const uint8_t* data = reinterpret_cast<const uint8_t*>(pBytecode->GetBufferPointer());
+        size_t byteSize = pBytecode->GetBufferSize();
+        result.byteCode.assign(data, data + byteSize);
+        result.bytecodeSize = byteSize;
         result.success = true;
 
         return result;

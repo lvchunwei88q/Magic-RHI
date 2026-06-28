@@ -194,7 +194,7 @@ namespace RHI
     bool RHIPipelineStateD3D11::Initialize(Device* device, const GraphicsPipelineStateDesc& desc)
     {
         Type = PipelineStateType::Graphics;
-        RHID3D11* dx11direct = SafeCast<RHID3D11>(device);
+        DeviceD3D11* dx11direct = SafeCast<DeviceD3D11>(device);
         // TODO: Pipeline state data initialization
         //GraphicsDesc.pRootSignature = desc.pRootSignature;
 
@@ -280,7 +280,7 @@ namespace RHI
     bool RHIPipelineStateD3D11::Initialize(Device* device, const ComputePipelineStateDesc& desc)
     {
         Type = PipelineStateType::Compute;
-        RHID3D11* dx11direct = SafeCast<RHID3D11>(device);
+        DeviceD3D11* dx11direct = SafeCast<DeviceD3D11>(device);
         // TODO: Pipeline state data initialization
         //ComputeDesc.pRootSignature = desc.pRootSignature;
         
@@ -315,7 +315,7 @@ namespace RHI
         return ComputeDesc;
     }
 
-    std::shared_ptr<RHIPipelineState> RHID3D11::CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc)
+    std::shared_ptr<RHIPipelineState> DeviceD3D11::CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc)
     {
         auto pipelineState = std::make_shared<RHIPipelineStateD3D11>();
         if (pipelineState->Initialize(this, desc))
@@ -325,7 +325,7 @@ namespace RHI
         return nullptr;
     }
 
-    std::shared_ptr<RHIPipelineState> RHID3D11::CreateComputePipelineState(const ComputePipelineStateDesc& desc)
+    std::shared_ptr<RHIPipelineState> DeviceD3D11::CreateComputePipelineState(const ComputePipelineStateDesc& desc)
     {
         auto pipelineState = std::make_shared<RHIPipelineStateD3D11>();
         if (pipelineState->Initialize(this, desc))
@@ -335,7 +335,7 @@ namespace RHI
         return nullptr;
     }
 
-    void RHID3D11::DeletePipelineState(std::shared_ptr<RHIPipelineState>& pipelineState)
+    void DeviceD3D11::DeletePipelineState(std::shared_ptr<RHIPipelineState>& pipelineState)
     {
         if (pipelineState)
         {

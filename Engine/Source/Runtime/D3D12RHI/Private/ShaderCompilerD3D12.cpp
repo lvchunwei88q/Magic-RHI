@@ -3,8 +3,6 @@
 #include <Common/Check.h>
 #include "RHID3D12.h"
 
-#include <include/Support/ErrorCodes.h>
-
 #include <IO.h>
 
 
@@ -12,7 +10,7 @@ namespace RHI
 {
     namespace
     {
-        // 将 D3D_SHADER_MODEL 枚举转换为自定义枚举
+        // Convert the D3D_SHADER_MODEL enum to a custom enum
         ShaderModelVersion ConvertD3DShaderModel(D3D_SHADER_MODEL model)
         {
             switch (model)
@@ -32,13 +30,13 @@ namespace RHI
             }
         }
 
-        // 获取设备支持的最高 Shader Model
+        // Get the highest Shader Model supported by the device
         ShaderModelVersion GetHighestSupportedShaderModel(ID3D12Device* device)
         {
             if (!device)
                 return ShaderModelVersion::Unknown;
             
-            // 按从高到低的顺序测试所有 SM 版本
+            // Test all SM versions in descending order to find the highest supported one
             std::vector<D3D_SHADER_MODEL> testVersions = {
                 D3D_SHADER_MODEL_6_9,
                 D3D_SHADER_MODEL_6_8,
@@ -64,7 +62,7 @@ namespace RHI
                     &shaderModel, 
                     sizeof(shaderModel))))
                 {
-                    // 返回检测到的最高版本
+                    // Return the highest supported version
                     return ConvertD3DShaderModel(shaderModel.HighestShaderModel);
                 }
             }
@@ -72,249 +70,69 @@ namespace RHI
             return ShaderModelVersion::Unknown;
         }
 
-        std::string ReadFileToString(const std::string& filePath)
-        {
-            // 检查文件是否存在
-            std::wstring filePathW = IO::ToWideString(filePath);
-            if (!IO::Exists(filePathW))
-            {
-                ThrowErrorMessage("Shader file not found: " + filePath);
-                return "";
-            }
-
-            std::string content = IO::ReadAllText(filePathW);
-            return content;
-        }
-
-        std::string LoadShaderSource(const ShaderCompileDesc& desc, std::string& outBasePath)
-        {
-            if (desc.SourceCode)
-            {
-                return desc.SourceCode;
-            }
-            else if (desc.FilePath)
-            {
-                std::string filePath = desc.FilePath;
-                size_t lastSlash = filePath.find_last_of("/\\");
-                if (lastSlash != std::string::npos)
-                {
-                    outBasePath = filePath.substr(0, lastSlash);
-                }
-                
-                return ReadFileToString(filePath);
-            }
-            else
-            {
-                ThrowErrorMessage("No shader source or file path provided");
-                return "";
-            }
-        }
-
         template<typename ShaderType>
-        std::shared_ptr<ShaderType> CompileShaderInternal(RHID3D12* device, const ShaderCompileDesc& desc, const char* defaultProfile)
+        std::unique_ptr<ShaderType> CompileShaderInternal(const CreateShaderDesc& desc)
         {
-            std::string basePath;
-            std::string source = LoadShaderSource(desc, basePath);
-            if (source.empty())
+            if(desc.shaderType != CreateShaderDesc::ShaderType::HLSL){
+#if RHI_ENABLE_DEBUG_INFO
+                ThrowErrorMessage("Shader type is not HLSL");
+#endif 
                 return nullptr;
-
-            std::string profile = desc.Profile ? desc.Profile : defaultProfile;
-            std::string entryPoint = desc.EntryPoint ? desc.EntryPoint : "main";
-
-            std::vector<uint8_t> bytecode;
-            if (!device->CompileShaderToBytecode(source, entryPoint, profile, desc.EnableDebugInfo, desc.Macros, bytecode,basePath))
-                return nullptr;
-
-            return std::make_shared<ShaderType>(bytecode);
+            }
+            return std::make_unique<ShaderType>(desc.GetHLSLByteCode());
         }
     }
 
-    std::string RHID3D12::GetShaderTarget(const char* prefix) const
+    bool CreateShaderD3D12::Initialize(Device* device)
     {
-        ShaderModelVersion highestSM = GetHighestSupportedShaderModel(m_pDevice.Get());
-        
-        if (highestSM >= ShaderModelVersion::SM_6_0)
-        {
-            return std::string(prefix) + "_" + ShaderModelToString(highestSM);
-        }
-        else if (highestSM >= ShaderModelVersion::SM_5_1)
-        {
-            return std::string(prefix) + "_5_1";
-        }
-        else
-        {
-            return std::string(prefix) + "_5_0";
-        }
-    }
-
-    bool RHID3D12::CompileShaderToBytecode(const std::string& source, const std::string& entryPoint, 
-                                const std::string& profile, bool enableDebug, const std::vector<ShaderMacro>& macros,
-                                std::vector<uint8_t>& outBytecode,std::string& basePath)
-    {   
-        if (!compiler || !utils)
-        {
-            ThrowErrorMessage("DXC not initialized");
-            return false;
-        }
-        
-        // 转换字符串为 UTF-16
-        std::wstring sourceW = IO::ToWideString(source);
-        std::wstring entryPointW = IO::ToWideString(entryPoint);
-        std::wstring profileW = IO::ToWideString(profile);
-
-        // 创建源码 Blob
-        ComPtr<IDxcBlobEncoding> sourceBlob;
-        ThrowIfFailed(utils->CreateBlob(
-            sourceW.c_str(),
-            static_cast<UINT32>(sourceW.size() * sizeof(wchar_t)),
-            DXC_CP_WIDE,
-            &sourceBlob
-        ));
-
-        std::wstring shaderPath = IO::ToWideString(basePath);
-        
-        // 准备参数
-        std::vector<LPCWSTR> args;
-        std::vector<std::wstring> macroStrings; 
-        args.push_back(L"-T"); args.push_back(profileW.c_str());
-        args.push_back(L"-E"); args.push_back(entryPointW.c_str());
-        args.push_back(L"-I"); args.push_back(shaderPath.c_str()); // 在当前目录找头文件
-        
-        if (enableDebug)
-        {
-            args.push_back(L"-Zi");
-            args.push_back(L"-Od");
-        }
-        
-        // 开启严格模式
-        args.push_back(L"-Ges");
-        args.push_back(L"-WX");
-
-        for (const auto& macro : macros)
-        {
-            std::wstring macroW = IO::ToWideString(macro.name);
-            macroW += L"=" + IO::ToWideString(macro.definition);
-            macroStrings.push_back(macroW); 
-            args.push_back(L"-D"); args.push_back(macroStrings.back().c_str());
-            //args.push_back(L"-D"); args.push_back(L"SHADER_MODEL=50");
-        }
-        
-        // 编译
-        DxcBuffer sourceBuffer;
-        sourceBuffer.Ptr = sourceBlob->GetBufferPointer();
-        sourceBuffer.Size = sourceBlob->GetBufferSize();
-        sourceBuffer.Encoding = DXC_CP_WIDE;
-        
-        ComPtr<IDxcResult> result;
-        ThrowIfFailed(compiler->Compile(&sourceBuffer, args.data(), (UINT32)args.size(),
-                            includeHandler.Get(), IID_PPV_ARGS(&result)));
-        
-        // 检查错误
-        ComPtr<IDxcBlobUtf8> errors;
-        result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errors), nullptr);
-        
-        if (errors && errors->GetStringLength() > 0)
-        {
-            std::string errorMsg = errors->GetStringPointer();
-            
-            // 获取详细状态
-            HRESULT hr = S_OK;
-            if (result)
-            {
-                result->GetStatus(&hr);
-            }
-            
-            // 构建最终错误消息
-            std::string finalMsg = "Shader compilation failed";
-            
-            switch (hr)
-            {
-            case DXC_E_OVERLAPPING_SEMANTICS:
-                finalMsg += " (Overlapping semantics):\n";
-                break;
-            case DXC_E_MULTIPLE_DEPTH_SEMANTICS:
-                finalMsg += " (Multiple depth semantics):\n";
-                break;
-            case DXC_E_INPUT_FILE_TOO_LARGE:
-                finalMsg += " (Input file too large):\n";
-                break;
-            case DXC_E_INCORRECT_DXBC:
-                finalMsg += " (Incorrect DXBC):\n";
-                break;
-            case DXC_E_MISSING_PART:
-                finalMsg += " (Missing DXIL part):\n";
-                break;
-            case DXC_E_IR_VERIFICATION_FAILED:
-                finalMsg += " (IR verification failed - possible compiler bug):\n";
-                break;
-            case DXC_E_CONTAINER_INVALID:
-                finalMsg += " (Invalid DXIL container):\n";
-                break;
-            case DXC_E_OPTIMIZATION_FAILED:
-                finalMsg += " (Optimization failed):\n";
-                break;
-            case DXC_E_GENERAL_INTERNAL_ERROR:
-                finalMsg += " (DXC internal error):\n";
-                break;
-            default:
-                finalMsg += ":\n";
-                break;
-            }
-            
-            finalMsg += errorMsg;
-            Core::ErrorCapture::Capture(finalMsg.c_str());
-            // ThrowErrorMessage(finalMsg.c_str());   这里不要直接抛出异常，否则会导致程序崩溃
-            return false;
-        }
-        
-        // 获取字节码
-        ComPtr<IDxcBlob> bytecodeBlob;
-        ThrowIfFailed(result->GetOutput(DXC_OUT_OBJECT, IID_PPV_ARGS(&bytecodeBlob), nullptr));
-        
-        if (!bytecodeBlob)
-        {
-            ThrowErrorMessage("Failed to get compiled bytecode");
-            return false;
-        }
-        
-        outBytecode.resize(bytecodeBlob->GetBufferSize());
-        memcpy(outBytecode.data(), bytecodeBlob->GetBufferPointer(), bytecodeBlob->GetBufferSize());
+        m_pRHI = SafeCast<DeviceD3D12>(device);
+        m_Initialization = CoreDeviceInitialization::Initialize;
         return true;
     }
 
-
-    std::shared_ptr<RHIVertexShader> RHID3D12::CompileVertexShader(const ShaderCompileDesc& desc)
+    void CreateShaderD3D12::Shutdown()
     {
-        return CompileShaderInternal<VertexShaderD3D12>(this, desc, GetShaderTarget("vs").c_str());
+        m_Initialization = CoreDeviceInitialization::Shutdown;
+        m_pRHI = nullptr;
     }
 
-    std::shared_ptr<RHIPixelShader> RHID3D12::CompilePixelShader(const ShaderCompileDesc& desc)
+    bool CreateShaderD3D12::IsValid() const
     {
-        return CompileShaderInternal<PixelShaderD3D12>(this, desc, GetShaderTarget("ps").c_str());
+        return m_Initialization == CoreDeviceInitialization::Initialize;
     }
 
-    std::shared_ptr<RHIGeometryShader> RHID3D12::CompileGeometryShader(const ShaderCompileDesc& desc)
+    std::unique_ptr<RHIVertexShader> CreateShaderD3D12::CreateVertexShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<GeometryShaderD3D12>(this, desc, GetShaderTarget("gs").c_str());
+        return CompileShaderInternal<VertexShaderD3D12>(desc);
     }
 
-    std::shared_ptr<RHIHullShader> RHID3D12::CompileHullShader(const ShaderCompileDesc& desc)
+    std::unique_ptr<RHIPixelShader> CreateShaderD3D12::CreatePixelShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<HullShaderD3D12>(this, desc, GetShaderTarget("hs").c_str());
+        return CompileShaderInternal<PixelShaderD3D12>(desc);
     }
 
-    std::shared_ptr<RHIDomainShader> RHID3D12::CompileDomainShader(const ShaderCompileDesc& desc)
+    std::unique_ptr<RHIGeometryShader> CreateShaderD3D12::CreateGeometryShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<DomainShaderD3D12>(this, desc, GetShaderTarget("ds").c_str());
+        return CompileShaderInternal<GeometryShaderD3D12>(desc);
     }
 
-    std::shared_ptr<RHIComputeShader> RHID3D12::CompileComputeShader(const ShaderCompileDesc& desc)
+    std::unique_ptr<RHIHullShader> CreateShaderD3D12::CreateHullShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<ComputeShaderD3D12>(this, desc, GetShaderTarget("cs").c_str());
+        return CompileShaderInternal<HullShaderD3D12>(desc);
+    }
+
+    std::unique_ptr<RHIDomainShader> CreateShaderD3D12::CreateDomainShader(const CreateShaderDesc& desc)
+    {
+        return CompileShaderInternal<DomainShaderD3D12>(desc);
+    }
+
+    std::unique_ptr<RHIComputeShader> CreateShaderD3D12::CreateComputeShader(const CreateShaderDesc& desc)
+    {
+        return CompileShaderInternal<ComputeShaderD3D12>(desc);
     }
     
-    ShaderModelVersion RHID3D12::GetShaderModelVersion() const
+    ShaderModelVersion CreateShaderD3D12::GetShaderModelVersion() const
     {
-        return GetHighestSupportedShaderModel(GetDevice());
+        return GetHighestSupportedShaderModel(m_pRHI->GetDevice());
     }
 }

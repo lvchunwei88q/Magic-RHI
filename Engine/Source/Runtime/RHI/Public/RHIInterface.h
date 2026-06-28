@@ -51,6 +51,12 @@ namespace RHI
     struct GraphicsPipelineStateDesc;
     struct ComputePipelineStateDesc;
 
+    // Core Device Initialization State - Place user-uninitialized device
+    enum class CoreDeviceInitialization : uint8_t {
+        Initialize = 1,
+        Shutdown = 2,
+    };
+
     class RHI_API Device
     {
     public:
@@ -58,8 +64,8 @@ namespace RHI
 
         virtual bool Initialize() = 0;
         virtual void Shutdown() = 0;
-
         virtual bool IsValid() const = 0;
+        
         virtual RHIType GetType() const = 0;
         virtual const std::wstring& GetAdapterName() const = 0;
         virtual FeatureLevel GetFeatureLevel() const = 0;
@@ -80,14 +86,6 @@ namespace RHI
         [[nodiscard]] virtual std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator) = 0;
         [[nodiscard]] virtual RHICommandQueue* GetCommandQueue(RHICmdType Type) const = 0;
 
-        [[nodiscard]] virtual std::shared_ptr<RHIVertexShader> CompileVertexShader(const ShaderCompileDesc& desc) = 0;
-        [[nodiscard]] virtual std::shared_ptr<RHIPixelShader> CompilePixelShader(const ShaderCompileDesc& desc) = 0;
-        [[nodiscard]] virtual std::shared_ptr<RHIGeometryShader> CompileGeometryShader(const ShaderCompileDesc& desc) = 0;
-        [[nodiscard]] virtual std::shared_ptr<RHIHullShader> CompileHullShader(const ShaderCompileDesc& desc) = 0;
-        [[nodiscard]] virtual std::shared_ptr<RHIDomainShader> CompileDomainShader(const ShaderCompileDesc& desc) = 0;
-        [[nodiscard]] virtual std::shared_ptr<RHIComputeShader> CompileComputeShader(const ShaderCompileDesc& desc) = 0;
-        virtual ShaderModelVersion GetShaderModelVersion() const = 0;
-
         [[nodiscard]] virtual std::shared_ptr<RHIRootSignature> CreateRootSignature(const RootSignatureDesc& desc) = 0;
         virtual void DeleteRootSignature(std::shared_ptr<RHIRootSignature>& rootSignature) = 0;
 
@@ -96,6 +94,8 @@ namespace RHI
         virtual void DeletePipelineState(std::shared_ptr<RHIPipelineState>& pipelineState) = 0;
 
         [[nodiscard]] virtual RHIDescriptorHeap* GetDescriptorHeap(RHIDescriptorHeapType type) const = 0;
+    protected:
+        CoreDeviceInitialization m_Initialization;
     };
 
     class RHI_API SwapChain
@@ -105,8 +105,8 @@ namespace RHI
 
         virtual bool Initialize(Device* device, const SwapChainDesc& desc) = 0;
         virtual void Shutdown() = 0;
-
         virtual bool IsValid() const = 0;
+
         virtual void Present(uint32_t syncInterval, uint32_t presentFlags) = 0;
         virtual void Resize(uint32_t width, uint32_t height) = 0;
         virtual uint32_t GetFrameIndex() const = 0;
@@ -116,5 +116,27 @@ namespace RHI
 
         virtual RHIRenderTargetView* GetRenderTargetView(uint32_t index) const = 0;
         virtual RHITexture* GetBackBuffer(uint32_t index) const = 0;
+
+    protected:
+        CoreDeviceInitialization m_Initialization;
+    };
+
+    class RHI_API CreateShader
+    {
+    public:
+        virtual ~CreateShader() = default;
+        virtual bool Initialize(Device* device) = 0;
+        virtual void Shutdown() = 0;
+        virtual bool IsValid() const = 0;
+
+        [[nodiscard]] virtual std::unique_ptr<RHIVertexShader> CreateVertexShader(const CreateShaderDesc& desc) = 0;
+        [[nodiscard]] virtual std::unique_ptr<RHIPixelShader> CreatePixelShader(const CreateShaderDesc& desc) = 0;
+        [[nodiscard]] virtual std::unique_ptr<RHIGeometryShader> CreateGeometryShader(const CreateShaderDesc& desc) = 0;
+        [[nodiscard]] virtual std::unique_ptr<RHIHullShader> CreateHullShader(const CreateShaderDesc& desc) = 0;
+        [[nodiscard]] virtual std::unique_ptr<RHIDomainShader> CreateDomainShader(const CreateShaderDesc& desc) = 0;
+        [[nodiscard]] virtual std::unique_ptr<RHIComputeShader> CreateComputeShader(const CreateShaderDesc& desc) = 0;
+        virtual ShaderModelVersion GetShaderModelVersion() const = 0;
+    protected:
+        CoreDeviceInitialization m_Initialization;
     };
 }

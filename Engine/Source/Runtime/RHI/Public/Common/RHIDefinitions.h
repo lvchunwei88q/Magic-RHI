@@ -2,6 +2,7 @@
 #include "RHITypes.h"
 #include <string>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 namespace RHI
@@ -130,25 +131,41 @@ struct ShaderCompileOptions {
 // Shader Compile Result
 struct ShaderCompileResult {
     bool success = false;           // compile success
-    std::vector<uint32_t> byteCode;    // shader byte code
+    std::vector<uint8_t> byteCode;    // shader byte code
     std::string errorMessage;       // error msg
     std::string warningMessage;     // warning msg
     size_t bytecodeSize = 0;        // bytecode size
 };
 
-// Shader Compile Description
-struct ShaderCompileDesc
+// Shader Compile Source Description
+struct ShaderCompileSource
 {
-    ShaderType Type;
-    std::vector<ShaderMacro> Macros = {};
-    const char* SourceCode = nullptr;
-    const char* EntryPoint = "main";
-	// For regular shaders, we don't want you to specify a profile,
-	// because the support for Shader Models varies across different platforms.
-	//  Our shader compiler will automatically choose the appropriate profile based on the platform.
-    const char* Profile = nullptr;
-    const char* FilePath = nullptr;
-    bool EnableDebugInfo = false;
+    enum class SourceType {
+        SourcePath = 1,
+        SourceCode = 2,
+    };
+    std::string sourceDescription;
+    SourceType sourceType = SourceType::SourcePath;
+};
+
+// Create Shader Description
+struct CreateShaderDesc
+{
+    enum class ShaderType : uint8_t {
+        HLSL = 1,
+        SPIRV = 2,
+    };
+    
+    std::variant<std::vector<uint8_t>, std::vector<uint32_t>> byteCode;
+    ShaderType shaderType = ShaderType::HLSL;
+
+    const std::vector<uint8_t>& GetHLSLByteCode() const {
+        return std::get<std::vector<uint8_t>>(byteCode);
+    }
+    
+    const std::vector<uint32_t>& GetSPIRVByteCode() const {
+        return std::get<std::vector<uint32_t>>(byteCode);
+    }
 };
 	
 // Input Element Description

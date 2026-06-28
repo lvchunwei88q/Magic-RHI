@@ -10,9 +10,13 @@
 namespace RHI {
     // ========== SPIR-V Reflection ==========
     // Get SPIR-V reflection instance
-    IShaderCompiler* IRHIModule::GetSPIRVReflection(){
+    IShaderCompiler* Internal::GetSPIRVReflection(){
         return &SPIRVGenerationReflection::Get();
     }
+
+    SPIRVGenerationReflection::SPIRVGenerationReflection() = default;
+
+    SPIRVGenerationReflection::~SPIRVGenerationReflection() = default;
 
     SPIRVReflection SPIRVGenerationReflection::ExtractReflection(const std::vector<uint32_t>& spirv) {
         SPIRVReflection reflection;

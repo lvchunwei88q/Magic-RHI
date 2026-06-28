@@ -4,7 +4,7 @@
 
 namespace RHI
 {
-    RHIDescriptorHandle RHID3D11::CreateStandardHeapDescriptorView(RHIBuffer* Buffer,DescriptorRangeType Type)
+    RHIDescriptorHandle DeviceD3D11::CreateStandardHeapDescriptorView(RHIBuffer* Buffer,DescriptorRangeType Type)
     {
         if (!m_pStandardHeap || m_pStandardHeap->IsFull())
         {
@@ -78,7 +78,7 @@ namespace RHI
         return handle;
     }
 
-    RHIDescriptorHandle RHID3D11::CreateStandardHeapDescriptorView(RHITexture* Texture,DescriptorRangeType Type)
+    RHIDescriptorHandle DeviceD3D11::CreateStandardHeapDescriptorView(RHITexture* Texture,DescriptorRangeType Type)
     {
         if (!m_pStandardHeap || m_pStandardHeap->IsFull())
         {
@@ -88,7 +88,7 @@ namespace RHI
         return m_pStandardHeap->Allocate();
     }
 
-    RHIDescriptorHandle RHID3D11::CreateSamplerHeapDescriptorView(const SamplerStateDesc& /*desc*/)
+    RHIDescriptorHandle DeviceD3D11::CreateSamplerHeapDescriptorView(const SamplerStateDesc& /*desc*/)
     {
         if (!m_pSamplerHeap || m_pSamplerHeap->IsFull())
         {
@@ -98,7 +98,7 @@ namespace RHI
         return m_pSamplerHeap->Allocate();
     }
 
-    RHIDescriptorHandle RHID3D11::CreateRTVHeapDescriptorView(RHIRenderTargetView* /*InView*/)
+    RHIDescriptorHandle DeviceD3D11::CreateRTVHeapDescriptorView(RHIRenderTargetView* /*InView*/)
     {
         if (!m_pRTVHeap || m_pRTVHeap->IsFull())
         {
@@ -108,7 +108,7 @@ namespace RHI
         return m_pRTVHeap->Allocate();
     }
 
-    RHIDescriptorHandle RHID3D11::CreateDSVHeapDescriptorView(RHIDepthStencilView* /*InView*/)
+    RHIDescriptorHandle DeviceD3D11::CreateDSVHeapDescriptorView(RHIDepthStencilView* /*InView*/)
     {
         if (!m_pDSVHeap || m_pDSVHeap->IsFull())
         {

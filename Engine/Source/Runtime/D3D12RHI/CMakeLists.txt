@@ -1,5 +1,4 @@
 include(${PROJECT_SOURCE_DIR}/Engine/Cmake/macro.cmake)
-set(DXC_ROOT ${THIRD_PARTY_DIR}/DirectXShaderCompiler) # DXC root directory
 
 add_module_sources(D3D12RHI)
 
@@ -14,7 +13,6 @@ target_include_directories(D3D12RHI
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/Internal # Other projects cannot access it
         ${CMAKE_CURRENT_SOURCE_DIR}/../RHI/Public # include RHI headers
-        ${DXC_ROOT} # include DXC headers
 )
 
 target_link_options(D3D12RHI PRIVATE 
@@ -26,7 +24,6 @@ target_compile_definitions(D3D12RHI PRIVATE D3D12RHI_EXPORTS)
 target_link_libraries(D3D12RHI
     PRIVATE   
         d3d12.lib
-        ${DXC_ROOT}/dxcompiler.lib
         dxgi.lib
         dxguid.lib
 )

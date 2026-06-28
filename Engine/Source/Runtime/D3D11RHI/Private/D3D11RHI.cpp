@@ -2,13 +2,12 @@
 
 #include <RHIDynamicLoader.h>
 #include "RHID3D11.h"
-#include "SwapChainD3D11.h"
 
 namespace RHI
 {
     D3D11RHI_API CreateDevice_Function
     {
-        auto device = std::make_unique<RHID3D11>();
+        auto device = std::make_unique<DeviceD3D11>();
         if (device) {
             return device;
         }
@@ -20,6 +19,15 @@ namespace RHI
         auto swapChain = std::make_unique<SwapChainD3D11>();
         if (swapChain) {
             return swapChain;
+        }
+        return nullptr;
+    }
+
+    D3D11RHI_API CreateCreateShader_Function
+    {
+        auto createShader = std::make_unique<CreateShaderD3D11>();
+        if (createShader) {
+            return createShader;
         }
         return nullptr;
     }

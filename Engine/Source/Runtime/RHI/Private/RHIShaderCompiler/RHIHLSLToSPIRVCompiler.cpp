@@ -7,7 +7,7 @@ namespace RHI
     }
     // ========== SPIR-V Compiler ==========
     // Get SPIR-V compiler instance
-    IShaderCompiler* IRHIModule::GetSPIRVCompiler(){
+    IShaderCompiler* Internal::GetSPIRVCompiler(){
         return &HLSLToSPIRVCompiler::Get();
     }
 

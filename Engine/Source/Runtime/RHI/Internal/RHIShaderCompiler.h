@@ -28,6 +28,12 @@ using namespace Microsoft::WRL;
 
 namespace RHI {
 
+namespace Internal {
+    IShaderCompiler* GetHLSLCompiler();
+    IShaderCompiler* GetSPIRVCompiler();
+    IShaderCompiler* GetSPIRVReflection();
+}
+
 // Shader compiler context
 struct ShaderCompilerContext {
     ComPtr<IDxcCompiler3> compiler;
@@ -56,6 +62,7 @@ struct ShaderCompilerContext {
         bool m_Initialized = false;
 };
 
+// Struct for internal compilation settings
 struct LocalShaderCompileOption : public ShaderCompileOptions {
     // Target Compiler mode (SPIR-V or HLSL)
     std::string targetCompilerMode = "-spirv";
@@ -64,6 +71,25 @@ struct LocalShaderCompileOption : public ShaderCompileOptions {
 
     LocalShaderCompileOption() = default;
     LocalShaderCompileOption(const ShaderCompileOptions& options) : ShaderCompileOptions(options) {}
+};
+
+// Struct for compiler pipeline cache
+struct CompilerPipelineCache {
+    // Cache for compiler
+    ShaderCompileResult CompileCache;
+    // Cache for SPIRV reflection
+    SPIRVReflection SPIRVReflectionCache;
+    // Cache for Compiler Options
+    LocalShaderCompileOption CompilerOptionsCache;
+    // Cache for Source
+    ShaderCompileSource SourceCache;
+
+    void Clear() {
+        CompileCache = ShaderCompileResult {};
+        SPIRVReflectionCache = SPIRVReflection {};
+        CompilerOptionsCache = LocalShaderCompileOption {};
+        SourceCache = ShaderCompileSource {};
+    }
 };
 
 // ----------------------------------------------------------------- Compiler Functions
@@ -81,9 +107,31 @@ struct LocalShaderCompileOption : public ShaderCompileOptions {
     std::vector<std::wstring>& m_ArgStorage
 );
 
+// Get SPIR-V target env (call external function)
+inline std::string GetSPIRVTargetEnv() {
+    switch (GetBestAvailableRHI()) {
+    case RHIType::D3D12:
+        return "vulkan1.3";
+    case RHIType::D3D11:
+        return "vulkan1.0";
+    default:
+        return "vulkan1.0";
+    }
+}
+
 // ----------------------------------------------------------------- Compiler Functions End
 
 class CompilerContextController : public IShaderCompiler {
+public:
+    enum class CompilerContextState {
+        Initialized,
+        Shutdown
+    };
+
+    enum class CompilerPipelineState {
+        Start,
+        End
+    };
 public:
     CompilerContextController();
     ~CompilerContextController();
@@ -93,15 +141,21 @@ public:
     void ShutdownCompilerContext() override;
 
     const ShaderCompilerContext* GetCompilerContext() const { return m_Context.get(); }
-private:
-    enum class CompilerContextState {
-        Initialized,
-        Shutdown
-    };
 
+    const CompilerPipelineCache* GetCompilerPipelineCache() const { return m_Cache.get(); }
+    CompilerPipelineCache& AppendCompilerPipelineCache() { return *m_Cache; }
+    // Normally we shouldn't use this function to set the cache because it will clear all existing caches unless you know what you're doing.
+    void SetCompilerPipelineCache(const CompilerPipelineCache& cache) { *m_Cache = cache; }
+    void ClearCompilerPipelineCache() { m_Cache->Clear(); }
+
+    void SetCompilerPipelineState(CompilerPipelineState state) { m_Pipeline_State = state; }
+    CompilerPipelineState GetCompilerPipelineState() const { return m_Pipeline_State; }
+private:
     CompilerContextState m_State = CompilerContextState::Shutdown;
+    CompilerPipelineState m_Pipeline_State = CompilerPipelineState::End;
 
     std::unique_ptr<ShaderCompilerContext> m_Context;
+    std::unique_ptr<CompilerPipelineCache> m_Cache;
 };
 
 // Get local thread compiler context
@@ -125,12 +179,34 @@ private:
     return context;
 }
 
+class CompilerPipeline : public IShaderCompiler , public Singleton<CompilerPipeline> {
+public:
+    CompilerPipeline();
+    ~CompilerPipeline();
+
+    // State machine
+    void BeginCompiler() override;
+    void EndCompiler() override;
+
+    // Real work function
+    ShaderCompileResult Compile(const ShaderCompileOptions& options, const ShaderCompileSource& source) override;
+    SPIRVReflection Reflection() override;
+    CreateShaderDesc CreateShaderDescription() override;
+
+private:
+    ShaderCompileResult CompileD3D12(const ShaderCompileOptions& options, const ShaderCompileSource& source);
+    ShaderCompileResult CompileOrdinaryAPI(const ShaderCompileOptions& options, const ShaderCompileSource& source);
+
+private:
+
+};
+
 // HLSL → SPIR-V Compiler
 class HLSLToSPIRVCompiler : public IShaderCompiler , public Singleton<HLSLToSPIRVCompiler> {
 public:
     HLSLToSPIRVCompiler();
     ~HLSLToSPIRVCompiler();
-
+protected:
     // Compile from source string
     ShaderCompileResult SPIRVCompileFromString(
         const std::string& hlslSource,
@@ -144,19 +220,6 @@ public:
     ) override;
 
 private:
-    // Get SPIR-V target env (call external function)
-    std::string GetSPIRVTargetEnv() const {
-        switch (GetBestAvailableRHI()) {
-        case RHIType::D3D12:
-            return "vulkan1.3";
-        case RHIType::D3D11:
-            return "vulkan1.0";
-        default:
-            return "vulkan1.0";
-        }
-    }
-
-private:
 };
 
 // HLSL Compiler
@@ -164,7 +227,7 @@ class HLSLCompiler : public IShaderCompiler , public Singleton<HLSLCompiler> {
 public:
     HLSLCompiler();
     ~HLSLCompiler();
-
+protected:
     // Compile from source string
     ShaderCompileResult HLSLCompileFromString(
         const std::string& hlslSource,
@@ -185,8 +248,12 @@ private:
 */
 class SPIRVGenerationReflection : public IShaderCompiler , public Singleton<SPIRVGenerationReflection> {
 public:
+    SPIRVGenerationReflection();
+    ~SPIRVGenerationReflection();
+protected:
     // Extract reflection information (using SPIRV-Cross)
     SPIRVReflection ExtractReflection(const std::vector<uint32_t>& spirv) override;
+private:
 };
 
 } // namespace RHI
