@@ -219,6 +219,15 @@ int main(int argc, char* argv[])
                 { {-0.5f, -0.5f, 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f, 1.0f } }   // 顶点2: 左下，蓝色
             };
 
+            // 定义输入布局描述
+            std::vector<RHI::InputElementDesc> inputLayout = 
+            {
+                { "POSITION", 0, RHI::RHITextureFormat::R32G32B32_FLOAT, 0, RHI::InputElementDesc::APPEND_ALIGNED_ELEMENT,
+                    RHI::InputClassification::PerVertexData, 0 },
+                { "COLOR", 0, RHI::RHITextureFormat::R32G32B32A32_FLOAT, 0, RHI::InputElementDesc::APPEND_ALIGNED_ELEMENT,
+                    RHI::InputClassification::PerVertexData, 0 },
+            };
+
             std::vector<Vertex> cvertices = GenerateRandomVertices(2 * 1024);  // 2 KB
             
             auto CreateBuffer = [&](RHI::BufferHeapType t,RHI::BufferBindFlag f,RHI::DescriptorRangeType rt) {
@@ -292,10 +301,13 @@ int main(int argc, char* argv[])
             RHI::ShaderCompileSource Source{};
             Source.sourceType = RHI::ShaderCompileSource::SourceType::SourcePath;
             Source.sourceDescription = vsshaderPath;
+            Source.postProcessArgs = std::make_shared<RHI::VertexShaderPostProcessArgs>(inputLayout);
 
             RHI::ShaderCompileResult vsResult = Compiler->Compile(vsOption,Source);
             RHI::CreateShaderDesc vsDesc = Compiler->CreateShaderDescription();
             Source.sourceDescription = psshaderPath;
+            // PixelShader 不需要 post-process
+            Source.postProcessArgs = nullptr;
             RHI::ShaderCompileResult psResult = Compiler->Compile(psOption,Source);
             RHI::CreateShaderDesc psDesc = Compiler->CreateShaderDescription();
             RHI::SPIRVReflection psreflection = Compiler->Reflection();
@@ -400,20 +412,11 @@ int main(int argc, char* argv[])
                 if (rootSignature && rootSignature->IsValid() && rootUAVSignature && rootUAVSignature->IsValid())
                 {
                     std::cout << "RootSignature created successfully!" << std::endl;
-                    
-                    // 定义输入布局描述
-                    RHI::InputElementDesc inputLayout[] = 
-                    {
-                        { "TEXCOORD", 0, RHI::RHITextureFormat::R32G32B32_FLOAT, 0, RHI::InputElementDesc::APPEND_ALIGNED_ELEMENT,
-                            RHI::InputClassification::PerVertexData, 0 },
-                            { "TEXCOORD", 1, RHI::RHITextureFormat::R32G32B32A32_FLOAT, 0, RHI::InputElementDesc::APPEND_ALIGNED_ELEMENT,
-                            RHI::InputClassification::PerVertexData, 0 },
-                    };
 
                     RHI::GraphicsPipelineStateDesc graphicsDesc = {};
                     graphicsDesc.pRootSignature = rootSignature.get();
-                    graphicsDesc.pInputElementDesc = inputLayout;
-                    graphicsDesc.NumInputElements = sizeof(inputLayout) / sizeof(inputLayout[0]);
+                    graphicsDesc.pInputElementDesc = inputLayout.data();
+                    graphicsDesc.NumInputElements = inputLayout.size();
                     graphicsDesc.pVertexShader = vertexShader.get();
                     graphicsDesc.pPixelShader = pixelShader.get();
                     graphicsDesc.NumRenderTargets = 1;

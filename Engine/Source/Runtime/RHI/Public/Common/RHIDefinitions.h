@@ -1,5 +1,6 @@
 #pragma once
 #include "RHITypes.h"
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <variant>
@@ -66,6 +67,20 @@ struct TextureDesc
     uint32_t Flags;
 };
 
+// Input Element Description
+struct InputElementDesc
+{
+	const char* SemanticName;           		  // Semantic Name
+	uint32_t SemanticIndex;              		  // Semantic Index
+	RHITextureFormat Format;                      // Data Format
+	uint32_t InputSlot;              			  // Input Slot Index（0-15）
+	uint32_t AlignedByteOffset;              	  // Aligned Byte Offset（use APPDEND_ALIGNED_ELEMENT to calculate）
+	InputClassification InputSlotClass;           // Input Classification
+	uint32_t InstanceDataStepRate;                // Instance Data Step Rate
+	// Auxiliary Constants
+	static constexpr uint32_t APPEND_ALIGNED_ELEMENT = 0xFFFFFFFF;
+};
+
 /*
  * @brief SPIR-V Resource Description
  * This struct is used to describe the data layout in a buffer
@@ -110,7 +125,7 @@ struct ShaderMacro
 */
 struct ShaderCompileOptions {
     std::string entryPoint = "main";
-    std::string targetProfile = "vs_6_0";  // vs_6_0, ps_6_0, cs_6_0
+    std::string targetProfile = "xxx_6_0";  // vs_6_0, ps_6_0, cs_6_0
     // Whether to optimize the shader
     bool optimize = true;
     // Whether to enable debug info
@@ -139,6 +154,46 @@ struct ShaderCompileOptionInternal : public ShaderCompileOptions
     ShaderCompileOptionInternal(const ShaderCompileOptions& options) : ShaderCompileOptions(options) {}
 };
 
+// ========================================================== Post-Process Args
+struct ShaderPostProcessArgs {
+    RHIResourceType ShaderType;
+
+    virtual bool IsValid() const = 0;
+
+    ShaderPostProcessArgs() = default;
+    explicit ShaderPostProcessArgs(RHIResourceType type) : ShaderType(type) {}
+    virtual ~ShaderPostProcessArgs() = default;
+};
+
+struct VertexShaderPostProcessArgs : public ShaderPostProcessArgs
+{
+    std::vector<InputElementDesc> inputLayout;
+
+    bool IsValid() const override { return inputLayout.size() > 0; }
+    VertexShaderPostProcessArgs() : ShaderPostProcessArgs(RHIResourceType::RRT_VertexShader) {}
+    VertexShaderPostProcessArgs(const std::vector<InputElementDesc>& inputLayout) : inputLayout(inputLayout), ShaderPostProcessArgs(RHIResourceType::RRT_VertexShader) {}
+};
+struct PixelShaderPostProcessArgs : public ShaderPostProcessArgs
+{
+    // NOT
+    bool IsValid() const override { return true; }
+    PixelShaderPostProcessArgs() : ShaderPostProcessArgs(RHIResourceType::RRT_PixelShader) {};
+};
+struct ComputeShaderPostProcessArgs : public ShaderPostProcessArgs
+{
+    // NOT
+    bool IsValid() const override { return true; }
+    ComputeShaderPostProcessArgs() : ShaderPostProcessArgs(RHIResourceType::RRT_ComputeShader) {};
+};
+struct GeometryShaderPostProcessArgs : public ShaderPostProcessArgs
+{
+    // NOT
+    bool IsValid() const override { return true; }
+    GeometryShaderPostProcessArgs() : ShaderPostProcessArgs(RHIResourceType::RRT_GeometryShader) {};
+};
+// ...
+// ==========================================================
+
 // Shader Compile Result
 struct ShaderCompileResult {
     bool success = false;           // compile success
@@ -157,6 +212,7 @@ struct ShaderCompileSource
     };
     std::string sourceDescription;
     SourceType sourceType = SourceType::SourcePath;
+    std::shared_ptr<ShaderPostProcessArgs> postProcessArgs;
 };
 
 // Shader Reflection Generation Mode
@@ -181,20 +237,6 @@ struct CreateShaderDesc
     const std::vector<uint32_t>& GetUINT32ByteCode() const {
         return std::get<std::vector<uint32_t>>(byteCode);
     }
-};
-	
-// Input Element Description
-struct InputElementDesc
-{
-	const char* SemanticName;           		  // Semantic Name
-	uint32_t SemanticIndex;              		  // Semantic Index
-	RHITextureFormat Format;                      // Data Format
-	uint32_t InputSlot;              			  // Input Slot Index（0-15）
-	uint32_t AlignedByteOffset;              	  // Aligned Byte Offset（use APPDEND_ALIGNED_ELEMENT to calculate）
-	InputClassification InputSlotClass;           // Input Classification
-	uint32_t InstanceDataStepRate;                // Instance Data Step Rate
-	// Auxiliary Constants
-	static constexpr uint32_t APPEND_ALIGNED_ELEMENT = 0xFFFFFFFF;
 };
 }
 

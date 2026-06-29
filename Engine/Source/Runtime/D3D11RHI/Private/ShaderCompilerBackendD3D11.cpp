@@ -145,7 +145,8 @@ namespace RHI
         return internalOptions;
     }
 
-    void ShaderCompilerBackendD3D11::PostProcessShader(const ShaderCompileOptions& options, const ShaderCompileResult& in_result, ShaderCompileResult& out_result)
+    void ShaderCompilerBackendD3D11::PostProcessShader(const ShaderCompileOptions& options, const ShaderPostProcessArgs* postProcessArgs, 
+        const ShaderCompileResult& in_result, ShaderCompileResult& out_result)
     {
         std::vector<uint32_t> spirv = ConvertUint8ToUint32(in_result.byteCode);
 
@@ -167,6 +168,26 @@ namespace RHI
         // TODO: add HLSL-specific resource binding mappings
         // ...
         
+        // For some shaders, we might need to handle them specially.
+        if(postProcessArgs != nullptr){
+            if (postProcessArgs->ShaderType == RHIResourceType::RRT_VertexShader) {
+                const VertexShaderPostProcessArgs* VSArgs = SafeCast<const VertexShaderPostProcessArgs>(postProcessArgs);
+                for (size_t i = 0; i < VSArgs->inputLayout.size(); i++) {
+                    const auto& inputLayout = VSArgs->inputLayout[i];
+                    std::string semantic = inputLayout.SemanticName;
+                    // Concatenated Index XXX or XXX1
+                    if (inputLayout.SemanticIndex > 0) {
+                        semantic += std::to_string(inputLayout.SemanticIndex);
+                    }
+                    hlslCompiler.add_vertex_attribute_remap({ static_cast<uint32_t>(i), semantic });
+                }
+            }
+            // More ... 
+            else{
+                // NOT IMPLEMENTED
+            }
+        }
+
         // compile to HLSL source
         std::string hlslSource;
         try {

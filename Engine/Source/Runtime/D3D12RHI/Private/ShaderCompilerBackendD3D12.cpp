@@ -32,9 +32,13 @@ namespace RHI
         return internalOptions;
     }
 
-    void ShaderCompilerBackendD3D12::PostProcessShader(const ShaderCompileOptions& options, const ShaderCompileResult& in_result, ShaderCompileResult& out_result)
+    void ShaderCompilerBackendD3D12::PostProcessShader(const ShaderCompileOptions& options, const ShaderPostProcessArgs* postProcessArgs, 
+        const ShaderCompileResult& in_result, ShaderCompileResult& out_result)
     {
         // DX12 doesn't need post-processing
+        if(postProcessArgs != nullptr){
+            // ... Post-process shader
+        }
         out_result = in_result;
     }
 

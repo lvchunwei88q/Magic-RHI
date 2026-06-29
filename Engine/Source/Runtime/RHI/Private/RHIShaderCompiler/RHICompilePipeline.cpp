@@ -121,9 +121,14 @@ namespace RHI {
         controller->AppendCompilerPipelineCache().SourceCache = source;
         controller->AppendCompilerPipelineCache().CompilerOptionsCache = CompilerOptions;
 
-        // Post-process shader
+        // It's okay for postProcessArgs to be nullptr, but if it's there, it has to be valid.
+        if (source.postProcessArgs != nullptr && !source.postProcessArgs->IsValid()) {
+            ThrowErrorMessage("Post-process shader arguments is invalid");
+            return {};
+        }
+
         ShaderCompileResult CompileResult;
-        backend->PostProcessShader(options, InitialCompileResult, CompileResult);
+        backend->PostProcessShader(options,source.postProcessArgs.get(), InitialCompileResult, CompileResult);
         // Cache compile result
         controller->AppendCompilerPipelineCache().CompileResultCache = CompileResult;
 
