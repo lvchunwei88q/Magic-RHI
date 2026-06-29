@@ -29,5 +29,9 @@ target_link_libraries(D3D11RHI
         d3dcompiler.lib # use default d3d compiler
 )
 
+# SPI SPIRV-Cross
+target_link_libraries(D3D11RHI PRIVATE spirv-cross-core)
+target_link_libraries(D3D11RHI PRIVATE spirv-cross-backend)
+
 target_link_libraries(D3D11RHI PRIVATE RHI)
 target_link_libraries(D3D11RHI PRIVATE Core)

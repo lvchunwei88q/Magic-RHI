@@ -4,7 +4,7 @@
 struct PSInput
 {
     float4 pos : SV_POSITION;      // 屏幕空间位置
-    float4 Color : COLOR;          // 颜色
+    float4 Color : TEXCOORD1;          // 颜色
 };
 
 uint4 ConvertToPixel(float4 ndcPos, uint2 viewportSize)
