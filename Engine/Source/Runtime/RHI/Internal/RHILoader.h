@@ -23,7 +23,7 @@ namespace RHI
         
         std::unique_ptr<Device> CreateDevice() override;
         std::unique_ptr<SwapChain> CreateSwapChain() override;
-        std::unique_ptr<CreateShader> CreateCreateShader() override;
+        std::unique_ptr<ShaderCompilerBackend> CreateShaderCompilerBackend() override;
         
         bool IsLoaded() const override { return m_hModule != nullptr; }
         RHIType GetRHIType() const override { return m_loadedType; }
@@ -32,7 +32,8 @@ namespace RHI
         HMODULE m_hModule = nullptr;
         PFN_CreateDevice m_CreateDevice = nullptr;
         PFN_CreateSwapChain m_CreateSwapChain = nullptr;
-        PFN_CreateCreateShader m_CreateCreateShader = nullptr;
+        PFN_CreateShaderCompilerBackend m_CreateShaderCompilerBackend = nullptr;
+
         PFN_GetRHIType m_GetRHIType = nullptr;
         RHIType m_loadedType = RHIType::Unknown;
     };

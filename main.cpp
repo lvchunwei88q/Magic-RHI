@@ -174,11 +174,13 @@ int main(int argc, char* argv[])
     std::cout << "Initializing Device..." << std::endl;
 
     RHIAPILoader* loader = RHIModule::GetRHILoader();
+    loader->Load(type);
+    std::cout << "Is Multi-Threading Supported: " << (RHI::IsMultiThreadingSupported(loader->GetRHIType()) ? "Yes" : "No") << std::endl;
 
     std::unique_ptr<RHIShaderCompiler> compilerContextController = RHIModule::GetCompilerContextController();
     RHIShaderCompiler* Compiler = RHIModule::GetCompilerPipeline();
 
-    bool isInitialized = compilerContextController->InitializeCompilerContext();
+    bool isInitialized = compilerContextController->InitializeCompilerThreadContext();
     if (!isInitialized) {
         std::cerr << "Failed to initialize shader compiler context!" << std::endl;
         return 1;
@@ -189,22 +191,11 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    loader->Load(type);
-    std::cout << "Is Multi-Threading Supported: " << (RHI::IsMultiThreadingSupported(loader->GetRHIType()) ? "Yes" : "No") << std::endl;
-    
     auto device = loader->CreateDevice();
-    
-    
     if (device && device->Initialize() && device->IsValid())
-    {
-        auto createShader = loader->CreateCreateShader();
-        if (!createShader || !createShader->Initialize(device.get()) || !createShader->IsValid())
-        {
-            std::cout << "CreateShader initialized failed!" << std::endl;
-        }
-        
+    {   
         std::cout << "Feature Level: " << GetFeatureLevelName(device->GetFeatureLevel()) << std::endl;
-        std::cout << "Shader Model Version: " << ShaderModelToString(createShader->GetShaderModelVersion()) << std::endl;
+        std::cout << "Shader Model Version: " << ShaderModelToString(device->GetShaderModelVersion()) << std::endl;
         std::wcout << L"Device initialized successfully: " << device->GetAdapterName() << std::endl;
         
         RHI::SwapChainDesc swapChainDesc = {};
@@ -265,7 +256,7 @@ int main(int argc, char* argv[])
             std::cout << "VertexBuffer created successfully!" << std::endl;
             
             std::cout << "Shader compilation..." << std::endl;
-            std::string versionStr = std::to_string(ShaderModelToNumber(createShader->GetShaderModelVersion()));
+            std::string versionStr = std::to_string(ShaderModelToNumber(device->GetShaderModelVersion()));
             // 从文件编译顶点着色器
             std::string exePath = IO::ToNarrowString(IO::AbsolutePath::Get().GetExecutableDirectory());
             std::string ShaderPath = exePath + "\\..\\..\\Test";
@@ -335,12 +326,12 @@ int main(int argc, char* argv[])
             
             PrintReflection(psreflection);
 
-            // 创建着色器
-            std::shared_ptr<RHI::RHIVertexShader> vertexShader = createShader->CreateVertexShader(vsDesc);
-            std::shared_ptr<RHI::RHIPixelShader> pixelShader = createShader->CreatePixelShader(psDesc);
-            std::shared_ptr<RHI::RHIComputeShader> computeShader = createShader->CreateComputeShader(csDesc);
-
             Compiler->EndCompiler();
+
+            // 创建着色器
+            std::shared_ptr<RHI::RHIVertexShader> vertexShader = device->CreateVertexShader(vsDesc);
+            std::shared_ptr<RHI::RHIPixelShader> pixelShader = device->CreatePixelShader(psDesc);
+            std::shared_ptr<RHI::RHIComputeShader> computeShader = device->CreateComputeShader(csDesc);
 
             if (vertexShader && pixelShader && computeShader)
             {
@@ -575,7 +566,7 @@ int main(int argc, char* argv[])
         std::cout << "Failed to initialize Device!" << std::endl;
     }
     
-    compilerContextController->ShutdownCompilerContext();
+    compilerContextController->ShutdownCompilerThreadContext();
     device.reset(); 
     
     // 注意所有的释放必须在这里之前完成否则将无法释放

@@ -216,7 +216,7 @@ namespace RHI
 
     bool DeviceD3D12::Initialize()
     {
-        m_Initialization = CoreDeviceInitialization::Initialize;
+        m_Initialization = InitialState::Initialize;
         UINT dxgiFactoryFlags = 0;
 
 #ifdef _DEBUG
@@ -321,7 +321,7 @@ namespace RHI
 
     void DeviceD3D12::Shutdown()
     {
-        m_Initialization = CoreDeviceInitialization::Shutdown;
+        m_Initialization = InitialState::Shutdown;
         m_pDSVHeap.reset();
         m_pRTVHeap.reset();
         m_pSamplerHeap.reset();
@@ -385,7 +385,7 @@ namespace RHI
 
     bool DeviceD3D12::IsValid() const
     {
-        return m_pDevice != nullptr && m_Initialization == CoreDeviceInitialization::Initialize;
+        return m_pDevice != nullptr && m_Initialization == InitialState::Initialize;
     }
 
     std::shared_ptr<RHICommandAllocator> DeviceD3D12::CreateCommandAllocator(RHICmdType type)

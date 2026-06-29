@@ -2,60 +2,26 @@
 #include "IO.h"
 
 namespace RHI {
-    // ========== Compiler Context Controller ==========
-    // Get compiler context controller instance
-    std::unique_ptr<IShaderCompiler> IRHIModule::GetCompilerContextController(){
-        return std::make_unique<CompilerContextController>();
+    // ========== CompilerInstance ==========
+    // Get compiler instance
+    IShaderCompiler* Internal::GetCompilerInstance(){
+        return &CompilerInstance::Get();
     }
 
-    CompilerContextController::CompilerContextController() = default;
-    CompilerContextController::~CompilerContextController() {
-        // if compiler context is not shutdown, shutdown it
-        if (m_State != CompilerContextState::Shutdown) {
-            ShutdownCompilerContext();
-        }
-    };
+    CompilerInstance::CompilerInstance() = default;
+    CompilerInstance::~CompilerInstance() = default;
 
-    // Initialize Compiler context instance
-    bool CompilerContextController::InitializeCompilerContext() {
-        // Initialize cache
-        m_Cache = std::make_unique<CompilerPipelineCache>();
-        // Initialize shader context
-        m_Context = std::make_unique<ShaderCompilerContext>();
-        bool isInitialized = m_Context->Initialize();
-        if (!isInitialized) {
-            // init shader compiler failed
-            Core::ErrorCapture::Capture("Failed to initialize shader compiler!");
-        }
+    // ========== HLSL Compiler Functions ==========
 
-        // Set compiler context to this controller
-        SetCompilerContext(this);
-        // Return if initialized and state to initialized
-        m_State = CompilerContextState::Initialized;
-        return m_Context != nullptr && isInitialized;
-    }
-
-    void CompilerContextController::ShutdownCompilerContext() {
-        // Shutdown DXC compiler
-        m_Context.reset();
-        // Reset cache
-        m_Cache.reset();
-        // Set compiler context to nullptr
-        SetCompilerContext(nullptr);
-
-        // Set state to shutdown
-        m_State = CompilerContextState::Shutdown;
-    }
-
-    // ========== Internal compile core function ==========
-    ShaderCompileResult CompileInternal(
+    // ========== compile core function ==========
+    ShaderCompileResult CompilerInstance::CompileInternal(
         const std::string& hlslSource,
-        const LocalShaderCompileOption& options,
-        const ShaderCompilerContext& context) {
+        const ShaderCompileOptionInternal& options,
+        const LocalShaderCompilerContext& context) {
 
         ShaderCompileResult result;
 
-        // Check ShaderCompilerContext is initialized
+        // Check LocalShaderCompilerContext is initialized
         if (!context.IsInitialized()) {
             result.errorMessage = "Shader compiler context not initialized!";
             return result;
@@ -140,8 +106,8 @@ namespace RHI {
     }
 
     // ========== Build DXC arguments ==========
-    std::vector<const wchar_t*> BuildArguments(
-        const LocalShaderCompileOption& options,
+    std::vector<const wchar_t*> CompilerInstance::BuildArguments(
+        const ShaderCompileOptionInternal& options,
         std::vector<std::wstring>& m_ArgStorage) {
         
         std::vector<const wchar_t*> args;
@@ -240,5 +206,54 @@ namespace RHI {
         }
 
         return args;
+    }
+
+    // Compile from source string
+    ShaderCompileResult CompilerInstance::CompileFromString(
+        const std::string& hlslSource,
+        const ShaderCompileOptionInternal& options
+    ) {
+        
+        const IShaderCompiler* compilerContext = GetCompilerContext();
+        const LocalShaderCompilerContext* context = GetLocalThreadCompilerContext(compilerContext);
+        if (context == nullptr) {
+            // Compiler context not initialized, return error
+            ShaderCompileResult result;
+            result.errorMessage = "Shader compiler context not initialized!";
+            result.success = false;
+            return result;
+        }
+
+        return CompileInternal(hlslSource, options, *context);
+    }
+
+    // Compile from file
+    ShaderCompileResult CompilerInstance::CompileFromFile(
+        const std::string& filePath,
+        const ShaderCompileOptionInternal& options
+    ) {
+
+        std::wstring filePathW = IO::ToWideString(filePath);
+        if (!IO::Exists(filePathW)) {
+            // File not found, return error
+            ShaderCompileResult result;
+            result.success = false;
+            result.errorMessage = "Shader file not found: " + filePath;
+            return result;
+        }
+
+        std::string content = IO::ReadAllText(filePathW);
+        
+        const IShaderCompiler* compilerContext = GetCompilerContext();
+        const LocalShaderCompilerContext* context = GetLocalThreadCompilerContext(compilerContext);
+        if (context == nullptr) {
+            // Compiler context not initialized, return error
+            ShaderCompileResult result;
+            result.errorMessage = "Shader compiler context not initialized!";
+            result.success = false;
+            return result;
+        }
+
+        return CompileInternal(content, options, *context);
     }
 }

@@ -5,6 +5,7 @@
 #include "Common/RHIConfig.h"
 #include <CoreMinimal.h>
 #include <Tools/Singleton.h>
+#include "RHIInterface.h"
 
 // Windows headers
 #include <windows.h>
@@ -29,16 +30,16 @@ using namespace Microsoft::WRL;
 namespace RHI {
 
 namespace Internal {
-    IShaderCompiler* GetHLSLCompiler();
-    IShaderCompiler* GetSPIRVCompiler();
-    IShaderCompiler* GetSPIRVReflection();
+    IShaderCompiler* GetCompilerInstance();
+    IShaderCompiler* GetSPIRVReflectionGenerator();
 }
 
 // Shader compiler context
-struct ShaderCompilerContext {
+struct LocalShaderCompilerContext {
     ComPtr<IDxcCompiler3> compiler;
     ComPtr<IDxcUtils> utils;
     ComPtr<IDxcIncludeHandler> includeHandler;
+    mutable std::unique_ptr<ShaderCompilerBackend> m_Backend;
 
     bool Initialize() {
         // Create DXC compiler and utils
@@ -49,6 +50,14 @@ struct ShaderCompilerContext {
             return false;
         }
         if (FAILED(utils->CreateDefaultIncludeHandler(&includeHandler))) {
+            return false;
+        }
+        // Create shader compiler backend API
+        m_Backend = IRHIModule::GetRHILoader()->CreateShaderCompilerBackend();
+        if (m_Backend == nullptr || !m_Backend->Initialize()) {
+#if RHI_ENABLE_DEBUG_INFO
+            ThrowErrorMessage("Shader compiler backend initialize failed!");
+#endif
             return false;
         }
         
@@ -62,64 +71,29 @@ struct ShaderCompilerContext {
         bool m_Initialized = false;
 };
 
-// Struct for internal compilation settings
-struct LocalShaderCompileOption : public ShaderCompileOptions {
-    // Target Compiler mode (SPIR-V or HLSL)
-    std::string targetCompilerMode = "-spirv";
-    // Target SPIR-V environment (vulkan1.0 or vulkan1.3)
-    std::string SPIR_V_TargetEnv = "vulkan1.0";
-
-    LocalShaderCompileOption() = default;
-    LocalShaderCompileOption(const ShaderCompileOptions& options) : ShaderCompileOptions(options) {}
-};
-
 // Struct for compiler pipeline cache
-struct CompilerPipelineCache {
-    // Cache for compiler
-    ShaderCompileResult CompileCache;
+struct LocalCompilerPipelineCache {
+    // Cache for compiler compile result
+    ShaderCompileResult InitialCompileCache;
+    // Cache for compiler compile result
+    ShaderCompileResult CompileResultCache;
+
     // Cache for SPIRV reflection
     SPIRVReflection SPIRVReflectionCache;
     // Cache for Compiler Options
-    LocalShaderCompileOption CompilerOptionsCache;
+    ShaderCompileOptionInternal CompilerOptionsCache;
     // Cache for Source
     ShaderCompileSource SourceCache;
-
+    
     void Clear() {
-        CompileCache = ShaderCompileResult {};
+        InitialCompileCache = ShaderCompileResult {};
+        CompileResultCache = ShaderCompileResult {};
+
         SPIRVReflectionCache = SPIRVReflection {};
-        CompilerOptionsCache = LocalShaderCompileOption {};
+        CompilerOptionsCache = ShaderCompileOptionInternal {};
         SourceCache = ShaderCompileSource {};
     }
 };
-
-// ----------------------------------------------------------------- Compiler Functions
-
-// Internal compile function
-[[nodiscard]] ShaderCompileResult CompileInternal(
-    const std::string& hlslSource,
-    const LocalShaderCompileOption& options,
-    const ShaderCompilerContext& context
-);
-
-// Build DXC arguments
-[[nodiscard]] std::vector<const wchar_t*> BuildArguments(
-    const LocalShaderCompileOption& options,
-    std::vector<std::wstring>& m_ArgStorage
-);
-
-// Get SPIR-V target env (call external function)
-inline std::string GetSPIRVTargetEnv() {
-    switch (GetBestAvailableRHI()) {
-    case RHIType::D3D12:
-        return "vulkan1.3";
-    case RHIType::D3D11:
-        return "vulkan1.0";
-    default:
-        return "vulkan1.0";
-    }
-}
-
-// ----------------------------------------------------------------- Compiler Functions End
 
 class CompilerContextController : public IShaderCompiler {
 public:
@@ -137,29 +111,30 @@ public:
     ~CompilerContextController();
 
     // Compiler Context Controller
-    bool InitializeCompilerContext() override;
-    void ShutdownCompilerContext() override;
+    bool InitializeCompilerThreadContext() override;
+    void ShutdownCompilerThreadContext() override;
 
-    const ShaderCompilerContext* GetCompilerContext() const { return m_Context.get(); }
+    // Get compiler context and backend
+    const LocalShaderCompilerContext* GetCompilerContext() const { return m_Context.get(); }
 
-    const CompilerPipelineCache* GetCompilerPipelineCache() const { return m_Cache.get(); }
-    CompilerPipelineCache& AppendCompilerPipelineCache() { return *m_Cache; }
+    const LocalCompilerPipelineCache* GetCompilerPipelineCache() const { return m_Cache.get(); }
+    LocalCompilerPipelineCache& AppendCompilerPipelineCache() { return *m_Cache; }
     // Normally we shouldn't use this function to set the cache because it will clear all existing caches unless you know what you're doing.
-    void SetCompilerPipelineCache(const CompilerPipelineCache& cache) { *m_Cache = cache; }
+    void SetCompilerPipelineCache(const LocalCompilerPipelineCache& cache) { *m_Cache = cache; }
     void ClearCompilerPipelineCache() { m_Cache->Clear(); }
 
     void SetCompilerPipelineState(CompilerPipelineState state) { m_Pipeline_State = state; }
     CompilerPipelineState GetCompilerPipelineState() const { return m_Pipeline_State; }
 private:
-    CompilerContextState m_State = CompilerContextState::Shutdown;
+    CompilerContextState m_ThreadContext_State = CompilerContextState::Shutdown;
     CompilerPipelineState m_Pipeline_State = CompilerPipelineState::End;
 
-    std::unique_ptr<ShaderCompilerContext> m_Context;
-    std::unique_ptr<CompilerPipelineCache> m_Cache;
+    std::unique_ptr<LocalShaderCompilerContext> m_Context;
+    std::unique_ptr<LocalCompilerPipelineCache> m_Cache;
 };
 
 // Get local thread compiler context
-[[nodiscard]] inline const ShaderCompilerContext* GetLocalThreadCompilerContext(const IShaderCompiler* compilerContext) {
+[[nodiscard]] inline const LocalShaderCompilerContext* GetLocalThreadCompilerContext(const IShaderCompiler* compilerContext) {
     const CompilerContextController* controller = SafeCast<const CompilerContextController>(compilerContext);
     if (controller == nullptr) {
         // Compiler context not initialized, return error
@@ -168,7 +143,7 @@ private:
 #endif
         return nullptr;
     }
-    const ShaderCompilerContext* context = controller->GetCompilerContext();
+    const LocalShaderCompilerContext* context = controller->GetCompilerContext();
     if (context == nullptr) {
         // Compiler context not initialized, return error
 #if RHI_ENABLE_DEBUG_INFO
@@ -194,52 +169,40 @@ public:
     CreateShaderDesc CreateShaderDescription() override;
 
 private:
-    ShaderCompileResult CompileD3D12(const ShaderCompileOptions& options, const ShaderCompileSource& source);
-    ShaderCompileResult CompileOrdinaryAPI(const ShaderCompileOptions& options, const ShaderCompileSource& source);
-
-private:
 
 };
 
-// HLSL → SPIR-V Compiler
-class HLSLToSPIRVCompiler : public IShaderCompiler , public Singleton<HLSLToSPIRVCompiler> {
+// HLSL → SPIR-V Compiler or HLSL Compiler
+class CompilerInstance : public IShaderCompiler , public Singleton<CompilerInstance> {
 public:
-    HLSLToSPIRVCompiler();
-    ~HLSLToSPIRVCompiler();
+    CompilerInstance();
+    ~CompilerInstance();
 protected:
     // Compile from source string
-    ShaderCompileResult SPIRVCompileFromString(
+    ShaderCompileResult CompileFromString(
         const std::string& hlslSource,
-        const ShaderCompileOptions& options
+        const ShaderCompileOptionInternal& options
     ) override;
 
     // Compile from file
-    ShaderCompileResult SPIRVCompileFromFile(
+    ShaderCompileResult CompileFromFile(
         const std::string& filePath,
-        const ShaderCompileOptions& options
+        const ShaderCompileOptionInternal& options
     ) override;
 
 private:
-};
-
-// HLSL Compiler
-class HLSLCompiler : public IShaderCompiler , public Singleton<HLSLCompiler> {
-public:
-    HLSLCompiler();
-    ~HLSLCompiler();
-protected:
-    // Compile from source string
-    ShaderCompileResult HLSLCompileFromString(
+    // compile function
+    [[nodiscard]] ShaderCompileResult CompileInternal(
         const std::string& hlslSource,
-        const ShaderCompileOptions& options
-    ) override;
+        const ShaderCompileOptionInternal& options,
+        const LocalShaderCompilerContext& context
+    );
 
-    // Compile from file
-    ShaderCompileResult HLSLCompileFromFile(
-        const std::string& filePath,
-        const ShaderCompileOptions& options
-    ) override;
-private:
+    // Build DXC arguments
+    [[nodiscard]] std::vector<const wchar_t*> BuildArguments(
+        const ShaderCompileOptionInternal& options,
+        std::vector<std::wstring>& m_ArgStorage
+    );
 };
 
 /*

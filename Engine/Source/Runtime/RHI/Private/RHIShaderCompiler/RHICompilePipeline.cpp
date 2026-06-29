@@ -2,7 +2,6 @@
 #include "CoreMinimal.h"
 #include "IRHIModule.h"
 #include "RHIShaderCompiler.h"
-#include "RHILoader.h"
 
 namespace RHI {
     namespace {
@@ -16,6 +15,22 @@ namespace RHI {
             size_t count = byteCode.size() / sizeof(uint32_t);
             return std::vector<uint32_t>(data, data + count);
         }
+
+        bool CheckCompilerResult(ShaderCompileResult& result){
+            if(result.success == false || result.errorMessage.size() > 0){
+#if RHI_ENABLE_DEBUG_INFO
+                ThrowErrorMessage(result.errorMessage);
+#endif
+                Core::ErrorCapture::Capture(result.errorMessage);
+                Core::WarningCapture::Capture(result.errorMessage);
+                return false;
+            }
+            // if warning message is not empty, then capture it
+            if(result.warningMessage.size() > 0){
+                Core::WarningCapture::Capture(result.warningMessage);
+            }
+            return true;
+        }
     }
 
     // ========== Compiler Pipeline ==========
@@ -27,50 +42,7 @@ namespace RHI {
     CompilerPipeline::CompilerPipeline() = default;
     CompilerPipeline::~CompilerPipeline() = default;
 
-    // With DX12, we can directly compile HLSL shaders without any extra steps.
-    ShaderCompileResult CompilerPipeline::CompileD3D12(const ShaderCompileOptions& options, const ShaderCompileSource& source) {
-        // D3D12 compiler pipeline
-        IShaderCompiler* HLSLCompiler = Internal::GetHLSLCompiler();
-        ShaderCompileResult result;
-
-        switch (source.sourceType) {
-        case ShaderCompileSource::SourceType::SourcePath:
-            result = HLSLCompiler->HLSLCompileFromFile(source.sourceDescription, options);
-            break;
-        case ShaderCompileSource::SourceType::SourceCode:
-            result = HLSLCompiler->HLSLCompileFromString(source.sourceDescription, options);
-            break;
-        default:
-            result.errorMessage = "Invalid source type";
-            result.success = false;
-            break;
-        }
-
-        return result;
-    }
-
-    // When we're using APIs that aren't DX12, we need to first compile the shaders into SPIRV bytecode using a SPIRV compiler, and then pass it on to the DX11 backend for processing.
-    ShaderCompileResult CompilerPipeline::CompileOrdinaryAPI(const ShaderCompileOptions& options, const ShaderCompileSource& source) {
-        // D3D11 compiler pipeline
-        IShaderCompiler* SPIRVCompiler = Internal::GetSPIRVCompiler();
-        ShaderCompileResult result;
-
-        switch (source.sourceType) {
-        case ShaderCompileSource::SourceType::SourcePath:
-            result = SPIRVCompiler->SPIRVCompileFromFile(source.sourceDescription, options);
-            break;
-        case ShaderCompileSource::SourceType::SourceCode:
-            result = SPIRVCompiler->SPIRVCompileFromString(source.sourceDescription, options);
-            break;
-        default:
-            result.errorMessage = "Invalid source type";
-            result.success = false;
-            break;
-        }
-
-        return result;
-    }
-
+    // ============================================================= Set Compiler Pipeline State =============================================================
     // State machine
     void CompilerPipeline::BeginCompiler() {
         IShaderCompiler* compilerContext = GetCompilerContext();
@@ -103,6 +75,7 @@ namespace RHI {
         }
         controller->SetCompilerPipelineState(CompilerContextController::CompilerPipelineState::End);
     }
+    // ============================================================= Compile =============================================================
 
     ShaderCompileResult CompilerPipeline::Compile(const ShaderCompileOptions& options, const ShaderCompileSource& source) {
         // Get compilerContext
@@ -117,37 +90,47 @@ namespace RHI {
         }
         
         // Default implementation
-        ShaderCompileResult result;
-        result.success = false;
-        result.errorMessage = "Not implemented";
+        ShaderCompileResult InitialCompileResult;
+        InitialCompileResult.success = false;
+        InitialCompileResult.errorMessage = "Not implemented";
 
-        // Check API type
-        RHIType APIType = RHILoader::Get().GetRHIType();
-        // Compile shader based on API type
-        switch (APIType) {
-        // Only DX12 requires us to handle it specially
-        case RHIType::D3D12:
-            // D3D12 compiler pipeline
-            result = CompileD3D12(options, source);
-            break;
-        default:result = CompileOrdinaryAPI(options, source);
-            break;
+        // Get backend
+        ShaderCompilerBackend* backend = controller->GetCompilerContext()->m_Backend.get();
+        if (!backend || !backend->IsValid()) {
+            ThrowErrorMessage("Shader compiler backend is null");
         }
 
-        // Set cache Because this is the initial compile, it should be the start of all cached data.
-        LocalShaderCompileOption CompilerOptionCache = LocalShaderCompileOption(options);
-        CompilerOptionCache.SPIR_V_TargetEnv = GetSPIRVTargetEnv();
-        controller->AppendCompilerPipelineCache().CompileCache = result;
-        controller->AppendCompilerPipelineCache().SourceCache = source;
-        controller->AppendCompilerPipelineCache().CompilerOptionsCache = CompilerOptionCache;
+        // Use ShaderCompilerBackend to generate parameters for a specific backend API
+        ShaderCompileOptionInternal CompilerOptions = backend->AddBackendArguments(options);
+        IShaderCompiler* compiler = Internal::GetCompilerInstance();
+        if (!compiler) {    
+            ThrowErrorMessage("Shader compiler instance is null");
+        }
 
-        return result;
+        // Compile shader from source
+        if(source.sourceType == ShaderCompileSource::SourceType::SourcePath){
+            InitialCompileResult = compiler->CompileFromFile(source.sourceDescription, CompilerOptions);
+        }else if(source.sourceType == ShaderCompileSource::SourceType::SourceCode){
+            InitialCompileResult = compiler->CompileFromString(source.sourceDescription, CompilerOptions);
+        }else{
+            ThrowErrorMessage("Not implemented");
+            return {};
+        }
+
+        controller->AppendCompilerPipelineCache().InitialCompileCache = InitialCompileResult;
+        controller->AppendCompilerPipelineCache().SourceCache = source;
+        controller->AppendCompilerPipelineCache().CompilerOptionsCache = CompilerOptions;
+
+        // Post-process shader
+        ShaderCompileResult CompileResult;
+        backend->PostProcessShader(options, InitialCompileResult, CompileResult);
+        // Cache compile result
+        controller->AppendCompilerPipelineCache().CompileResultCache = CompileResult;
+
+        return CompileResult;
     }
 
     SPIRVReflection CompilerPipeline::Reflection() {
-        // Check API type
-        RHIType APIType = RHILoader::Get().GetRHIType();
-
         // Get compilerContext
         IShaderCompiler* compilerContext = GetCompilerContext();
         CompilerContextController* controller = SafeCast<CompilerContextController>(compilerContext);
@@ -160,64 +143,83 @@ namespace RHI {
         }
 
         // Get cache
-        const CompilerPipelineCache* cache = controller->GetCompilerPipelineCache();
+        const LocalCompilerPipelineCache* cache = controller->GetCompilerPipelineCache();
+        
+        // Get backend
+        ShaderCompilerBackend* backend = controller->GetCompilerContext()->m_Backend.get();
+        if (!backend || !backend->IsValid()) {
+            ThrowErrorMessage("Shader compiler backend is null");
+        }
 
-        ShaderCompileResult SPIRVCompileResult;
-
-        auto SPIRVCompileLambda = [cache]() -> ShaderCompileResult {
+        // Get shader reflection generation mode
+        ShaderReflectionGenerationMode reflectionMode = backend->GetShaderReflectionGenerationMode();
+        // SPIRV compile result
+        ShaderCompileResult ReflectionGeneratedSource;
+        
+        // SPIRV compile lambda
+        auto SPIRVCompileLambda = [cache, backend]() -> ShaderCompileResult {
             std::string sourceDescription = cache->SourceCache.sourceDescription;
+            ShaderCompileOptionInternal CompilerOptions = cache->CompilerOptionsCache;
+            std::string SPIRVEnvironment = backend->SPIRVCompileEnvironment();
+            // Set SPIR-V target environment
+            CompilerOptions.SPIR_V_TargetEnv = SPIRVEnvironment.c_str();
+            CompilerOptions.targetCompilerMode = "-spirv";
+
             switch (cache->SourceCache.sourceType) {
                 case ShaderCompileSource::SourceType::SourcePath:
-                    return Internal::GetSPIRVCompiler()->SPIRVCompileFromFile(sourceDescription, cache->CompilerOptionsCache);
+                    return Internal::GetCompilerInstance()->CompileFromFile(sourceDescription, CompilerOptions);
                     break;
                 case ShaderCompileSource::SourceType::SourceCode:
-                    return Internal::GetSPIRVCompiler()->SPIRVCompileFromString(sourceDescription, cache->CompilerOptionsCache);
+                    return Internal::GetCompilerInstance()->CompileFromString(sourceDescription, CompilerOptions);
                     break;
                 default: ThrowErrorMessage("Not implemented");
                     return {};
                     break;
             }
         };
-        // Compile shader based on API type
-        switch (APIType) {
-        // Only DX12 requires us to handle it specially
-        case RHIType::D3D12:
-            // D3D12 compiler pipeline - SPI SPIRV
-            SPIRVCompileResult = SPIRVCompileLambda();
-            break;
-            // use cache
-        default: SPIRVCompileResult = controller->GetCompilerPipelineCache()->CompileCache;
-            break;
+        // Select a mode to generate SPIRV reflection source
+        switch (reflectionMode.mode) {
+            case ShaderReflectionGenerationMode::ReflectionGenerationMode::Use_CompileResultCache:
+                ReflectionGeneratedSource = cache->CompileResultCache;
+                break;
+            case ShaderReflectionGenerationMode::ReflectionGenerationMode::Use_InitialCompileCache:
+                ReflectionGeneratedSource = cache->InitialCompileCache;
+                break;
+            case ShaderReflectionGenerationMode::ReflectionGenerationMode::Use_SourceCacheCompile:
+                ReflectionGeneratedSource = SPIRVCompileLambda();
+                break;
+            default: ThrowErrorMessage("Not implemented");
+                return {};
+                break;
         }
 
         // Check compile result
-        if(!SPIRVCompileResult.success){
-            Core::ErrorCapture::Capture(SPIRVCompileResult.errorMessage);
+        if(!ReflectionGeneratedSource.success){
+            Core::ErrorCapture::Capture(ReflectionGeneratedSource.errorMessage);
             // Default implementation
             struct SPIRVReflection reflection;
             return reflection;
         }
 
-        std::vector<uint32_t> SPIRVByteCode = ConvertUint8ToUint32(SPIRVCompileResult.byteCode);
-        // Extract reflection
-        IShaderCompiler* SPIRVReflection = Internal::GetSPIRVReflection();
-        if (!SPIRVReflection) {
+        std::vector<uint32_t> SPIRVByteCode = ConvertUint8ToUint32(ReflectionGeneratedSource.byteCode);
+        // Get the reflection generator
+        IShaderCompiler* reflectionGenerator = Internal::GetSPIRVReflectionGenerator();
+        if (!reflectionGenerator) {
 #if RHI_ENABLE_DEBUG_INFO
-            ThrowErrorMessage("SPIRV reflection is null");
+            ThrowErrorMessage("SPIRV reflection generator is null");
 #endif
             // Default implementation
             return {};
         }
 
-        struct SPIRVReflection reflection = SPIRVReflection->ExtractReflection(SPIRVByteCode);
+        // Extract reflection
+        SPIRVReflection reflection = reflectionGenerator->ExtractReflection(SPIRVByteCode);
         // Set cache
         controller->AppendCompilerPipelineCache().SPIRVReflectionCache = reflection;
         return reflection;
     }
 
     CreateShaderDesc CompilerPipeline::CreateShaderDescription() {
-        // Check API type
-        RHIType APIType = RHILoader::Get().GetRHIType();
         // Get compilerContext
         IShaderCompiler* compilerContext = GetCompilerContext();
         CompilerContextController* controller = SafeCast<CompilerContextController>(compilerContext);
@@ -230,26 +232,13 @@ namespace RHI {
         }
 
         // Get cache
-        const CompilerPipelineCache* cache = controller->GetCompilerPipelineCache();
+        const LocalCompilerPipelineCache* cache = controller->GetCompilerPipelineCache();
         CreateShaderDesc shaderDesc;
-        shaderDesc.byteCode = cache->CompileCache.byteCode;
+        shaderDesc.byteCode.emplace<std::vector<uint8_t>>(cache->CompileResultCache.byteCode);
 
-        // output error message and warning message
-        if(cache->CompileCache.errorMessage.size() > 0){
-            Core::ErrorCapture::Capture(cache->CompileCache.errorMessage);
-        }
-        if(cache->CompileCache.warningMessage.size() > 0){
-            Core::WarningCapture::Capture(cache->CompileCache.warningMessage);
-        }
-
-        // Create shader description based on API type
-        switch (APIType) {
-        // Only DX12 requires us to handle it specially
-        case RHIType::D3D12:
-            shaderDesc.shaderType = CreateShaderDesc::ShaderType::HLSL;
-            break;
-        default:shaderDesc.shaderType = CreateShaderDesc::ShaderType::SPIRV;
-            break;
+        if(cache->CompileResultCache.success == false || cache->CompileResultCache.errorMessage.size() > 0){
+            Core::ErrorCapture::Capture( "Create shader description failed: " + cache->CompileResultCache.errorMessage);
+            return {};
         }
 
         return shaderDesc;

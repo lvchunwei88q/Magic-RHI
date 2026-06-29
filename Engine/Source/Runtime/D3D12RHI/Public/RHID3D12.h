@@ -45,6 +45,14 @@ namespace RHI
         RHIDescriptorHandle CreateRTVHeapDescriptorView(RHIRenderTargetView* InView) override;
         RHIDescriptorHandle CreateDSVHeapDescriptorView(RHIDepthStencilView* InView) override;
 
+        [[nodiscard]] std::unique_ptr<RHIVertexShader> CreateVertexShader(const CreateShaderDesc& desc) override;
+        [[nodiscard]] std::unique_ptr<RHIPixelShader> CreatePixelShader(const CreateShaderDesc& desc) override;
+        [[nodiscard]] std::unique_ptr<RHIGeometryShader> CreateGeometryShader(const CreateShaderDesc& desc) override;
+        [[nodiscard]] std::unique_ptr<RHIHullShader> CreateHullShader(const CreateShaderDesc& desc) override;
+        [[nodiscard]] std::unique_ptr<RHIDomainShader> CreateDomainShader(const CreateShaderDesc& desc) override;
+        [[nodiscard]] std::unique_ptr<RHIComputeShader> CreateComputeShader(const CreateShaderDesc& desc) override;
+        ShaderModelVersion GetShaderModelVersion() const override;
+
         [[nodiscard]] std::shared_ptr<RHICommandAllocator> CreateCommandAllocator(RHICmdType type) override;
         [[nodiscard]] std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator) override;
         [[nodiscard]] RHICommandQueue* GetCommandQueue(RHICmdType Type) const override;
@@ -120,25 +128,22 @@ namespace RHI
         SwapChainDesc m_desc;
     };
 
-    class D3D12RHI_API CreateShaderD3D12 : public CreateShader
+    class D3D12RHI_API ShaderCompilerBackendD3D12 : public ShaderCompilerBackend
     {
     public:
-        CreateShaderD3D12() {};
-        ~CreateShaderD3D12() override { Shutdown();  };
-        bool Initialize(Device* device) override;
+        ShaderCompilerBackendD3D12() {};
+        ~ShaderCompilerBackendD3D12() override { Shutdown();  };
+        bool Initialize() override;
         void Shutdown() override;
         bool IsValid() const override;
-        
-        [[nodiscard]] std::unique_ptr<RHIVertexShader> CreateVertexShader(const CreateShaderDesc& desc) override;
-        [[nodiscard]] std::unique_ptr<RHIPixelShader> CreatePixelShader(const CreateShaderDesc& desc) override;
-        [[nodiscard]] std::unique_ptr<RHIGeometryShader> CreateGeometryShader(const CreateShaderDesc& desc) override;
-        [[nodiscard]] std::unique_ptr<RHIHullShader> CreateHullShader(const CreateShaderDesc& desc) override;
-        [[nodiscard]] std::unique_ptr<RHIDomainShader> CreateDomainShader(const CreateShaderDesc& desc) override;
-        [[nodiscard]] std::unique_ptr<RHIComputeShader> CreateComputeShader(const CreateShaderDesc& desc) override;
-        ShaderModelVersion GetShaderModelVersion() const override;
 
+        ShaderCompileOptionInternal AddBackendArguments(const ShaderCompileOptions& options) override;
+        void PostProcessShader(const ShaderCompileOptions& options, const ShaderCompileResult& in_result, ShaderCompileResult& out_result) override;
+        ShaderReflectionGenerationMode GetShaderReflectionGenerationMode() override;
+
+        // ------------------- Tools -------------------
+        std::string SPIRVCompileEnvironment() const override;
     private:
-        DeviceD3D12* m_pRHI;
     };
     
 }

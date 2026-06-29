@@ -128,6 +128,17 @@ struct ShaderCompileOptions {
     static constexpr const char* DEFAULT_HLSL_VERSION = "2021";
 };
 
+struct ShaderCompileOptionInternal : public ShaderCompileOptions
+{
+    // Target Compiler mode (SPIR-V or HLSL)
+    std::string targetCompilerMode = "-spirv";
+    // Target SPIR-V environment (vulkan1.0 or vulkan1.3)
+    std::string SPIR_V_TargetEnv = "vulkan1.0";
+
+    ShaderCompileOptionInternal() = default;
+    ShaderCompileOptionInternal(const ShaderCompileOptions& options) : ShaderCompileOptions(options) {}
+};
+
 // Shader Compile Result
 struct ShaderCompileResult {
     bool success = false;           // compile success
@@ -148,22 +159,26 @@ struct ShaderCompileSource
     SourceType sourceType = SourceType::SourcePath;
 };
 
+// Shader Reflection Generation Mode
+struct ShaderReflectionGenerationMode {
+    enum class ReflectionGenerationMode {
+        Use_InitialCompileCache = 1,
+        Use_CompileResultCache = 2,
+        Use_SourceCacheCompile = 3,
+    };
+    ReflectionGenerationMode mode = ReflectionGenerationMode::Use_InitialCompileCache;
+};
+
 // Create Shader Description
 struct CreateShaderDesc
-{
-    enum class ShaderType : uint8_t {
-        HLSL = 1,
-        SPIRV = 2,
-    };
-    
+{   
     std::variant<std::vector<uint8_t>, std::vector<uint32_t>> byteCode;
-    ShaderType shaderType = ShaderType::HLSL;
 
-    const std::vector<uint8_t>& GetHLSLByteCode() const {
+    const std::vector<uint8_t>& GetUINT8ByteCode() const {
         return std::get<std::vector<uint8_t>>(byteCode);
     }
     
-    const std::vector<uint32_t>& GetSPIRVByteCode() const {
+    const std::vector<uint32_t>& GetUINT32ByteCode() const {
         return std::get<std::vector<uint32_t>>(byteCode);
     }
 };

@@ -11,7 +11,7 @@ namespace RHI
     // Forward Declaration
     class Device;
     class SwapChain;
-    class CreateShader;
+    class ShaderCompilerBackend;
 
     // RHI Loader Interface
     class IRHILoader;
@@ -40,7 +40,7 @@ namespace RHI
         
         virtual std::unique_ptr<Device> CreateDevice() = 0;
         virtual std::unique_ptr<SwapChain> CreateSwapChain() = 0;
-        virtual std::unique_ptr<CreateShader> CreateCreateShader() = 0;
+        virtual std::unique_ptr<ShaderCompilerBackend> CreateShaderCompilerBackend() = 0;
         
         virtual bool IsLoaded() const = 0;
         virtual RHIType GetRHIType() const = 0;
@@ -54,8 +54,8 @@ namespace RHI
         virtual ~IShaderCompiler () = default;
 
         // Compiler Context Controller
-        virtual bool InitializeCompilerContext() { return false; }
-        virtual void ShutdownCompilerContext() {}
+        virtual bool InitializeCompilerThreadContext() { return false; }
+        virtual void ShutdownCompilerThreadContext() {}
 
         // ----------------------------------------------------------------- Compiler Functions Start
         // Compiler Core
@@ -73,13 +73,9 @@ namespace RHI
         virtual CreateShaderDesc CreateShaderDescription() { return CreateShaderDesc {}; }
         
     protected:
-        // Compile HLSL
-        virtual ShaderCompileResult HLSLCompileFromString(const std::string& hlslSource, const ShaderCompileOptions& options) { return ShaderCompileResult {}; }
-        virtual ShaderCompileResult HLSLCompileFromFile(const std::string& filePath, const ShaderCompileOptions& options) { return ShaderCompileResult {}; };
-
         // Compile HLSL → SPIR-V
-        virtual ShaderCompileResult SPIRVCompileFromString(const std::string& hlslSource, const ShaderCompileOptions& options) { return ShaderCompileResult {}; }
-        virtual ShaderCompileResult SPIRVCompileFromFile(const std::string& filePath, const ShaderCompileOptions& options) { return ShaderCompileResult {}; };
+        virtual ShaderCompileResult CompileFromString(const std::string& hlslSource, const ShaderCompileOptionInternal& options) { return ShaderCompileResult {}; }
+        virtual ShaderCompileResult CompileFromFile(const std::string& filePath, const ShaderCompileOptionInternal& options) { return ShaderCompileResult {}; };
         
         // Extract reflection information
         virtual SPIRVReflection ExtractReflection(const std::vector<uint32_t>& spirv) { return SPIRVReflection {}; }

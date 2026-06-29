@@ -190,12 +190,12 @@ namespace RHI
         VertexShaderD3D11(ID3D11VertexShader* pShader) : m_pVertexShader(pShader) {}
         ~VertexShaderD3D11() override = default;
         ID3D11VertexShader* GetShader() const { return m_pVertexShader.Get(); }
-        ID3DBlob* GetVSBlob() const { return m_pVSBlob.Get(); }
+        ID3DBlob* GetByteBlob() const { return m_pByteBlob.Get(); }
 
-        void SetVSBlob(ID3DBlob* pVSBlob) { m_pVSBlob = pVSBlob; }
+        void SetByteBlob(ID3DBlob* pBBlob) { m_pByteBlob = pBBlob; }
     private:
         ComPtr<ID3D11VertexShader> m_pVertexShader;
-        ComPtr<ID3DBlob> m_pVSBlob;
+        ComPtr<ID3DBlob> m_pByteBlob;
     };
 
     class PixelShaderD3D11 : public RHIPixelShader

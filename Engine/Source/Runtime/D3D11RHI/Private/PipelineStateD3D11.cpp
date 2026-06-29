@@ -200,7 +200,7 @@ namespace RHI
 
         VertexShaderD3D11* pVShader = SafeCast<VertexShaderD3D11>(desc.pVertexShader);
         ComPtr<ID3D11VertexShader> VShader = pVShader->GetShader();
-        ComPtr<ID3DBlob> pVSBlob = pVShader->GetVSBlob();
+        ComPtr<ID3DBlob> pVSBlob = pVShader->GetByteBlob();
 
         ComPtr<ID3D11PixelShader> PShader;
         if(desc.pPixelShader != nullptr)
@@ -241,7 +241,7 @@ namespace RHI
         ThrowIfFailed(dx11direct->GetDevice()->CreateInputLayout(
             d3d11Elements.data(),
             static_cast<UINT>(d3d11Elements.size()),
-            pVSBlob->GetBufferPointer(),   // VS 字节码（用于验证）
+            pVSBlob->GetBufferPointer(),   // VS bytecode (for verification)
             pVSBlob->GetBufferSize(),
             GraphicsDesc.pInputLayout.GetAddressOf()
         ));

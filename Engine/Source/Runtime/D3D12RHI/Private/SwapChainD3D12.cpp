@@ -19,7 +19,7 @@ namespace RHI
 
     bool SwapChainD3D12::Initialize(Device* device, const SwapChainDesc& desc)
     {
-        m_Initialization = CoreDeviceInitialization::Initialize;
+        m_Initialization = InitialState::Initialize;
         m_pRHI = SafeCast<DeviceD3D12>(device);
         if (!m_pRHI)
         {
@@ -110,7 +110,7 @@ namespace RHI
 
     void SwapChainD3D12::Shutdown()
     {
-        m_Initialization = CoreDeviceInitialization::Shutdown;
+        m_Initialization = InitialState::Shutdown;
         for (UINT n = 0; n < RHI_MULTI_BUFFERING; n++)
         {
             m_pBackBuffers[n].reset();
@@ -122,7 +122,7 @@ namespace RHI
 
     bool SwapChainD3D12::IsValid() const {
         return (m_pSwapChain1 != nullptr || m_pSwapChain3 != nullptr) 
-            && m_Initialization == CoreDeviceInitialization::Initialize;
+            && m_Initialization == InitialState::Initialize;
     }
 
     void SwapChainD3D12::Present(uint32_t syncInterval, uint32_t presentFlags)

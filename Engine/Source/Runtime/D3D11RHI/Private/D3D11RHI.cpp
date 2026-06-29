@@ -23,11 +23,11 @@ namespace RHI
         return nullptr;
     }
 
-    D3D11RHI_API CreateCreateShader_Function
+    D3D11RHI_API CreateShaderCompilerBackend_Function
     {
-        auto createShader = std::make_unique<CreateShaderD3D11>();
-        if (createShader) {
-            return createShader;
+        auto shaderCompilerBackend = std::make_unique<ShaderCompilerBackendD3D11>();
+        if (shaderCompilerBackend) {
+            return shaderCompilerBackend;
         }
         return nullptr;
     }

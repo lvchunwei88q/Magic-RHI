@@ -16,12 +16,12 @@ namespace RHI
     // DLL Export function type definition
     typedef std::unique_ptr<Device>         (*PFN_CreateDevice)();
     typedef std::unique_ptr<SwapChain>      (*PFN_CreateSwapChain)();
-    typedef std::unique_ptr<CreateShader>   (*PFN_CreateCreateShader)();
+    typedef std::unique_ptr<ShaderCompilerBackend> (*PFN_CreateShaderCompilerBackend)();
     typedef RHIType                         (*PFN_GetRHIType)();
 }
 
 // Macro definition to unify function call methods
 #define CreateDevice_Function           std::unique_ptr<RHI::Device> CreateDevice()
 #define CreateSwapChain_Function        std::unique_ptr<RHI::SwapChain> CreateSwapChain()
-#define CreateCreateShader_Function     std::unique_ptr<RHI::CreateShader> CreateCreateShader()
+#define CreateShaderCompilerBackend_Function std::unique_ptr<RHI::ShaderCompilerBackend> CreateShaderCompilerBackend()
 #define GetRHIType_Function             RHI::RHIType GetRHIType()

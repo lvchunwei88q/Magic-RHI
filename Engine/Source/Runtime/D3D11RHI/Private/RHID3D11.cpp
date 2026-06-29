@@ -44,7 +44,7 @@ namespace RHI
 
     bool DeviceD3D11::Initialize()
     {
-        m_Initialization = CoreDeviceInitialization::Initialize;
+        m_Initialization = InitialState::Initialize;
         UINT creationFlags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
 #ifdef _DEBUG
@@ -97,7 +97,7 @@ namespace RHI
 
     void DeviceD3D11::Shutdown()
     {
-        m_Initialization = CoreDeviceInitialization::Shutdown;
+        m_Initialization = InitialState::Shutdown;
         if (m_pDeviceContext) {
             m_pDeviceContext->ClearState();
             m_pDeviceContext->Flush();  // 刷新所有待执行的命令
@@ -121,7 +121,7 @@ namespace RHI
 
     bool DeviceD3D11::IsValid() const
     {
-        return m_pDevice != nullptr && m_Initialization == CoreDeviceInitialization::Initialize;
+        return m_pDevice != nullptr && m_Initialization == InitialState::Initialize;
     }
 
     std::shared_ptr<RHICommandAllocator> DeviceD3D11::CreateCommandAllocator(RHICmdType type)

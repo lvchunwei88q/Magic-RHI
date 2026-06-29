@@ -7,6 +7,11 @@
 
 namespace RHI
 {
+/** Core Device Initialization State - Place user-uninitialized device. */
+enum class InitialState : uint8_t {
+	Initialize = 1,
+	Shutdown = 2,
+};
 
 /** An enumeration of the different RHI reference types. */
 enum RHIResourceType : uint8_t

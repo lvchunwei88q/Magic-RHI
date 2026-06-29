@@ -53,10 +53,10 @@ namespace RHI
         // get function pointers
         m_CreateDevice = reinterpret_cast<PFN_CreateDevice>(GetProcAddress(m_hModule, "CreateDevice"));
         m_CreateSwapChain = reinterpret_cast<PFN_CreateSwapChain>(GetProcAddress(m_hModule, "CreateSwapChain"));
-        m_CreateCreateShader = reinterpret_cast<PFN_CreateCreateShader>(GetProcAddress(m_hModule, "CreateCreateShader"));
+        m_CreateShaderCompilerBackend = reinterpret_cast<PFN_CreateShaderCompilerBackend>(GetProcAddress(m_hModule, "CreateShaderCompilerBackend"));
         m_GetRHIType = reinterpret_cast<PFN_GetRHIType>(GetProcAddress(m_hModule, "GetRHIType"));
         
-        if (!m_CreateDevice || !m_CreateSwapChain || !m_CreateCreateShader || !m_GetRHIType) {
+        if (!m_CreateDevice || !m_CreateSwapChain || !m_CreateShaderCompilerBackend || !m_GetRHIType) {
             Unload();
             ErrorCapture::Capture("Failed to get RHI function pointers");
             return false;
@@ -84,7 +84,7 @@ namespace RHI
         
         m_CreateDevice = nullptr;
         m_CreateSwapChain = nullptr;
-        m_CreateCreateShader = nullptr;
+        m_CreateShaderCompilerBackend = nullptr;
         m_GetRHIType = nullptr;
     }
 
@@ -104,10 +104,10 @@ namespace RHI
         return nullptr;
     }
 
-    std::unique_ptr<CreateShader> RHILoader::CreateCreateShader()
+    std::unique_ptr<ShaderCompilerBackend> RHILoader::CreateShaderCompilerBackend()
     {
-        if (m_CreateCreateShader) {
-            return m_CreateCreateShader();
+        if (m_CreateShaderCompilerBackend) {
+            return m_CreateShaderCompilerBackend();
         }
         return nullptr;
     }

@@ -51,12 +51,6 @@ namespace RHI
     struct GraphicsPipelineStateDesc;
     struct ComputePipelineStateDesc;
 
-    // Core Device Initialization State - Place user-uninitialized device
-    enum class CoreDeviceInitialization : uint8_t {
-        Initialize = 1,
-        Shutdown = 2,
-    };
-
     class RHI_API Device
     {
     public:
@@ -82,6 +76,18 @@ namespace RHI
         virtual RHIDescriptorHandle CreateRTVHeapDescriptorView(class RHIRenderTargetView* InView) = 0;
         virtual RHIDescriptorHandle CreateDSVHeapDescriptorView(class RHIDepthStencilView* InView) = 0;
 
+        /* In our design, all the work of compiling shaders should be fully done in RHIShaderCompiler.
+        * Here, we only deal with creating the shader structures for the corresponding platform,
+        * and we need to pass in the shader bytecode, so calling it should be really fast.
+        */
+        [[nodiscard]] virtual std::unique_ptr<RHIVertexShader> CreateVertexShader(const CreateShaderDesc& desc) = 0;
+        [[nodiscard]] virtual std::unique_ptr<RHIPixelShader> CreatePixelShader(const CreateShaderDesc& desc) = 0;
+        [[nodiscard]] virtual std::unique_ptr<RHIGeometryShader> CreateGeometryShader(const CreateShaderDesc& desc) = 0;
+        [[nodiscard]] virtual std::unique_ptr<RHIHullShader> CreateHullShader(const CreateShaderDesc& desc) = 0;
+        [[nodiscard]] virtual std::unique_ptr<RHIDomainShader> CreateDomainShader(const CreateShaderDesc& desc) = 0;
+        [[nodiscard]] virtual std::unique_ptr<RHIComputeShader> CreateComputeShader(const CreateShaderDesc& desc) = 0;
+        virtual ShaderModelVersion GetShaderModelVersion() const = 0;
+
         [[nodiscard]] virtual std::shared_ptr<RHICommandAllocator> CreateCommandAllocator(RHICmdType type) = 0;
         [[nodiscard]] virtual std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator) = 0;
         [[nodiscard]] virtual RHICommandQueue* GetCommandQueue(RHICmdType Type) const = 0;
@@ -95,7 +101,7 @@ namespace RHI
 
         [[nodiscard]] virtual RHIDescriptorHeap* GetDescriptorHeap(RHIDescriptorHeapType type) const = 0;
     protected:
-        CoreDeviceInitialization m_Initialization;
+        InitialState m_Initialization;
     };
 
     class RHI_API SwapChain
@@ -118,25 +124,25 @@ namespace RHI
         virtual RHITexture* GetBackBuffer(uint32_t index) const = 0;
 
     protected:
-        CoreDeviceInitialization m_Initialization;
+        InitialState m_Initialization;
     };
 
-    class RHI_API CreateShader
+    // This should be handled by RHI's RHIShaderCompiler system, users usually don't need to use it.
+    class RHI_API ShaderCompilerBackend
     {
     public:
-        virtual ~CreateShader() = default;
-        virtual bool Initialize(Device* device) = 0;
+        virtual ~ShaderCompilerBackend() = default;
+        virtual bool Initialize() = 0;
         virtual void Shutdown() = 0;
         virtual bool IsValid() const = 0;
 
-        [[nodiscard]] virtual std::unique_ptr<RHIVertexShader> CreateVertexShader(const CreateShaderDesc& desc) = 0;
-        [[nodiscard]] virtual std::unique_ptr<RHIPixelShader> CreatePixelShader(const CreateShaderDesc& desc) = 0;
-        [[nodiscard]] virtual std::unique_ptr<RHIGeometryShader> CreateGeometryShader(const CreateShaderDesc& desc) = 0;
-        [[nodiscard]] virtual std::unique_ptr<RHIHullShader> CreateHullShader(const CreateShaderDesc& desc) = 0;
-        [[nodiscard]] virtual std::unique_ptr<RHIDomainShader> CreateDomainShader(const CreateShaderDesc& desc) = 0;
-        [[nodiscard]] virtual std::unique_ptr<RHIComputeShader> CreateComputeShader(const CreateShaderDesc& desc) = 0;
-        virtual ShaderModelVersion GetShaderModelVersion() const = 0;
+        virtual ShaderCompileOptionInternal AddBackendArguments(const ShaderCompileOptions& options) = 0;
+        virtual void PostProcessShader(const ShaderCompileOptions& options, const ShaderCompileResult& in_result, ShaderCompileResult& out_result) = 0;
+        virtual ShaderReflectionGenerationMode GetShaderReflectionGenerationMode() = 0;
+
+        // ------------------- Tools -------------------
+        virtual std::string SPIRVCompileEnvironment() const = 0;
     protected:
-        CoreDeviceInitialization m_Initialization;
+        InitialState m_Initialization;
     };
 }

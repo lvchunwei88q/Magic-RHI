@@ -2,5 +2,5 @@
 EXPORTS
     CreateDevice
     CreateSwapChain
-    CreateCreateShader
+    CreateShaderCompilerBackend
     GetRHIType
