@@ -32,6 +32,7 @@ namespace RHI
         
         RHIType GetType() const override { return RHIType::D3D12; }
         const std::wstring& GetAdapterName() const override { return m_AdapterName; }
+        FeatureLevel GetFeatureLevel() const override;
         
         [[nodiscard]] std::shared_ptr<RHISamplerState> CreateSamplerState(const SamplerStateDesc& desc) override;
         void DeleteSamplerState(std::shared_ptr<RHI::RHISamplerState>& samplerState) override;
@@ -68,7 +69,6 @@ namespace RHI
 
         [[nodiscard]] RHIDescriptorHeap* GetDescriptorHeap(RHIDescriptorHeapType type) const override;
         
-        FeatureLevel GetFeatureLevel() const override;
         ID3D12Device* GetDevice() const { return m_pDevice.Get(); }
         IDXGIAdapter1* GetAdapter() const { return m_pAdapter.Get(); }
 

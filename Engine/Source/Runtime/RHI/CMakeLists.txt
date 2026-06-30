@@ -32,9 +32,12 @@ target_link_libraries(RHI PRIVATE spirv-cross-backend)
 # dx shader compiler
 target_link_libraries(RHI PRIVATE ${DXC_ROOT}/dxcompiler.lib)
 
-# copy dxcompiler.dll to build directory
+# Collect all files in the dll directory
+file(GLOB DXC_DLL_FILES "${DXC_ROOT}/dll/*.dll")
+
+# Copy all collected files
 add_custom_command(TARGET RHI POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${DXC_ROOT}/dll/dxcompiler.dll
+        ${DXC_DLL_FILES}
         $<TARGET_FILE_DIR:RHI>
 )

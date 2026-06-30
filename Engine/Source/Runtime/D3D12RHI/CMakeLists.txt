@@ -12,7 +12,6 @@ target_include_directories(D3D12RHI
         ${CMAKE_CURRENT_SOURCE_DIR}/Public # Other projects can also access it
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/Internal # Other projects cannot access it
-        ${CMAKE_CURRENT_SOURCE_DIR}/../RHI/Public # include RHI headers
 )
 
 target_link_options(D3D12RHI PRIVATE 

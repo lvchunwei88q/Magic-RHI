@@ -11,6 +11,7 @@ namespace RHI
         Unknown = 0,
         D3D11,      // DirectX 11
         D3D12,      // DirectX 12
+        VulKan,     // Vulkan
         // More RHI types
     };
 
@@ -21,6 +22,7 @@ namespace RHI
             case RHIType::Unknown:      return "Unknown";
             case RHIType::D3D11:    return "D3D11";
             case RHIType::D3D12:    return "D3D12";
+            case RHIType::VulKan:    return "VulKan";
             default:                    return "Invalid";
         }
     }
@@ -30,6 +32,7 @@ namespace RHI
     inline bool IsMultiThreadingSupported(RHIType type) {
         switch (type) {
             case RHIType::D3D12:
+            case RHIType::VulKan:
                 return true;  // 现代 API，原生支持多线程录制
                 
             case RHIType::D3D11:

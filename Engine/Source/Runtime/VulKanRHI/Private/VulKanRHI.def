@@ -1,0 +1,6 @@
+﻿; VulKanRHI.def
+EXPORTS
+    CreateDevice
+    CreateSwapChain
+    CreateShaderCompilerBackend
+    GetRHIType

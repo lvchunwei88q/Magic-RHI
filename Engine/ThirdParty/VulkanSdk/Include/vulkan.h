@@ -1,0 +1,36 @@
+#ifndef VULKAN_H_
+#define VULKAN_H_ 1
+
+/*
+** Copyright 2015-2026 The Khronos Group Inc.
+**
+** SPDX-License-Identifier: Apache-2.0
+*/
+
+#include "vk_platform.h"
+#include "vulkan_core.h"
+
+#ifdef VK_USE_PLATFORM_WIN32_KHR
+#include <windows.h>
+#include "vulkan_win32.h"
+#endif
+
+#ifdef VK_USE_PLATFORM_WAYLAND_KHR
+#include "vulkan_wayland.h"
+#endif
+
+#ifdef VK_USE_PLATFORM_XCB_KHR
+#include <xcb/xcb.h>
+#include "vulkan_xcb.h"
+#endif
+
+#ifdef VK_USE_PLATFORM_XLIB_KHR
+#include <X11/Xlib.h>
+#include "vulkan_xlib.h"
+#endif
+
+#ifdef VK_ENABLE_BETA_EXTENSIONS
+#include "vulkan_beta.h"
+#endif
+
+#endif // VULKAN_H_

@@ -205,6 +205,7 @@ namespace RHI
             }
         }
     }
+    
     DeviceD3D12::DeviceD3D12()
     {
     }
