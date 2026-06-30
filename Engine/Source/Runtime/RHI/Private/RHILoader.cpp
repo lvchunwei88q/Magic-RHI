@@ -36,6 +36,9 @@ namespace RHI
         case RHIType::D3D11:
             dllName = RHI_D3D11_DLL_FILE;
             break;
+        case RHIType::VulKan:
+            dllName = RHI_VULKAN_DLL_FILE;
+            break;
         default:
             return false;       
         }

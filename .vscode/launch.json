@@ -14,6 +14,15 @@
             "console": "integratedTerminal", 
         },
         {
+            "name": "Launch Vulkan RHI - Debug",
+            "type":"lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/Binary/Debug/MagicRHI.exe",
+            "args": ["vk"],
+            "cwd": "${workspaceRoot}",
+            "console": "integratedTerminal", 
+        },
+        {
             "name": "Launch D3D12 RHI - Debug",
             "type":"lldb",
             "request": "launch",
@@ -29,6 +38,14 @@
             "program": "${workspaceRoot}/Binary/Release/MagicRHI.exe",
             "args": ["dx11"],
             "cwd": "${workspaceRoot}"
+        },
+        {
+            "name": "Launch Vulkan RHI - Release",
+            "type":"lldb",
+            "request": "launch",
+            "program": "${workspaceRoot}/Binary/Release/MagicRHI.exe",
+            "args": ["vk"],
+            "cwd": "${workspaceRoot}",
         },
         {
             "name": "Launch D3D12 RHI - Release",

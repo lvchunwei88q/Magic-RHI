@@ -112,6 +112,22 @@ std::vector<Vertex> GenerateRandomVertices(size_t targetSize)
     return vertices;
 }
 
+std::wstring GetRHIWindowName(RHI::RHIType type)
+{
+    switch (type)
+    {
+    case RHI::RHIType::D3D11:
+        return L"RHI D3D11 Window";
+    case RHI::RHIType::D3D12:
+        return L"RHI D3D12 Window";
+    case RHI::RHIType::VulKan:
+        return L"RHI Vulkan Window";
+    case RHI::RHIType::Unknown:
+    default:
+        return L"RHI Unknown Window";
+    }
+}
+
 // 是的你没看错这是一个屎山代码😀
 int main(int argc, char* argv[])
 {
@@ -122,7 +138,10 @@ int main(int argc, char* argv[])
     if (argc > 1 && strcmp(argv[1], "dx12") == 0) {
         type = RHI::RHIType::D3D12;
         std::cout << "Using D3D12" << std::endl;
-    } else {
+    } else if (argc > 1 && strcmp(argv[1], "vk") == 0) {
+        type = RHI::RHIType::VulKan;
+        std::cout << "Using Vulkan" << std::endl;
+    }else{
         type = RHI::RHIType::D3D11;
         std::cout << "Using D3D11" << std::endl;
     }
@@ -150,11 +169,13 @@ int main(int argc, char* argv[])
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     
     RegisterClass(&wc);
+
+    std::wstring windowName = GetRHIWindowName(type);
     
     HWND hwnd = CreateWindowEx(
         0,
         CLASS_NAME,
-        type == RHI::RHIType::D3D11 ? L"RHI D3D11 Window" : L"RHI D3D12 Window",
+        windowName.c_str(),
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, 800, 600,
         nullptr,

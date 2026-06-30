@@ -4,6 +4,9 @@
 #include <RHIInterface.h>
 #include <RHIResource.h>
 #include <cstdint>
+
+// Includes the required platform definitions
+#define VK_USE_PLATFORM_WIN32_KHR
 #include <vulkan.h>
 
 // DescriptorHeap
@@ -52,6 +55,7 @@ namespace RHI
         [[nodiscard]] std::unique_ptr<RHIHullShader> CreateHullShader(const CreateShaderDesc& desc) override;
         [[nodiscard]] std::unique_ptr<RHIDomainShader> CreateDomainShader(const CreateShaderDesc& desc) override;
         [[nodiscard]] std::unique_ptr<RHIComputeShader> CreateComputeShader(const CreateShaderDesc& desc) override;
+        // TODO: Get shader model version from device shader model version.
         ShaderModelVersion GetShaderModelVersion() const override { return ShaderModelVersion::SM_6_9; }
 
         [[nodiscard]] std::shared_ptr<RHICommandAllocator> CreateCommandAllocator(RHICmdType type) override;

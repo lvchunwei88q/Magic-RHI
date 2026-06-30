@@ -1,6 +1,8 @@
 #include <Common/Check.h>
 #include <Common/RHIFeatureLevel.h>
 #include "RHIVulKan.h"
+#include "IO.h"
+#include <algorithm>
 #include <set>
 
 namespace RHI
@@ -11,42 +13,55 @@ namespace RHI
         VkPhysicalDeviceShaderFloat16Int8Features float16Int8Features;
         // You can add other extensions
     };
+
+    struct LocalVulkanPhysicalDeviceInfo
+    {
+        VkPhysicalDevice device;
+        VkPhysicalDeviceProperties properties;
+        VkPhysicalDeviceMemoryProperties memoryProperties;
+        VkPhysicalDeviceFeatures features;
+        uint32_t graphicsFamily;
+        uint32_t computeFamily;
+        uint32_t transferFamily;
+        uint32_t score; // Score for sorting
+        bool isSoftware;
+    };
     
     namespace
     {
         bool CheckValidationLayerSupport(const std::vector<const char*>& validationLayers)
         {
+            // Get all available validation layers count
             uint32_t layerCount;
             vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
 
+            // Get all available validation layers
             std::vector<VkLayerProperties> availableLayers(layerCount);
             vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
+            // Check if all required validation layers are available
             for (const char* layerName : validationLayers)
             {
                 bool layerFound = false;
-
+                // Check if the layer is available
                 for (const auto& layerProperties : availableLayers)
                 {
                     if (strcmp(layerName, layerProperties.layerName) == 0)
                     {
-                        layerFound = true;
-                        break;
+                        layerFound = true;break;
                     }
                 }
-
+                // If the layer is not found, return false
                 if (!layerFound)
-                {
-                    return false;
-                }
+                    return false;   
             }
-
             return true;
         }
 
         std::vector<const char*> GetRequiredValidationLayers()
         {
-#ifdef _DEBUG
+#ifdef RHI_ENABLE_DEBUG_INFO
+            // Add validation layers for debug info
             return {
                 "VK_LAYER_KHRONOS_validation"
             };
@@ -57,18 +72,48 @@ namespace RHI
 
         std::vector<const char*> GetRequiredExtensions(bool enableValidation)
         {
+            // Get all available extensions count
             uint32_t extensionCount = 0;
             vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+            if (extensionCount == 0)
+            {
+                Core::WarningCapture::Capture("No Vulkan instance extensions found!");
+                return {};
+            }
+
+            // Get all available extensions
             std::vector<VkExtensionProperties> extensions(extensionCount);
             vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
 
-            std::vector<const char*> requiredExtensions = {
-                VK_KHR_SWAPCHAIN_EXTENSION_NAME
+            // Helper function: Check if the extension exists
+            auto isExtensionAvailable = [&](const char* extensionName) -> bool {
+                for (const auto& ext : extensions)
+                {
+                    if (strcmp(ext.extensionName, extensionName) == 0)
+                    {
+                        return true;
+                    }
+                }
+                return false;
             };
 
+            // Build the list of needed extensions
+            std::vector<const char*> requiredExtensions;
+            // Add basic extension 
+            requiredExtensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+            requiredExtensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+
+            // Add debug utils extension
             if (enableValidation)
             {
-                requiredExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+                if (isExtensionAvailable(VK_EXT_DEBUG_UTILS_EXTENSION_NAME))
+                {
+                    requiredExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+                }
+                else
+                {
+                    Core::WarningCapture::Capture("VK_EXT_DEBUG_UTILS_EXTENSION_NAME is not available, debug utils disabled");
+                }
             }
 
             return requiredExtensions;
@@ -91,8 +136,8 @@ namespace RHI
             
             // Extension features ... 
             result.float16Int8Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES;
-            result.float16Int8Features.shaderFloat16 = VK_TRUE;
-            result.float16Int8Features.shaderInt8 = VK_TRUE;
+            result.float16Int8Features.shaderFloat16 = VK_FALSE;
+            result.float16Int8Features.shaderInt8 = VK_FALSE;
             
             return result;
         }
@@ -101,18 +146,21 @@ namespace RHI
         {
             VkPhysicalDeviceProperties deviceProperties;
             vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
-
+            // Check if the device is a discrete GPU or an integrated GPU
             if (deviceProperties.deviceType != VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU &&
                 deviceProperties.deviceType != VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU)
             {
+                // If the device is not a discrete GPU or an integrated GPU, return false
                 return false;
             }
-
+            
+            // Get queue family count
             uint32_t queueFamilyCount = 0;
             vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
             std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
             vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilies.data());
 
+            // Set default values for queue families
             graphicsFamily = UINT32_MAX;
             computeFamily = UINT32_MAX;
             transferFamily = UINT32_MAX;
@@ -121,6 +169,7 @@ namespace RHI
             {
                 const auto& queueFamily = queueFamilies[i];
 
+                // if the queue family supports graphics queue
                 if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
                 {
                     graphicsFamily = i;
@@ -128,11 +177,13 @@ namespace RHI
                     if (transferFamily == UINT32_MAX) transferFamily = i;
                 }
 
+                // if the queue family supports compute queue
                 if ((queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT) && !(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT))
                 {
                     computeFamily = i;
                 }
 
+                // if the queue family supports transfer queue
                 if ((queueFamily.queueFlags & VK_QUEUE_TRANSFER_BIT) && 
                     !(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) && 
                     !(queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT))
@@ -141,7 +192,8 @@ namespace RHI
                 }
             }
 
-            return graphicsFamily != UINT32_MAX;
+            // Check if all required queue families are found
+            return graphicsFamily != UINT32_MAX && computeFamily != UINT32_MAX && transferFamily != UINT32_MAX;
         }
 
         std::wstring GetPhysicalDeviceName(VkPhysicalDevice physicalDevice)
@@ -178,6 +230,93 @@ namespace RHI
             }
             
             return FeatureLevel::Vulkan_1_0;  // default value
+        }
+
+        // ============================================================
+        // Convert VkPhysicalDeviceType to a string
+        // ============================================================
+        const char* VkPhysicalDeviceTypeToString(VkPhysicalDeviceType type)
+        {
+            switch (type)
+            {
+            case VK_PHYSICAL_DEVICE_TYPE_OTHER:          return "Other";
+            case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU: return "Integrated GPU";
+            case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:   return "Discrete GPU";
+            case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:    return "Virtual GPU";
+            case VK_PHYSICAL_DEVICE_TYPE_CPU:            return "CPU";
+            case VK_PHYSICAL_DEVICE_TYPE_MAX_ENUM:       return "Max Enum";
+            default:                                     return "Unknown";
+            }
+        }
+
+        uint32_t CalculatePhysicalDeviceScore(
+            VkPhysicalDevice physicalDevice,
+            const VkPhysicalDeviceProperties& properties,
+            const VkPhysicalDeviceFeatures& features,
+            const VkPhysicalDeviceMemoryProperties& memoryProperties)
+        {
+            uint32_t score = 0;
+
+            // ============================================================
+            // Device Type (Most Important)
+            // ============================================================
+            switch (properties.deviceType)
+            {
+            case VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU:
+                score += 1000;  // Dedicated GPU: Highest priority
+                break;
+            case VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU:
+                score += 500;   // Integrated GPU: Medium priority
+                break;
+            case VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU:
+                score += 200;   // Virtual GPU: Low priority
+                break;
+            case VK_PHYSICAL_DEVICE_TYPE_CPU:
+                score += 50;    // CPU Software Simulation: Lowest priority
+                break;
+            default:
+                score += 0;     // Unknown type
+                break;
+            }
+
+            // ============================================================
+            // VRAM Size (Calculated via Memory Heap)
+            // ============================================================
+            VkDeviceSize totalVideoMemory = 0;
+            for (uint32_t i = 0; i < memoryProperties.memoryHeapCount; ++i)
+            {
+                if (memoryProperties.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+                {
+                    totalVideoMemory += memoryProperties.memoryHeaps[i].size;
+                }
+            }
+
+            // VRAM Score (in GB)
+            uint32_t vramGB = static_cast<uint32_t>(totalVideoMemory / (1024ULL * 1024ULL * 1024ULL));
+            if (vramGB >= 16) score += 160;      // 16GB+ 
+            else if (vramGB >= 12) score += 120; // 12GB+
+            else if (vramGB >= 8) score += 80;   // 8GB+
+            else if (vramGB >= 6) score += 60;   // 6GB+
+            else if (vramGB >= 4) score += 40;   // 4GB+
+            else if (vramGB >= 2) score += 20;   // 2GB+
+            else score += 10;                    // <2GB
+
+            // ============================================================
+            // API Version
+            // ============================================================
+            uint32_t major = VK_VERSION_MAJOR(properties.apiVersion);
+            uint32_t minor = VK_VERSION_MINOR(properties.apiVersion);
+
+            if (major >= 1)
+            {
+                if (minor >= 4) score += 140;      // Vulkan 1.4
+                else if (minor >= 3) score += 130; // Vulkan 1.3
+                else if (minor >= 2) score += 120; // Vulkan 1.2
+                else if (minor >= 1) score += 110; // Vulkan 1.1
+                else score += 100;                 // Vulkan 1.0
+            }
+
+            return score;
         }
     }
 
@@ -227,7 +366,7 @@ namespace RHI
     bool DeviceVulKan::CreateInstance()
     {
         bool enableValidation = false;
-#ifdef _DEBUG
+#ifdef RHI_ENABLE_DEBUG_INFO
         enableValidation = true;
 #endif
 
@@ -250,12 +389,13 @@ namespace RHI
         createInfo.pApplicationInfo = &appInfo;
 
         auto extensions = GetRequiredExtensions(enableValidation);
+        auto validationLayers = GetRequiredValidationLayers();
+
         createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         createInfo.ppEnabledExtensionNames = extensions.data();
 
         if (enableValidation)
         {
-            auto validationLayers = GetRequiredValidationLayers();
             createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
             createInfo.ppEnabledLayerNames = validationLayers.data();
         }
@@ -295,40 +435,109 @@ namespace RHI
         // Enumerate physical devices
         std::vector<VkPhysicalDevice> devices(deviceCount);
         vkEnumeratePhysicalDevices(m_Instance, &deviceCount, devices.data());
+        
+        std::vector<LocalVulkanPhysicalDeviceInfo> candidates;
 
         // Check each physical device for suitability
         for (VkPhysicalDevice device : devices)
         {
             uint32_t graphicsFamily, computeFamily, transferFamily;
-            if (IsPhysicalDeviceSuitable(device, graphicsFamily, computeFamily, transferFamily))
-            {
-                m_PhysicalDevice = device;
-                m_GraphicsQueueFamilyIndex = graphicsFamily;
-                m_ComputeQueueFamilyIndex = computeFamily;
-                m_CopyQueueFamilyIndex = transferFamily;
-                m_AdapterName = GetPhysicalDeviceName(device);
-                return true;
-            }
+            bool isSoftware = !IsPhysicalDeviceSuitable(device, graphicsFamily, computeFamily, transferFamily);
+            
+            // Get physical device properties
+            VkPhysicalDeviceProperties properties;
+            vkGetPhysicalDeviceProperties(device, &properties);
+            // Get physical device memory properties
+            VkPhysicalDeviceMemoryProperties memoryProperties;
+            vkGetPhysicalDeviceMemoryProperties(device, &memoryProperties);
+
+            // Get physical device features
+            VkPhysicalDeviceFeatures features;
+            vkGetPhysicalDeviceFeatures(device, &features);
+
+            // Calculate scores: discrete GPU priority, VRAM size, feature support
+            uint32_t score = CalculatePhysicalDeviceScore(device, properties, features, memoryProperties);
+
+            // add candidate to list
+            LocalVulkanPhysicalDeviceInfo candidate;
+            candidate.device = device;
+            candidate.memoryProperties = memoryProperties;
+            candidate.graphicsFamily = graphicsFamily;
+            candidate.computeFamily = computeFamily;
+            candidate.transferFamily = transferFamily;
+            candidate.features = features;
+            candidate.properties = properties;
+            candidate.score = score;
+            candidate.isSoftware = isSoftware;
+            candidates.push_back(candidate);
         }
 
-        ThrowErrorMessage("No suitable GPU found");
-        return false;
+        // IF no suitable GPU found, throw error
+        if (candidates.empty())
+        {
+            ThrowErrorMessage("No suitable GPU found");
+            return false;
+        }
+        
+        // Sort candidates by score in descending order
+        std::sort(candidates.begin(), candidates.end(), [](const LocalVulkanPhysicalDeviceInfo& a, const LocalVulkanPhysicalDeviceInfo& b)
+        {
+            return a.score > b.score;
+        });
+        
+        // Pick the first candidate as the physical device
+        m_PhysicalDevice = candidates[0].device;
+        /* Each GPU might have different types of queue families.
+         * So we need to first get the queue family index for each type of queue, and then when creating the device,
+         * we tell the driver which queue family we want to allocate the queue from using the index we got.
+         * Finally, we get the queue handle using vkGetDeviceQueue.
+        */
+        m_GraphicsQueueFamilyIndex = candidates[0].graphicsFamily;
+        m_ComputeQueueFamilyIndex = candidates[0].computeFamily;
+        m_CopyQueueFamilyIndex = candidates[0].transferFamily;
+        // Convert to wide string
+        m_AdapterName = IO::ToWideString(candidates[0].properties.deviceName);
+
+        char debugBuffer[512];
+        const auto& best = candidates[0];
+        sprintf_s(debugBuffer,
+            "[Vulkan] Selected Device:\n"
+            "  Name: %s\n"
+            "  Type: %s\n"
+            "  API Version: %d.%d.%d\n"
+            "  Score: %u\n"
+            "  VRAM: %.2f GB\n"
+            "  Graphics Queue: %u\n"
+            "  Compute Queue: %u\n"
+            "  Transfer Queue: %u\n",
+            best.properties.deviceName,
+            VkPhysicalDeviceTypeToString(best.properties.deviceType),
+            VK_VERSION_MAJOR(best.properties.apiVersion),
+            VK_VERSION_MINOR(best.properties.apiVersion),
+            VK_VERSION_PATCH(best.properties.apiVersion),
+            best.score,
+            (double)best.memoryProperties.memoryHeaps[0].size / (1024.0 * 1024.0 * 1024.0),
+            m_GraphicsQueueFamilyIndex,
+            m_ComputeQueueFamilyIndex,
+            m_CopyQueueFamilyIndex
+        );
+        Core::InfoCapture::Capture(debugBuffer);
+
+        candidates.clear();
+        return true;
     }
 
     bool DeviceVulKan::CreateLogicalDevice()
     {
-        /*
-         * "每个GPU对应的每个种类的队列簇是不同的，
-         * 所以我们需要先获取每个队列的队列簇索引，然后在创建设备时设置 queueFamilyIndex 告诉驱动我要从哪个队列簇分配队列，
-         * 最后通过 vkGetDeviceQueue 获取队列的句柄。"
-        */
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+        // Get unique queue families
         std::set<uint32_t> uniqueQueueFamilies = {
             m_GraphicsQueueFamilyIndex,
             m_ComputeQueueFamilyIndex,
             m_CopyQueueFamilyIndex
         };
 
+        // This is the queue's execution priority, 1.0f is the highest priority.
         float queuePriority = 1.0f;
         for (uint32_t queueFamily : uniqueQueueFamilies)
         {
@@ -340,32 +549,24 @@ namespace RHI
             queueCreateInfos.push_back(queueCreateInfo);
         }
 
+        // Get required features
         LocalRequiredFeatures deviceFeatures = GetRequiredFeatures();
 
+        // Set device extensions
         std::vector<const char*> deviceExtensions = {
+            // Swapchain extension (must) 
             VK_KHR_SWAPCHAIN_EXTENSION_NAME
         };
 
         VkDeviceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
         createInfo.pNext = &deviceFeatures.features2; 
+        createInfo.enabledLayerCount = 0;
 
         createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         createInfo.pQueueCreateInfos = queueCreateInfos.data();
         createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
         createInfo.ppEnabledExtensionNames = deviceExtensions.data();
-
-        bool enableValidation = false;
-#ifdef _DEBUG
-        enableValidation = true;
-#endif
-
-        if (enableValidation)
-        {
-            auto validationLayers = GetRequiredValidationLayers();
-            createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-            createInfo.ppEnabledLayerNames = validationLayers.data();
-        }
 
         VkResult result = vkCreateDevice(m_PhysicalDevice, &createInfo, nullptr, &m_Device);
         if (result != VK_SUCCESS)

@@ -11,7 +11,10 @@ add_engine_library(RHI SHARED
 # output RHI.modules.generated.h file
 file(GENERATE
     OUTPUT ${CMAKE_GENERATE_OUTPUT_DIRECTORY}/RHI/RHI.modules.generated.h
-    CONTENT "#pragma once\n#define RHI_D3D11_DLL_FILE \"$<TARGET_FILE_NAME:D3D11RHI>\"\n#define RHI_D3D12_DLL_FILE \"$<TARGET_FILE_NAME:D3D12RHI>\""
+    CONTENT "#pragma once
+            \n#define RHI_D3D11_DLL_FILE \"$<TARGET_FILE_NAME:D3D11RHI>\"
+            \n#define RHI_D3D12_DLL_FILE \"$<TARGET_FILE_NAME:D3D12RHI>\"
+            \n#define RHI_VULKAN_DLL_FILE \"$<TARGET_FILE_NAME:VulKanRHI>\""
 )
 target_include_directories(RHI PUBLIC ${CMAKE_GENERATE_OUTPUT_DIRECTORY}/RHI)
 
