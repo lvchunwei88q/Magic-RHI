@@ -81,91 +81,6 @@ namespace RHI
             *ppAdapter = adapter.Detach();
         }
 
-        [[nodiscard]] static ComPtr<ID3D12GraphicsCommandList> CreateLevelCommandList(
-            ID3D12Device* pDevice,
-            D3D12_COMMAND_LIST_TYPE d3dType,
-            ID3D12CommandAllocator* pAllocator,
-            FeatureLevel featureLevel)
-        {
-            // 0=NOT, 1=BASE, 2=接口1, 3=接口2, 4=接口4
-            static int s_MaxSupportedVersion = 0;
-
-            auto ProbeVersion = [&](auto&& pProbeList, int version) -> bool
-            {
-                HRESULT hr = pDevice->CreateCommandList(
-                    0, d3dType, pAllocator, nullptr,
-                    IID_PPV_ARGS(&pProbeList));
-                if (SUCCEEDED(hr))
-                {
-                    s_MaxSupportedVersion = version;
-                    pProbeList.Reset();
-                    return true;
-                }
-                return false;
-            };
-
-            if (s_MaxSupportedVersion == 0)
-            {
-                if (featureLevel >= FeatureLevel::Level_12_2)
-                {
-                    ComPtr<ID3D12GraphicsCommandList4> pCmdList4;
-                    ProbeVersion(pCmdList4, 4);
-                }
-
-                if (s_MaxSupportedVersion == 0 && featureLevel >= FeatureLevel::Level_12_0)
-                {
-                    ComPtr<ID3D12GraphicsCommandList2> pCmdList2;
-                    ProbeVersion(pCmdList2, 3);
-                }
-
-                if (s_MaxSupportedVersion == 0 && featureLevel >= FeatureLevel::Level_11_0)
-                {
-                    ComPtr<ID3D12GraphicsCommandList1> pCmdList1;
-                    ProbeVersion(pCmdList1, 2);
-                }
-                if (s_MaxSupportedVersion == 0)
-                {
-                    s_MaxSupportedVersion = 1;
-                }
-            }
-
-            switch (s_MaxSupportedVersion)
-            {
-                case 4:
-                {
-                    ComPtr<ID3D12GraphicsCommandList4> pCmdList4;
-                    ThrowIfFailed(pDevice->CreateCommandList(
-                        0, d3dType, pAllocator, nullptr,
-                        IID_PPV_ARGS(&pCmdList4)));
-                    return pCmdList4;
-                }
-                case 3:
-                {
-                    ComPtr<ID3D12GraphicsCommandList2> pCmdList2;
-                    ThrowIfFailed(pDevice->CreateCommandList(
-                        0, d3dType, pAllocator, nullptr,
-                        IID_PPV_ARGS(&pCmdList2)));
-                    return pCmdList2;
-                }
-                case 2:
-                {
-                    ComPtr<ID3D12GraphicsCommandList1> pCmdList1;
-                    ThrowIfFailed(pDevice->CreateCommandList(
-                        0, d3dType, pAllocator, nullptr,
-                        IID_PPV_ARGS(&pCmdList1)));
-                    return pCmdList1;
-                }
-                default:
-                {
-                    ComPtr<ID3D12GraphicsCommandList> pCmdList;
-                    ThrowIfFailed(pDevice->CreateCommandList(
-                        0, d3dType, pAllocator, nullptr,
-                        IID_PPV_ARGS(&pCmdList)));
-                    return pCmdList;
-                }
-            }
-        }
-
         FeatureLevel FromD3DFeatureLevel(D3D_FEATURE_LEVEL level)
         {
             switch (level)
@@ -185,27 +100,8 @@ namespace RHI
                 return FeatureLevel::Level_11_0;  // 默认值
             }
         }
-
-        D3D12_COMMAND_LIST_TYPE ConvertRHICmdTypeToD3D12(RHICmdType type)
-        {
-            switch (type)
-            {
-            case RHICmdType::Graphics:
-                return D3D12_COMMAND_LIST_TYPE_DIRECT;
-            case RHICmdType::Compute:
-                return D3D12_COMMAND_LIST_TYPE_COMPUTE;
-            case RHICmdType::Copy:
-                return D3D12_COMMAND_LIST_TYPE_COPY;
-            default:
-#ifdef _DEBUG
-                // 调试模式下，抛出异常
-                ThrowErrorMessage("Invalid RHICmdType");
-#endif
-                return static_cast<D3D12_COMMAND_LIST_TYPE>(-1);
-            }
-        }
     }
-    
+
     DeviceD3D12::DeviceD3D12()
     {
     }
@@ -389,43 +285,8 @@ namespace RHI
         return m_pDevice != nullptr && m_Initialization == InitialState::Initialize;
     }
 
-    std::shared_ptr<RHICommandAllocator> DeviceD3D12::CreateCommandAllocator(RHICmdType type)
-    {
-        D3D12_COMMAND_LIST_TYPE d3dType = ConvertRHICmdTypeToD3D12(type);
-
-        // Create command allocator this is the only interface that has no version 1，2，3 etc
-        ComPtr<ID3D12CommandAllocator> pAllocator;
-        ThrowIfFailed(m_pDevice->CreateCommandAllocator(d3dType, IID_PPV_ARGS(&pAllocator)));
-        return std::make_shared<CommandAllocatorD3D12>(type, pAllocator.Get());
-    }
-    
-    std::shared_ptr<RHICommandList> DeviceD3D12::CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator)
-    {
-        CommandAllocatorD3D12* pAllocator = SafeCast<CommandAllocatorD3D12>(allocator.get());
-        if (pAllocator == nullptr) {
-            ThrowErrorMessage("CommandAllocatorD3D12 is nullptr");
-            return nullptr;
-        }
-        RHICmdType type = pAllocator->GetCmdType();
-        D3D12_COMMAND_LIST_TYPE d3dType = ConvertRHICmdTypeToD3D12(type);
-    
-        // Create command list
-        ComPtr<ID3D12GraphicsCommandList> pCmdList = CreateLevelCommandList(
-            m_pDevice.Get(),
-            d3dType,
-            pAllocator->GetCommandAllocator(),
-            GetFeatureLevel()
-        );
-
-        // Initial state is closed
-        ThrowIfFailed(pCmdList->Close());
-    
-        // Create RHI wrapper object
-        return std::make_shared<CommandListD3D12>(pAllocator, pCmdList.Get());
-    }
-    
     /*
-    * 获取图形命令队列
+    * Get the graphics command queues here is divided into graphics queues, compute queues, and copy queues
     */
     RHICommandQueue* DeviceD3D12::GetCommandQueue(RHICmdType Type) const
     {
@@ -439,25 +300,6 @@ namespace RHI
             return m_CopyQueue.get();
         default:
             return nullptr;
-        }
-    }
-
-    std::shared_ptr<RHIRootSignature> DeviceD3D12::CreateRootSignature(const RootSignatureDesc& desc)
-    {
-        auto rootSignature = std::make_shared<RHIRootSignatureD3D12>();
-        if (rootSignature->Initialize(this, desc))
-        {
-            return rootSignature;
-        }
-        return nullptr;
-    }
-
-    void DeviceD3D12::DeleteRootSignature(std::shared_ptr<RHIRootSignature>& rootSignature)
-    {
-        if (rootSignature)
-        {
-            rootSignature->Shutdown();
-            rootSignature.reset();
         }
     }
 

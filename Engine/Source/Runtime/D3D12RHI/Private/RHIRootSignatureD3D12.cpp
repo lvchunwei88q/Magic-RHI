@@ -56,6 +56,30 @@ namespace RHI
 
     }
 
+    /*
+     * ======================================================================
+     * Create a root signature with the given descriptor
+     */
+    std::shared_ptr<RHIRootSignature> DeviceD3D12::CreateRootSignature(const RootSignatureDesc& desc)
+    {
+        auto rootSignature = std::make_shared<RHIRootSignatureD3D12>();
+        if (rootSignature->Initialize(this, desc))
+        {
+            return rootSignature;
+        }
+        return nullptr;
+    }
+
+    void DeviceD3D12::DeleteRootSignature(std::shared_ptr<RHIRootSignature>& rootSignature)
+    {
+        if (rootSignature)
+        {
+            rootSignature->Shutdown();
+            rootSignature.reset();
+        }
+    }
+    // ======================================================================
+
     RHIRootSignatureD3D12::RHIRootSignatureD3D12()
     {
     }
