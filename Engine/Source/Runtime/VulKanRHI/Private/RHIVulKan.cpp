@@ -192,18 +192,21 @@ namespace RHI
 
     bool DeviceVulKan::Initialize()
     {
+        // Create Vulkan instance 
         if (!CreateInstance())
         {
             ThrowErrorMessage("Failed to create Vulkan instance");
             return false;
         }
 
+        // Pick physical device
         if (!PickPhysicalDevice())
         {
             ThrowErrorMessage("Failed to pick physical device");
             return false;
         }
 
+        // Create logical device
         if (!CreateLogicalDevice())
         {
             ThrowErrorMessage("Failed to create logical device");
@@ -278,18 +281,22 @@ namespace RHI
 
     bool DeviceVulKan::PickPhysicalDevice()
     {
+        // Get physical device count
         uint32_t deviceCount = 0;
         vkEnumeratePhysicalDevices(m_Instance, &deviceCount, nullptr);
 
+        // Check if any physical device is available
         if (deviceCount == 0)
         {
             ThrowErrorMessage("No Vulkan compatible GPUs found");
             return false;
         }
 
+        // Enumerate physical devices
         std::vector<VkPhysicalDevice> devices(deviceCount);
         vkEnumeratePhysicalDevices(m_Instance, &deviceCount, devices.data());
 
+        // Check each physical device for suitability
         for (VkPhysicalDevice device : devices)
         {
             uint32_t graphicsFamily, computeFamily, transferFamily;

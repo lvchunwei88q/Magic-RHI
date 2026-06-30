@@ -4,6 +4,8 @@
 
 #include <Common/Check.h>
 #include <Common/RHIFeatureLevel.h>
+#include <algorithm>
+#include "CoreMinimal.h"
 #include "RHIRootSignatureD3D12.h"
 #include "RHICommandListD3D12.h"
 #include "RHID3D12.h"
@@ -11,10 +13,46 @@
 
 namespace RHI
 {
+    // Define Feature Level priorities (from high to low)
+    constexpr D3D_FEATURE_LEVEL FeatureLevels[] = {
+        D3D_FEATURE_LEVEL_12_2,
+        D3D_FEATURE_LEVEL_12_1,
+        D3D_FEATURE_LEVEL_12_0,
+        D3D_FEATURE_LEVEL_11_1,
+        D3D_FEATURE_LEVEL_11_0
+    };
+
+    // ============================================================
+    // Enumerate all D3D12 adapters and return the available list
+    // ============================================================
+    struct LocalD3D12AdapterInfo
+    {
+        ComPtr<IDXGIAdapter1> pAdapter;
+        DXGI_ADAPTER_DESC1 desc;
+        D3D_FEATURE_LEVEL maxFeatureLevel;
+        bool isSoftware = false;
+    };
+
     namespace
     {
-        // Helper function for acquiring the first available hardware adapter that supports Direct3D 12.
-        // If no such adapter can be found, *ppAdapter will be set to nullptr.
+        // Test the maximum supported by this adapter Feature Level
+        void TestAdapterFeatureLevel(
+            IDXGIAdapter1* pAdapter,
+            D3D_FEATURE_LEVEL& outMaxLevel)
+        {
+            outMaxLevel = D3D_FEATURE_LEVEL_11_0;
+            for (auto level : FeatureLevels)
+            {
+                if (SUCCEEDED(D3D12CreateDevice(pAdapter, level, _uuidof(ID3D12Device), nullptr)))
+                {
+                    outMaxLevel = level;
+                    break;
+                }
+            }
+        }
+
+        // Get the hardware device with the highest support for D3D12.
+        // If such an adapter is not found, *ppAdapter will be set to nullptr.
         _Use_decl_annotations_
         void GetHardwareAdapter(
             IDXGIFactory1* pFactory,
@@ -23,11 +61,12 @@ namespace RHI
         {
             *ppAdapter = nullptr;
 
-            ComPtr<IDXGIAdapter1> adapter;
+            std::vector<LocalD3D12AdapterInfo> candidates;
 
             ComPtr<IDXGIFactory6> factory6;
             if (SUCCEEDED(pFactory->QueryInterface(IID_PPV_ARGS(&factory6))))
             {
+                ComPtr<IDXGIAdapter1> adapter;
                 for (
                     UINT adapterIndex = 0;
                     SUCCEEDED(factory6->EnumAdapterByGpuPreference(
@@ -39,46 +78,77 @@ namespace RHI
                     DXGI_ADAPTER_DESC1 desc;
                     adapter->GetDesc1(&desc);
 
-                    if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
-                    {
-                        // Don't select the Basic Render Driver adapter.
-                        // If you want a software adapter, pass in "/warp" on the command line.
-                        continue;
-                    }
+                    // Test the maximum supported by this adapter Feature Level
+                    D3D_FEATURE_LEVEL maxLevel = D3D_FEATURE_LEVEL_11_0;
+                    TestAdapterFeatureLevel(adapter.Get(), maxLevel);
 
-                    // Check to see whether the adapter supports Direct3D 12, but don't create the
-                    // actual device yet.
-                    if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr)))
-                    {
-                        break;
-                    }
+                    // Add candidate to list
+                    LocalD3D12AdapterInfo candidate;
+                    candidate.pAdapter = adapter;
+                    candidate.desc = desc;
+                    candidate.maxFeatureLevel = maxLevel;
+                    candidate.isSoftware = desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE;
+                    candidates.push_back(candidate);
+
+                    adapter.Reset();
                 }
             }
 
-            if(adapter.Get() == nullptr)
+            // If no candidates are found, DXGIFactory6 will fall back to normal enumeration
+            if(candidates.size() == 0)
             {
+                ComPtr<IDXGIAdapter1> adapter;
                 for (UINT adapterIndex = 0; SUCCEEDED(pFactory->EnumAdapters1(adapterIndex, &adapter)); ++adapterIndex)
                 {
                     DXGI_ADAPTER_DESC1 desc;
                     adapter->GetDesc1(&desc);
 
-                    if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
-                    {
-                        // Don't select the Basic Render Driver adapter.
-                        // If you want a software adapter, pass in "/warp" on the command line.
-                        continue;
-                    }
+                    // Test the maximum supported by this adapter Feature Level
+                    D3D_FEATURE_LEVEL maxLevel = D3D_FEATURE_LEVEL_11_0;
+                    TestAdapterFeatureLevel(adapter.Get(), maxLevel);
 
-                    // Check to see whether the adapter supports Direct3D 12, but don't create the
-                    // actual device yet.
-                    if (SUCCEEDED(D3D12CreateDevice(adapter.Get(), D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr)))
-                    {
-                        break;
-                    }
+                    // Add candidate to list
+                    LocalD3D12AdapterInfo candidate;
+                    candidate.pAdapter = adapter;
+                    candidate.desc = desc;
+                    candidate.maxFeatureLevel = maxLevel;
+                    candidate.isSoftware = desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE;
+                    candidates.push_back(candidate);
+
+                    adapter.Reset();
                 }
             }
             
-            *ppAdapter = adapter.Detach();
+            // Choose the adapter with the highest support
+            if (!candidates.empty())
+            {
+                // Sort by support in descending order
+                std::sort(candidates.begin(), candidates.end(),
+                    [](const LocalD3D12AdapterInfo& a, const LocalD3D12AdapterInfo& b) {
+                        // 1. Prefer the one with a higher Feature Level
+                        if (a.maxFeatureLevel != b.maxFeatureLevel)
+                            return a.maxFeatureLevel > b.maxFeatureLevel;
+                        // 2. When the feature level is the same, choose the hardware adapter first
+                        if (a.isSoftware != b.isSoftware)
+                            return a.isSoftware < b.isSoftware;
+                        // 3. When the feature level and type are the same, choose the one with more dedicated video memory
+                        return a.desc.DedicatedVideoMemory > b.desc.DedicatedVideoMemory;
+                    });
+
+                // Select the first (highest support)
+                *ppAdapter = candidates[0].pAdapter.Detach();
+
+                // Output debug information
+                char debugBuffer[512];
+                sprintf_s(debugBuffer,
+                    "Selected D3D12 Adapter: %ls (Max Feature Level: %d.%d) , isSoftware: %s\n",
+                    candidates[0].desc.Description,
+                    (candidates[0].maxFeatureLevel >> 12) & 0xF,
+                    (candidates[0].maxFeatureLevel >> 8) & 0xF,
+                    candidates[0].isSoftware ? "Yes" : "No"
+                );
+                Core::InfoCapture::Capture(debugBuffer);
+            }
         }
 
         FeatureLevel FromD3DFeatureLevel(D3D_FEATURE_LEVEL level)
@@ -175,21 +245,12 @@ namespace RHI
             DXGI_ADAPTER_DESC1 desc;
             m_pAdapter->GetDesc1(&desc);
             m_AdapterName = desc.Description;  // copy
-            
         } else {
             m_AdapterName = L"Unknown Adapter";
         }
-
-        D3D_FEATURE_LEVEL featureLevels[] = {
-            D3D_FEATURE_LEVEL_12_2,
-            D3D_FEATURE_LEVEL_12_1,
-            D3D_FEATURE_LEVEL_12_0,
-            D3D_FEATURE_LEVEL_11_1,
-            D3D_FEATURE_LEVEL_11_0
-        };
         
         OutputDebugStringA("We use different levels to create devices, so if your physical device or system does not support the latest device creation, you may receive a device creation error. However, you don't need to worry because we will create them step by step.");
-        for (auto level : featureLevels) {
+        for (auto level : FeatureLevels) {
             if (SUCCEEDED(D3D12CreateDevice(m_pAdapter.Get(), level, 
                                              IID_PPV_ARGS(&m_pDevice)))) {
                 m_FeatureLevel = level;
