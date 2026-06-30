@@ -152,6 +152,33 @@ namespace RHI
             std::string name(deviceProperties.deviceName);
             return std::wstring(name.begin(), name.end());
         }
+
+        FeatureLevel FromVulkanVersionLevel(uint32_t apiVersion)
+        {
+            uint32_t major = VK_API_VERSION_MAJOR(apiVersion);
+            uint32_t minor = VK_API_VERSION_MINOR(apiVersion);
+
+            if (major == 1)
+            {
+                switch (minor)
+                {
+                case 0: return FeatureLevel::Vulkan_1_0;
+                case 1: return FeatureLevel::Vulkan_1_1;
+                case 2: return FeatureLevel::Vulkan_1_2;
+                case 3: return FeatureLevel::Vulkan_1_3;
+                case 4: return FeatureLevel::Vulkan_1_4;
+                default:
+                    if (minor > 4) {
+                        return FeatureLevel::Vulkan_1_4;
+                    }
+                    return FeatureLevel::Vulkan_1_0;  // default value
+                }
+            }else{
+                // more ...
+            }
+            
+            return FeatureLevel::Vulkan_1_0;  // default value
+        }
     }
 
     DeviceVulKan::DeviceVulKan()
@@ -230,11 +257,20 @@ namespace RHI
             createInfo.ppEnabledLayerNames = validationLayers.data();
         }
 
-        VkResult result = vkCreateInstance(&createInfo, nullptr, &m_Instance);
-        if (result != VK_SUCCESS)
+        VkResult instance_result = vkCreateInstance(&createInfo, nullptr, &m_Instance);
+        if (instance_result != VK_SUCCESS)
         {
             ThrowErrorMessage("Failed to create Vulkan instance");
             return false;
+        }
+
+        uint32_t apiVersion = 0;
+        VkResult api_version_result = vkEnumerateInstanceVersion(&apiVersion);
+        if (api_version_result == VK_SUCCESS) {
+            // apiVersion now includes the Vulkan version number supported by the instance
+            ApiVersion = apiVersion;
+        }else{
+            Core::ErrorCapture::Capture("Failed to enumerate instance version");
         }
 
         return true;
@@ -471,7 +507,7 @@ namespace RHI
 
     FeatureLevel DeviceVulKan::GetFeatureLevel() const
     {
-        return m_FeatureLevel;
+        return FromVulkanVersionLevel(ApiVersion);
     }
 
     std::shared_ptr<RHIPipelineState> DeviceVulKan::CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc)

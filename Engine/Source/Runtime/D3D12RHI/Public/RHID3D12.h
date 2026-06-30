@@ -58,8 +58,6 @@ namespace RHI
         [[nodiscard]] std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator) override;
         [[nodiscard]] RHICommandQueue* GetCommandQueue(RHICmdType Type) const override;
 
-        void CreateQueues();
-
         [[nodiscard]] std::shared_ptr<RHIRootSignature> CreateRootSignature(const RootSignatureDesc& desc) override;
         void DeleteRootSignature(std::shared_ptr<RHI::RHIRootSignature>& rootSignature) override;
 
@@ -73,6 +71,10 @@ namespace RHI
         IDXGIAdapter1* GetAdapter() const { return m_pAdapter.Get(); }
 
     private:
+        void CreateLogicalDevice(UINT dxgiFactoryFlags);
+        void CreateDescriptorHeaps();
+        void CreateQueues();
+
         ComPtr<ID3D12Device> m_pDevice;
         std::wstring m_AdapterName;
         D3D_FEATURE_LEVEL m_FeatureLevel;

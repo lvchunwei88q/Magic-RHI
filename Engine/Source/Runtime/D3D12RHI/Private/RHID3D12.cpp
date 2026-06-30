@@ -85,19 +85,20 @@ namespace RHI
         {
             switch (level)
             {
-            case D3D_FEATURE_LEVEL_9_1:  return FeatureLevel::Level_9_1;
-            case D3D_FEATURE_LEVEL_9_2:  return FeatureLevel::Level_9_2;
-            case D3D_FEATURE_LEVEL_9_3:  return FeatureLevel::Level_9_3;
-            case D3D_FEATURE_LEVEL_10_0: return FeatureLevel::Level_10_0;
-            case D3D_FEATURE_LEVEL_10_1: return FeatureLevel::Level_10_1;
-            case D3D_FEATURE_LEVEL_11_0: return FeatureLevel::Level_11_0;
-            case D3D_FEATURE_LEVEL_11_1: return FeatureLevel::Level_11_1;
-            case D3D_FEATURE_LEVEL_12_0: return FeatureLevel::Level_12_0;
-            case D3D_FEATURE_LEVEL_12_1: return FeatureLevel::Level_12_1;
-            case D3D_FEATURE_LEVEL_12_2: return FeatureLevel::Level_12_2;
-            
+            // ============================================================
+            // DirectX 12 Feature Levels (direct mapping)
+            // ============================================================
+            case D3D_FEATURE_LEVEL_11_0: return FeatureLevel::D3D12_11_0;
+            case D3D_FEATURE_LEVEL_11_1: return FeatureLevel::D3D12_11_1;
+            case D3D_FEATURE_LEVEL_12_0: return FeatureLevel::D3D12_12_0;
+            case D3D_FEATURE_LEVEL_12_1: return FeatureLevel::D3D12_12_1;
+            case D3D_FEATURE_LEVEL_12_2: return FeatureLevel::D3D12_12_2;
+
+            // ============================================================
+            // Unknown
+            // ============================================================
             default:
-                return FeatureLevel::Level_11_0;  // 默认值
+                return FeatureLevel::D3D12_11_0;  // default value
             }
         }
     }
@@ -116,7 +117,7 @@ namespace RHI
         m_Initialization = InitialState::Initialize;
         UINT dxgiFactoryFlags = 0;
 
-#ifdef _DEBUG
+#ifdef RHI_ENABLE_DEBUG_INFO
     // Enable the debug layer (requires the Graphics Tools "optional feature").
     // NOTE: Enabling the debug layer after device creation will invalidate the active device.
     {
@@ -130,7 +131,42 @@ namespace RHI
         }
     }
 #endif
+        CreateLogicalDevice(dxgiFactoryFlags); // create device
+        CreateQueues(); // create queues
+        CreateDescriptorHeaps(); // create descriptor heaps
 
+#ifdef RHI_ENABLE_DEBUG_INFO
+        ComPtr<ID3D12InfoQueue> infoQueue;
+        if (SUCCEEDED(m_pDevice.As(&infoQueue)))
+        {
+            infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+            infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+        }
+#endif
+        return true;
+    }
+
+    void DeviceD3D12::Shutdown()
+    {
+        m_Initialization = InitialState::Shutdown;
+        m_pDSVHeap.reset();
+        m_pRTVHeap.reset();
+        m_pSamplerHeap.reset();
+        m_pStandardHeap.reset();
+
+        m_GraphicsQueue.reset();
+        m_ComputeQueue.reset();
+        m_CopyQueue.reset();
+
+        m_pDevice.Reset();
+    }
+
+    FeatureLevel DeviceD3D12::GetFeatureLevel() const{
+        return FromD3DFeatureLevel(m_FeatureLevel);
+    }
+
+    void DeviceD3D12::CreateLogicalDevice(UINT dxgiFactoryFlags)
+    {
         ComPtr<IDXGIFactory4> factory;
         ThrowIfFailed(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)));
         GetHardwareAdapter(factory.Get(), &m_pAdapter);
@@ -161,10 +197,56 @@ namespace RHI
             }
         }
         OutputDebugStringA("The device has been created. You can now find errors through the subsequent output debug information.");
-        
-        CreateQueues(); // create queues
 
-        // -------------------- Create descriptor heaps --------------------
+    }
+
+    void DeviceD3D12::CreateQueues()
+    {
+        // Create a command queue. This is the only COM interface that doesn't have versions like 1, 2, 3, etc.
+        ComPtr<ID3D12CommandQueue> pGraphicsQueue;
+        ComPtr<ID3D12CommandQueue> pComputeQueue;
+        ComPtr<ID3D12CommandQueue> pCopyQueue;
+
+        // Graphics Queue (DIRECT) - All-Rounder, Executes All Commands
+        D3D12_COMMAND_QUEUE_DESC graphicsQueueDesc = {};
+        graphicsQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        graphicsQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+        graphicsQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+        ThrowIfFailed(m_pDevice->CreateCommandQueue(&graphicsQueueDesc, IID_PPV_ARGS(&pGraphicsQueue)));
+
+        // Compute Queue (COMPUTE) - Only Executes Compute and Copy Commands
+        D3D12_COMMAND_QUEUE_DESC computeQueueDesc = {};
+        computeQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        computeQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
+        computeQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+        ThrowIfFailed(m_pDevice->CreateCommandQueue(&computeQueueDesc, IID_PPV_ARGS(&pComputeQueue)));
+
+        // Copy Queue (COPY) - Only Executes Copy Commands
+        D3D12_COMMAND_QUEUE_DESC copyQueueDesc = {};
+        copyQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        copyQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
+        copyQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
+        ThrowIfFailed(m_pDevice->CreateCommandQueue(&copyQueueDesc, IID_PPV_ARGS(&pCopyQueue)));
+
+        m_GraphicsQueue = std::make_unique<GraphicsCommandQueueD3D12>(
+            RHICmdType::Graphics, 
+            pGraphicsQueue.Get(),
+            m_pDevice.Get()
+        );
+        m_ComputeQueue = std::make_unique<ComputeCommandQueueD3D12>(
+            RHICmdType::Compute, 
+            pComputeQueue.Get(),
+            m_pDevice.Get()
+        );
+        m_CopyQueue = std::make_unique<CopyCommandQueueD3D12>(
+            RHICmdType::Copy, 
+            pCopyQueue.Get(),
+            m_pDevice.Get()
+        );
+    }
+
+    void DeviceD3D12::CreateDescriptorHeaps()
+    {
         uint32_t m_StandardDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
         uint32_t m_SamplerDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER);
         uint32_t m_RTVDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -203,81 +285,6 @@ namespace RHI
         m_pSamplerHeap = std::make_unique<DescriptorHeapD3D12>(pSamplerHeap.Get(), RHIDescriptorHeapType::Sampler, RHI_DESCRIPTOR_HEAP_SIZE_SAMPLER, m_SamplerDescriptorSize);
         m_pRTVHeap = std::make_unique<DescriptorHeapD3D12>(pRTVHeap.Get(), RHIDescriptorHeapType::RenderTarget, RHI_DESCRIPTOR_HEAP_SIZE_RENDER_TARGET, m_RTVDescriptorSize);
         m_pDSVHeap = std::make_unique<DescriptorHeapD3D12>(pDSVHeap.Get(), RHIDescriptorHeapType::DepthStencil, RHI_DESCRIPTOR_HEAP_SIZE_DEPTH_STENCIL, m_DSVDescriptorSize);
-        // -------------------- Create descriptor heaps End --------------------
-
-#ifdef _DEBUG
-        ComPtr<ID3D12InfoQueue> infoQueue;
-        if (SUCCEEDED(m_pDevice.As(&infoQueue)))
-        {
-            infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-            infoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-        }
-#endif
-        return true;
-    }
-
-    void DeviceD3D12::Shutdown()
-    {
-        m_Initialization = InitialState::Shutdown;
-        m_pDSVHeap.reset();
-        m_pRTVHeap.reset();
-        m_pSamplerHeap.reset();
-        m_pStandardHeap.reset();
-
-        m_GraphicsQueue.reset();
-        m_ComputeQueue.reset();
-        m_CopyQueue.reset();
-
-        m_pDevice.Reset();
-    }
-
-    FeatureLevel DeviceD3D12::GetFeatureLevel() const{
-        return FromD3DFeatureLevel(m_FeatureLevel);
-    }
-
-    void DeviceD3D12::CreateQueues()
-    {
-        // 创建命令队列 这是唯一的Com接口没有 1，2，3 等版本的接口
-        ComPtr<ID3D12CommandQueue> pGraphicsQueue;
-        ComPtr<ID3D12CommandQueue> pComputeQueue;
-        ComPtr<ID3D12CommandQueue> pCopyQueue;
-
-        // 图形队列（DIRECT）- 全能型，执行所有命令
-        D3D12_COMMAND_QUEUE_DESC graphicsQueueDesc = {};
-        graphicsQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-        graphicsQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-        graphicsQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-        ThrowIfFailed(m_pDevice->CreateCommandQueue(&graphicsQueueDesc, IID_PPV_ARGS(&pGraphicsQueue)));
-
-        // 计算队列（COMPUTE）- 只执行计算和拷贝命令
-        D3D12_COMMAND_QUEUE_DESC computeQueueDesc = {};
-        computeQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-        computeQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_COMPUTE;
-        computeQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-        ThrowIfFailed(m_pDevice->CreateCommandQueue(&computeQueueDesc, IID_PPV_ARGS(&pComputeQueue)));
-
-        // 拷贝队列（COPY）- 只执行拷贝命令
-        D3D12_COMMAND_QUEUE_DESC copyQueueDesc = {};
-        copyQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-        copyQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_COPY;
-        copyQueueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-        ThrowIfFailed(m_pDevice->CreateCommandQueue(&copyQueueDesc, IID_PPV_ARGS(&pCopyQueue)));
-
-        m_GraphicsQueue = std::make_unique<GraphicsCommandQueueD3D12>(
-            RHICmdType::Graphics, 
-            pGraphicsQueue.Get(),
-            m_pDevice.Get()
-        );
-        m_ComputeQueue = std::make_unique<ComputeCommandQueueD3D12>(
-            RHICmdType::Compute, 
-            pComputeQueue.Get(),
-            m_pDevice.Get()
-        );
-        m_CopyQueue = std::make_unique<CopyCommandQueueD3D12>(
-            RHICmdType::Copy, 
-            pCopyQueue.Get(),
-            m_pDevice.Get()
-        );
     }
 
     bool DeviceD3D12::IsValid() const

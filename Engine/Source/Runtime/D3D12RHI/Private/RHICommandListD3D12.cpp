@@ -30,19 +30,19 @@ namespace RHI
 
             if (s_MaxSupportedVersion == 0)
             {
-                if (featureLevel >= FeatureLevel::Level_12_2)
+                if (featureLevel >= FeatureLevel::D3D12_12_2)
                 {
                     ComPtr<ID3D12GraphicsCommandList4> pCmdList4;
                     ProbeVersion(pCmdList4, 4);
                 }
 
-                if (s_MaxSupportedVersion == 0 && featureLevel >= FeatureLevel::Level_12_0)
+                if (s_MaxSupportedVersion == 0 && featureLevel >= FeatureLevel::D3D12_12_0)
                 {
                     ComPtr<ID3D12GraphicsCommandList2> pCmdList2;
                     ProbeVersion(pCmdList2, 3);
                 }
 
-                if (s_MaxSupportedVersion == 0 && featureLevel >= FeatureLevel::Level_11_0)
+                if (s_MaxSupportedVersion == 0 && featureLevel >= FeatureLevel::D3D12_11_0)
                 {
                     ComPtr<ID3D12GraphicsCommandList1> pCmdList1;
                     ProbeVersion(pCmdList1, 2);

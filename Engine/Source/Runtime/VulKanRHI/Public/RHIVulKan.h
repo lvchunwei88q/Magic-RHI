@@ -3,6 +3,7 @@
 #include "Common/VULKANRHI_API.h"
 #include <RHIInterface.h>
 #include <RHIResource.h>
+#include <cstdint>
 #include <vulkan.h>
 
 // DescriptorHeap
@@ -83,15 +84,15 @@ namespace RHI
         VkDevice m_Device = nullptr;
 
         std::wstring m_AdapterName;
-        FeatureLevel m_FeatureLevel = FeatureLevel::Level_12_0;
+        uint32_t ApiVersion = VK_API_VERSION_1_0;
 
         uint32_t m_GraphicsQueueFamilyIndex = UINT32_MAX;
         uint32_t m_ComputeQueueFamilyIndex = UINT32_MAX;
         uint32_t m_CopyQueueFamilyIndex = UINT32_MAX;
 
         //std::unique_ptr<GraphicsCommandQueueVulKan> m_GraphicsQueueWrapper;
-        //std::unique_ptr<ComputeCommandQueueVulKan> m_ComputeQueueWrapper;
-        //std::unique_ptr<CopyCommandQueueVulKan> m_CopyQueueWrapper;
+        //std::unique_ptr<ComputeCommandQueueVulKan>  m_ComputeQueueWrapper;
+        //std::unique_ptr<CopyCommandQueueVulKan>     m_CopyQueueWrapper;
 
         std::unique_ptr<DescriptorHeapVulKan> m_pStandardHeap;
         std::unique_ptr<DescriptorHeapVulKan> m_pSamplerHeap;

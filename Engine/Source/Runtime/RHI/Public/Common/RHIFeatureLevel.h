@@ -7,43 +7,56 @@
 
 namespace RHI
 {
-    /* Feature Level Type */
+
+/* Feature Level Type */
 enum class FeatureLevel : uint32_t
 {
-	// DirectX 9 Level
-	Level_9_1 = 0x9100,   // Shader Model 2.0
-	Level_9_2 = 0x9200,   // Shader Model 2.0+ 
-	Level_9_3 = 0x9300,   // Shader Model 3.0
-	// DirectX 10 Level
-	Level_10_0 = 0xa000,  // Shader Model 4.0
-	Level_10_1 = 0xa100,  // Shader Model 4.1
-	// DirectX 11 Level
-	Level_11_0 = 0xb000,  // Shader Model 5.0
-	Level_11_1 = 0xb100,  // Shader Model 5.0 + More Features
-	// DirectX 12 Level
-	Level_12_0 = 0xc000,  // Shader Model 5.1
-	Level_12_1 = 0xc100,  // Shader Model 5.1 + Rasterizer Order Independent
-	Level_12_2 = 0xc200   // Shader Model 6.0 + Ray Tracing + Mesh Shaders
-	// More ...
+    // ============================================================
+    // DirectX 12 Feature Levels
+    // ============================================================
+    D3D12_11_0   = 0xB000,   // DirectX 12, Feature Level 11.0 (SM 5.0)
+    D3D12_11_1   = 0xB100,   // DirectX 12, Feature Level 11.1 (SM 5.0+)
+    D3D12_12_0   = 0xC000,   // DirectX 12, Feature Level 12.0 (SM 5.1)
+    D3D12_12_1   = 0xC100,   // DirectX 12, Feature Level 12.1 (SM 5.1 + ROV)
+    D3D12_12_2   = 0xC200,   // DirectX 12 Ultimate, Feature Level 12.2 (SM 6.0 + RT + Mesh)
+
+    // ============================================================
+    // Vulkan API Versions
+    // ============================================================
+    Vulkan_1_0   = 0x010000, // Vulkan 1.0
+    Vulkan_1_1   = 0x010100, // Vulkan 1.1
+    Vulkan_1_2   = 0x010200, // Vulkan 1.2
+    Vulkan_1_3   = 0x010300, // Vulkan 1.3
+    Vulkan_1_4   = 0x010400, // Vulkan 1.4
 };
 
 inline const char* GetFeatureLevelName(FeatureLevel level)
 {
-	switch (level)
-	{
-	case FeatureLevel::Level_9_1:  return "DirectX 9.1";
-	case FeatureLevel::Level_9_2:  return "DirectX 9.2";
-	case FeatureLevel::Level_9_3:  return "DirectX 9.3";
-	case FeatureLevel::Level_10_0: return "DirectX 10.0";
-	case FeatureLevel::Level_10_1: return "DirectX 10.1";
-	case FeatureLevel::Level_11_0: return "DirectX 11.0";
-	case FeatureLevel::Level_11_1: return "DirectX 11.1";
-	case FeatureLevel::Level_12_0: return "DirectX 12.0";
-	case FeatureLevel::Level_12_1: return "DirectX 12.1";
-	case FeatureLevel::Level_12_2: return "DirectX 12.2 (Ultimate)";
-	// More ...
-	default: return "Unknown";
-	}
+    switch (level)
+    {
+    // ============================================================
+    // DirectX 12 Feature Levels
+    // ============================================================
+    case FeatureLevel::D3D12_11_0: return "DirectX 12.0 - Feature Level 11.0";
+    case FeatureLevel::D3D12_11_1: return "DirectX 12.0 - Feature Level 11.1";
+    case FeatureLevel::D3D12_12_0: return "DirectX 12.0 - Feature Level 12.0";
+    case FeatureLevel::D3D12_12_1: return "DirectX 12.1 - Feature Level 12.1";
+    case FeatureLevel::D3D12_12_2: return "DirectX 12 Ultimate - Feature Level 12.2";
+
+    // ============================================================
+    // Vulkan API Versions
+    // ============================================================
+    case FeatureLevel::Vulkan_1_0: return "Vulkan 1.0";
+    case FeatureLevel::Vulkan_1_1: return "Vulkan 1.1";
+    case FeatureLevel::Vulkan_1_2: return "Vulkan 1.2";
+    case FeatureLevel::Vulkan_1_3: return "Vulkan 1.3";
+    case FeatureLevel::Vulkan_1_4: return "Vulkan 1.4";
+
+    // ============================================================
+    // Unknown
+    // ============================================================
+    default: return "Unknown";
+    }
 }
 
 // Shader Model Level
