@@ -137,9 +137,9 @@ namespace RHI
         void Shutdown() override;
         bool IsValid() const override;
 
-        ShaderCompileOptionInternal AddBackendArguments(const ShaderCompileOptions& options) override { return {}; }
+        ShaderCompileOptionInternal AddBackendArguments(const ShaderCompileOptions& options) override;
         void PostProcessShader(const ShaderCompileOptions& options, const ShaderPostProcessArgs* postProcessArgs, 
-            const ShaderCompileResult& in_result, ShaderCompileResult& out_result) override {}
+            const ShaderCompileResult& in_result, ShaderCompileResult& out_result) override;
         ShaderReflectionGenerationMode GetShaderReflectionGenerationMode() override;
 
         // ------------------- Tools -------------------

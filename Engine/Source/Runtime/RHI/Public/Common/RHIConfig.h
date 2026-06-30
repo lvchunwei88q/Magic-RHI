@@ -37,6 +37,10 @@
 #define RHI_MULTI_BUFFERING 2
 #endif
 
+#ifndef DRAW_MAX_RENDER_TARGETS
+#define DRAW_MAX_RENDER_TARGETS 8 // Maximum number of render targets
+#endif
+
 // Enable resource debug info
 #ifndef RHI_ENABLE_DEBUG_INFO 
     #ifdef _DEBUG

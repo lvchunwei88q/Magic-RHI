@@ -5,7 +5,7 @@ namespace RHI
 {
     void CommandListD3D12::OMSetRenderTargets(uint32_t numRenderTargets, RHIRenderTargetView* const* ppViews, bool RTsSingleHandleToDescriptorRange, RHIDepthStencilView* pDepthStencilView)
     {
-        ThrowIf(numRenderTargets > MAX_RENDER_TARGETS, "numRenderTargets must be less than or equal to 8");
+        ThrowIf(numRenderTargets > DRAW_MAX_RENDER_TARGETS, "numRenderTargets must be less than or equal to DRAW_MAX_RENDER_TARGETS");
         
         std::vector<RenderTargetViewD3D12*> pRTViews(numRenderTargets);
         for (uint32_t i = 0; i < numRenderTargets; ++i)
