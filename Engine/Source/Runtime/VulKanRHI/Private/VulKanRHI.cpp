@@ -1,4 +1,4 @@
-// ========== D3D12RHI/Private/D3D12RHI.cpp ==========
+// ========== VulKanRHI/Private/VulKanRHI.cpp ==========
 
 #include <RHIDynamicLoader.h>
 #include "RHIVulKan.h"
