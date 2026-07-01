@@ -105,11 +105,12 @@ namespace RHI
     class CommandQueueVulKan : public RHICommandQueue
     {
     public:
-        CommandQueueVulKan(RHICmdType InType, VkQueue queue, uint32_t queueFamilyIndex, VkDevice* device)
+        CommandQueueVulKan(RHICmdType InType, VkQueue queue, uint32_t queueFamilyIndex, const VkDevice* device, const VkPhysicalDevice* physicalDevice)
             : RHICommandQueue(InType)
             , m_Queue(queue)
             , m_QueueFamilyIndex(queueFamilyIndex)
-            , m_Device(device) {
+            , m_Device(device)
+            , m_PhysicalDevice(physicalDevice) {
                 // Create Timeline Semaphore
                 VkSemaphoreTypeCreateInfo timelineInfo{};
                 timelineInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
@@ -148,6 +149,7 @@ namespace RHI
         uint64_t GetFrameIndex() const override;
 
         const VkDevice GetDevice() const;
+        const VkPhysicalDevice GetPhysicalDevice() const;
         const VkQueue GetQueue() const { return m_Queue; }
         uint32_t GetQueueFamilyIndex() const { return m_QueueFamilyIndex; }
     private:
@@ -155,6 +157,7 @@ namespace RHI
         const uint32_t m_QueueFamilyIndex;
         // Here we just store device handle references
         const VkDevice* m_Device;
+        const VkPhysicalDevice* m_PhysicalDevice;
 
         // use Timeline semaphore
         VkSemaphore m_TimelineSemaphore = VK_NULL_HANDLE;

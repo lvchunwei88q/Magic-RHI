@@ -48,6 +48,16 @@ namespace RHI
         return *m_Device;
     }
 
+    const VkPhysicalDevice CommandQueueVulKan::GetPhysicalDevice() const
+    {
+        if (!m_PhysicalDevice)
+        {
+            ThrowErrorMessage("CommandQueueVulKan: PhysicalDevice is null");
+            return VK_NULL_HANDLE;
+        }
+        return *m_PhysicalDevice;
+    }
+
     void CommandQueueVulKan::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists)
     {
         if (cmdLists.empty())
@@ -129,10 +139,15 @@ namespace RHI
 
     bool CommandQueueVulKan::GetTimestampFrequency(uint64_t* frequency)
     {
-        if (!frequency) {
+        if (!frequency)
             return false;
-        }
-        *frequency = 0;
+
+        VkPhysicalDeviceProperties properties;
+        vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
+        
+        // The unit of timestampPeriod is nanoseconds
+        // Frequency = 1,000,000,000 / timestampPeriod
+        *frequency = static_cast<uint64_t>(1e9 / properties.limits.timestampPeriod);
         return true;
     }
 

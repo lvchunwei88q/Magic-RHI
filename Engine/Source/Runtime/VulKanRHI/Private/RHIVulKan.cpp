@@ -602,21 +602,24 @@ namespace RHI
             RHICmdType::Graphics, 
             graphicsQueue,
             m_GraphicsQueueFamilyIndex,
-            &m_Device
+            GetDevice(),
+            GetPhysicalDevice()
         );
 
         m_ComputeQueue = std::make_unique<ComputeCommandQueueVulKan>(
             RHICmdType::Compute, 
             computeQueue,
             m_ComputeQueueFamilyIndex,
-            &m_Device
+            GetDevice(),
+            GetPhysicalDevice()
         );
 
         m_CopyQueue = std::make_unique<CopyCommandQueueVulKan>(
             RHICmdType::Copy, 
             copyQueue,
             m_CopyQueueFamilyIndex,
-            &m_Device
+            GetDevice(),
+            GetPhysicalDevice()
         );
     }
 
