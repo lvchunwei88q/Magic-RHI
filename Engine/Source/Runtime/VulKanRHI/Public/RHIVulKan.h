@@ -60,13 +60,11 @@ namespace RHI
         [[nodiscard]] std::unique_ptr<RHIDomainShader> CreateDomainShader(const CreateShaderDesc& desc) override;
         [[nodiscard]] std::unique_ptr<RHIComputeShader> CreateComputeShader(const CreateShaderDesc& desc) override;
         // TODO: Get shader model version from device shader model version.
-        ShaderModelVersion GetShaderModelVersion() const override { return ShaderModelVersion::SM_6_9; }
+        ShaderModelVersion GetShaderModelVersion() const override;
 
         [[nodiscard]] std::shared_ptr<RHICommandAllocator> CreateCommandAllocator(RHICmdType type) override;
         [[nodiscard]] std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator) override;
         [[nodiscard]] RHICommandQueue* GetCommandQueue(RHICmdType Type) const override;
-
-        void CreateQueues();
 
         [[nodiscard]] std::shared_ptr<RHIRootSignature> CreateRootSignature(const RootSignatureDesc& desc) override;
         void DeleteRootSignature(std::shared_ptr<RHI::RHIRootSignature>& rootSignature) override;
@@ -92,6 +90,7 @@ namespace RHI
         bool CreateInstance();
         bool PickPhysicalDevice();
         bool CreateLogicalDevice();
+        void CreateQueues();
         bool CreateDescriptorPools();
 
         VkInstance m_Instance = nullptr;
@@ -100,7 +99,8 @@ namespace RHI
         VkSurfaceKHR m_Surface = nullptr;
 
         std::wstring m_AdapterName;
-        uint32_t ApiVersion = VK_API_VERSION_1_0;
+        uint32_t SdkVkApiVersion = VK_API_VERSION_1_0;
+        uint32_t PhysicalDeviceApiVersion = VK_API_VERSION_1_0;
 
         uint32_t m_GraphicsQueueFamilyIndex = UINT32_MAX;
         uint32_t m_ComputeQueueFamilyIndex = UINT32_MAX;

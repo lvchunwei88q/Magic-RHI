@@ -421,7 +421,7 @@ namespace RHI
         VkResult api_version_result = vkEnumerateInstanceVersion(&apiVersion);
         if (api_version_result == VK_SUCCESS) {
             // apiVersion now includes the Vulkan version number supported by the instance
-            ApiVersion = apiVersion;
+            SdkVkApiVersion = apiVersion;
         }else{
             Core::ErrorCapture::Capture("Failed to enumerate instance version");
         }
@@ -507,6 +507,7 @@ namespace RHI
         m_CopyQueueFamilyIndex = candidates[0].transferFamily;
         // Convert to wide string
         m_AdapterName = IO::ToWideString(candidates[0].properties.deviceName);
+        PhysicalDeviceApiVersion = candidates[0].properties.apiVersion;
 
         char debugBuffer[512];
         const auto& best = candidates[0];
@@ -522,9 +523,9 @@ namespace RHI
             "  Transfer Queue: %u\n",
             best.properties.deviceName,
             VkPhysicalDeviceTypeToString(best.properties.deviceType),
-            VK_VERSION_MAJOR(best.properties.apiVersion),
-            VK_VERSION_MINOR(best.properties.apiVersion),
-            VK_VERSION_PATCH(best.properties.apiVersion),
+            VK_VERSION_MAJOR(PhysicalDeviceApiVersion),
+            VK_VERSION_MINOR(PhysicalDeviceApiVersion),
+            VK_VERSION_PATCH(PhysicalDeviceApiVersion),
             best.score,
             (double)best.memoryProperties.memoryHeaps[0].size / (1024.0 * 1024.0 * 1024.0),
             m_GraphicsQueueFamilyIndex,
@@ -763,7 +764,7 @@ namespace RHI
 
     FeatureLevel DeviceVulKan::GetFeatureLevel() const
     {
-        return FromVulkanVersionLevel(ApiVersion);
+        return FromVulkanVersionLevel(PhysicalDeviceApiVersion);
     }
 
     std::shared_ptr<RHIPipelineState> DeviceVulKan::CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc)
