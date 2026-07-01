@@ -8,6 +8,7 @@ using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
+    // ==================================================== State
     class RasterizerStateD3D12 : public RHIRasterizerState
     {
     public:
@@ -30,6 +31,21 @@ namespace RHI
         ~DepthStencilStateD3D12() override = default;
     };
 
+    class SamplerStateD3D12 : public RHISamplerState
+    {
+    public:
+        SamplerStateD3D12(D3D12_SAMPLER_DESC desc, RHIDescriptorHandle handle) 
+            : m_SamplerDesc(desc), RHISamplerState(handle) {} // init Handle
+
+        ~SamplerStateD3D12() override = default;
+
+        const D3D12_SAMPLER_DESC& GetSamplerDesc() const { return m_SamplerDesc; }
+
+    private:
+        D3D12_SAMPLER_DESC m_SamplerDesc;
+    };
+
+    // ==================================================== Buffer
     class BufferD3D12 : public RHIBuffer
     {
     public:
@@ -95,7 +111,7 @@ namespace RHI
         ComPtr<ID3D12Resource> m_pResource;
     };
 
-    // TODO 加入View 构造参数
+    // ==================================================== View
     class ConstantBufferViewD3D12 : public RHIConstantBufferView
     {
     public:
@@ -170,6 +186,7 @@ namespace RHI
         D3D12_CPU_DESCRIPTOR_HANDLE m_CPUHandle;
     };
 
+    // ==================================================== Shader
     class VertexShaderD3D12 : public RHIVertexShader
     {
     public:
@@ -228,19 +245,5 @@ namespace RHI
         const std::vector<uint8_t>& GetBytecode() const { return m_Bytecode; }
     private:
         std::vector<uint8_t> m_Bytecode;
-    };
-
-    class SamplerStateD3D12 : public RHISamplerState
-    {
-    public:
-        SamplerStateD3D12(D3D12_SAMPLER_DESC desc, RHIDescriptorHandle handle) 
-            : m_SamplerDesc(desc), RHISamplerState(handle) {} // 初始化 Handle
-
-        ~SamplerStateD3D12() override = default;
-
-        const D3D12_SAMPLER_DESC& GetSamplerDesc() const { return m_SamplerDesc; }
-
-    private:
-        D3D12_SAMPLER_DESC m_SamplerDesc;
     };
 }

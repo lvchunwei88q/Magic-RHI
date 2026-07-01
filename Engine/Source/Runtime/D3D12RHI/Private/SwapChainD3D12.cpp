@@ -1,10 +1,11 @@
 /*
- * 因为使用到了前向声明所以需要先引入声明定义
+ * Because we used forward declarations and C++ smart pointers,
+ * we need to include the definitions of the forward declarations first.
  */
  #include <Common/Check.h>
 #include "RHICommandListD3D12.h"
 #include "RHID3D12.h"
-#include "DirectXConfig.h"
+#include "D3D12Config.h"
 
 namespace RHI
 {
@@ -20,14 +21,14 @@ namespace RHI
     bool SwapChainD3D12::Initialize(Device* device, const SwapChainDesc& desc)
     {
         m_Initialization = InitialState::Initialize;
+        // Get the window handle from the device
+        HWND windowHandle = static_cast<HWND>(desc.WindowHandleRef);
+
         m_pRHI = SafeCast<DeviceD3D12>(device);
         if (!m_pRHI)
-        {
             return false;
-        }
 
         m_desc = desc;
-        
         ComPtr<IDXGIAdapter1> pAdapter = m_pRHI->GetAdapter();
 
         ComPtr<IDXGIFactory4> factory;
@@ -43,11 +44,11 @@ namespace RHI
         swapChainDesc.SampleDesc.Count = 1;
         swapChainDesc.SampleDesc.Quality = 0;
 
-        // 只有图形队列可以绑定交换链
+        // Only a graphics queue can be bound to the swap chain
         ComPtr<IDXGISwapChain1> swapChain1;
         ThrowIfFailed(factory->CreateSwapChainForHwnd(
             SafeCast<CommandQueueD3D12>(m_pRHI->GetCommandQueue(RHICmdType::Graphics))->GetCommandQueue(),
-            static_cast<HWND>(desc.WindowHandle),
+            windowHandle,
             &swapChainDesc,
             nullptr,
             nullptr,
@@ -56,18 +57,18 @@ namespace RHI
 
 #if RHI_SWAP_CHAIN_CLOSE_FULL_SCREEN
         // This RHI does not support fullscreen transitions.
-        ThrowIfFailed(factory->MakeWindowAssociation(static_cast<HWND>(desc.WindowHandle), DXGI_MWA_NO_ALT_ENTER));
+        ThrowIfFailed(factory->MakeWindowAssociation(windowHandle, DXGI_MWA_NO_ALT_ENTER));
 #endif
 
         ComPtr<IDXGISwapChain3> swapChain3;
         if (SUCCEEDED(swapChain1.As(&swapChain3))) {
-            m_pSwapChain3 = swapChain3;  // 支持现代接口
-            m_pSwapChain1 = swapChain1;  // 降级到基础接口
+            m_pSwapChain3 = swapChain3;  // Supports modern interface extensions
+            m_pSwapChain1 = swapChain1;  // Downgrade to basic interface if not supported
         } else {
 #if RHI_ENABLE_DEBUG_INFO
             ThrowErrorMessage("SwapChain3 is not supported on this device.");
 #endif
-            m_pSwapChain1 = swapChain1;  // 降级到基础接口
+            m_pSwapChain1 = swapChain1;  // Downgrade to basic interface if not supported
         }
 
         D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
@@ -76,13 +77,12 @@ namespace RHI
         rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 
         ThrowIfFailed(m_pRHI->GetDevice()->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(m_pRtvHeap.GetAddressOf())));
-
-        CreateRTVs();
-
+        // Create render target views
+        CreateRenderTargetView();
         return true;
     }
 
-    void SwapChainD3D12::CreateRTVs()
+    void SwapChainD3D12::CreateRenderTargetView()
     {
         ComPtr<ID3D12Device> dx12Device;
         ThrowIfFailed(m_pSwapChain1->GetDevice(IID_PPV_ARGS(&dx12Device)));
@@ -149,7 +149,8 @@ namespace RHI
             0
         ));
 
-        CreateRTVs();
+        // Create new render target views
+        CreateRenderTargetView();
     }
 
     RHIRenderTargetView* SwapChainD3D12::GetRenderTargetView(uint32_t index) const

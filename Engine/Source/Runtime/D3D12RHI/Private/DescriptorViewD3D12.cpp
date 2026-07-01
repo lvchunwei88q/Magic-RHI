@@ -40,7 +40,7 @@ namespace RHI
             m_pDevice->CreateConstantBufferView(&cbvDesc, cpuHandle);
 
             ConstantBufferViewD3D12* pCBView = new ConstantBufferViewD3D12(GPUVirtualAddress);
-            m_pStandardHeap->SetDescriptor(handle, pCBView);
+            m_pStandardHeap->SetCBVDescriptor(handle, pCBView);
             break;
         }
         
@@ -58,7 +58,7 @@ namespace RHI
             m_pDevice->CreateShaderResourceView(dx12Buffer->GetResource(), &srvDesc, cpuHandle);
 
             ShaderResourceViewD3D12* pSRVView = new ShaderResourceViewD3D12(GPUVirtualAddress);
-            m_pStandardHeap->SetDescriptor(handle, pSRVView);
+            m_pStandardHeap->SetSRVDescriptor(handle, pSRVView);
             break;
         }
         
@@ -75,7 +75,7 @@ namespace RHI
             m_pDevice->CreateUnorderedAccessView(dx12Buffer->GetResource(), nullptr, &uavDesc, cpuHandle);
 
             UnorderedAccessViewD3D12* pUAVView = new UnorderedAccessViewD3D12(GPUVirtualAddress);
-            m_pStandardHeap->SetDescriptor(handle, pUAVView);
+            m_pStandardHeap->SetUAVDescriptor(handle, pUAVView);
             break;
         }
         

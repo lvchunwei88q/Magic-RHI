@@ -121,49 +121,49 @@ namespace RHI
         CurrentIndex = Capacity - static_cast<uint32_t>(m_FreeList.size());
     }
 
-    void DescriptorHeapD3D12::SetDescriptor(RHIDescriptorHandle handle, ConstantBufferViewD3D12* pCBV)
+    void DescriptorHeapD3D12::SetCBVDescriptor(RHIDescriptorHandle handle, ConstantBufferViewD3D12* pCBV)
     {
         IMPLEMENT_SET_DESCRIPTOR(ConstantBufferViewD3D12, pCBV, RHIResourceType::RRT_ConstantBufferView,[](){
             ThrowErrorMessage("Error SetDescriptor ConstantBufferView Unknown index range");
         });
     }
 
-    void DescriptorHeapD3D12::SetDescriptor(RHIDescriptorHandle handle, ShaderResourceViewD3D12* pSRV)
+    void DescriptorHeapD3D12::SetSRVDescriptor(RHIDescriptorHandle handle, ShaderResourceViewD3D12* pSRV)
     {
         IMPLEMENT_SET_DESCRIPTOR(ShaderResourceViewD3D12, pSRV, RHIResourceType::RRT_ShaderResourceView,[](){
             ThrowErrorMessage("Error SetDescriptor ShaderResourceView Unknown index range");
         });
     }
 
-    void DescriptorHeapD3D12::SetDescriptor(RHIDescriptorHandle handle, UnorderedAccessViewD3D12* pUAV)
+    void DescriptorHeapD3D12::SetUAVDescriptor(RHIDescriptorHandle handle, UnorderedAccessViewD3D12* pUAV)
     {
         IMPLEMENT_SET_DESCRIPTOR(UnorderedAccessViewD3D12, pUAV, RHIResourceType::RRT_UnorderedAccessView,[](){
             ThrowErrorMessage("Error SetDescriptor UnorderedAccessView Unknown index range");
         });
     }
 
-    void DescriptorHeapD3D12::SetDescriptor(RHIDescriptorHandle handle, RenderTargetViewD3D12* pRTV)
+    void DescriptorHeapD3D12::SetRTVDescriptor(RHIDescriptorHandle handle, RenderTargetViewD3D12* pRTV)
     {
         IMPLEMENT_SET_DESCRIPTOR(RenderTargetViewD3D12, pRTV, RHIResourceType::RRT_RenderTargetView,[](){
             ThrowErrorMessage("Error SetDescriptor RenderTargetView Unknown index range");
         });
     }
 
-    void DescriptorHeapD3D12::SetDescriptor(RHIDescriptorHandle handle, DepthStencilViewD3D12* pDSV)
+    void DescriptorHeapD3D12::SetDSVDescriptor(RHIDescriptorHandle handle, DepthStencilViewD3D12* pDSV)
     {
         IMPLEMENT_SET_DESCRIPTOR(DepthStencilViewD3D12, pDSV, RHIResourceType::RRT_DepthStencilView,[](){
             ThrowErrorMessage("Error SetDescriptor DepthStencilView Unknown index range");
         });
     }
 
-    void DescriptorHeapD3D12::SetDescriptor(RHIDescriptorHandle handle, SamplerStateD3D12* pSampler)
+    void DescriptorHeapD3D12::SetSamplerDescriptor(RHIDescriptorHandle handle, SamplerStateD3D12* pSampler)
     {
         IMPLEMENT_SET_DESCRIPTOR(SamplerStateD3D12, pSampler, RHIResourceType::RRT_SamplerState,[](){
             ThrowErrorMessage("Error SetDescriptor SamplerState Unknown index range");
         });
     }
 
-    const DescriptorData* DescriptorHeapD3D12::GetDescriptor(RHIDescriptorHandle handle) const
+    const DescriptorData* DescriptorHeapD3D12::GetAnyDescriptor(RHIDescriptorHandle handle) const
     {   
         if (!handle.IsValid() || handle.GetType() != HeapType)
             return nullptr;

@@ -1,5 +1,6 @@
 #include <Common/Check.h>
 #include <Common/RHIFeatureLevel.h>
+#include "RHICommandListVulKan.h"
 #include "RHIVulKan.h"
 #include "IO.h"
 #include <algorithm>
@@ -8,9 +9,13 @@
 namespace RHI
 {
     // ========== Local Required Features ==========
-    struct LocalRequiredFeatures {
-        VkPhysicalDeviceFeatures2 features2;
-        VkPhysicalDeviceShaderFloat16Int8Features float16Int8Features;
+    struct LocalVkPhysicalDeviceFeatures {
+        VkPhysicalDeviceFeatures2 GetPhysicalDeviceFeatures() {
+            return features2;
+        }
+        VkPhysicalDeviceFeatures2 features2{};
+        VkPhysicalDeviceShaderFloat16Int8Features float16Int8Features{};
+        VkPhysicalDeviceTimelineSemaphoreFeatures timelineFeatures{};
         // You can add other extensions
     };
 
@@ -119,27 +124,31 @@ namespace RHI
             return requiredExtensions;
         }
 
-        LocalRequiredFeatures GetRequiredFeatures()
+        LocalVkPhysicalDeviceFeatures GetVkPhysicalDeviceFeatures()
         {
-            LocalRequiredFeatures result{};
+            LocalVkPhysicalDeviceFeatures features{};
             
             // Initialize the main structure
-            result.features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-            result.features2.pNext = &result.float16Int8Features;
+            features.features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
             
             // Core features (members of VkPhysicalDeviceFeatures)
-            result.features2.features.geometryShader = VK_TRUE;
-            result.features2.features.tessellationShader = VK_TRUE;
-            result.features2.features.shaderStorageImageMultisample = VK_TRUE;
-            result.features2.features.shaderStorageImageReadWithoutFormat = VK_TRUE;
-            result.features2.features.shaderStorageImageWriteWithoutFormat = VK_TRUE;
+            features.features2.features.geometryShader = VK_TRUE;
+            features.features2.features.tessellationShader = VK_TRUE;
+            features.features2.features.shaderStorageImageMultisample = VK_TRUE;
+            features.features2.features.shaderStorageImageReadWithoutFormat = VK_TRUE;
+            features.features2.features.shaderStorageImageWriteWithoutFormat = VK_TRUE;
             
-            // Extension features ... 
-            result.float16Int8Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES;
-            result.float16Int8Features.shaderFloat16 = VK_FALSE;
-            result.float16Int8Features.shaderInt8 = VK_FALSE;
+            // Extension features ...
+            features.float16Int8Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES;
+            features.float16Int8Features.shaderFloat16 = VK_FALSE;
+            features.float16Int8Features.shaderInt8 = VK_FALSE;
+            features.features2.pNext = &features.float16Int8Features;
+
+            features.timelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
+            features.timelineFeatures.timelineSemaphore = VK_TRUE;
+            features.float16Int8Features.pNext = &features.timelineFeatures;
             
-            return result;
+            return features;
         }
 
         bool IsPhysicalDeviceSuitable(VkPhysicalDevice physicalDevice, uint32_t& graphicsFamily, uint32_t& computeFamily, uint32_t& transferFamily)
@@ -331,6 +340,7 @@ namespace RHI
 
     bool DeviceVulKan::Initialize()
     {
+        m_Initialization = InitialState::Initialize;
         // Create Vulkan instance 
         if (!CreateInstance())
         {
@@ -550,7 +560,8 @@ namespace RHI
         }
 
         // Get required features
-        LocalRequiredFeatures deviceFeatures = GetRequiredFeatures();
+        LocalVkPhysicalDeviceFeatures deviceFeatures = GetVkPhysicalDeviceFeatures();
+		VkPhysicalDeviceFeatures2 features2 = deviceFeatures.GetPhysicalDeviceFeatures();
 
         // Set device extensions
         std::vector<const char*> deviceExtensions = {
@@ -560,7 +571,7 @@ namespace RHI
 
         VkDeviceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-        createInfo.pNext = &deviceFeatures.features2; 
+        createInfo.pNext = &features2;
         createInfo.enabledLayerCount = 0;
 
         createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
@@ -575,35 +586,38 @@ namespace RHI
             return false;
         }
 
-        // vkGetDeviceQueue(m_Device, m_GraphicsQueueFamilyIndex, 0, &m_GraphicsQueue);
-        // vkGetDeviceQueue(m_Device, m_ComputeQueueFamilyIndex, 0, &m_ComputeQueue);
-        // vkGetDeviceQueue(m_Device, m_CopyQueueFamilyIndex, 0, &m_CopyQueue);
-
         return true;
     }
 
     void DeviceVulKan::CreateQueues()
     {
-        // m_GraphicsQueueWrapper = std::make_unique<CommandQueueVulKan>(
-            // RHICmdType::Graphics, 
-            // m_GraphicsQueue,
-            // m_GraphicsQueueFamilyIndex,
-            // m_Device
-        // );
+        // Get queue handles
+        VkQueue graphicsQueue, computeQueue, copyQueue;
+        vkGetDeviceQueue(m_Device, m_GraphicsQueueFamilyIndex, 0, &graphicsQueue);
+        vkGetDeviceQueue(m_Device, m_ComputeQueueFamilyIndex, 0, &computeQueue);
+        vkGetDeviceQueue(m_Device, m_CopyQueueFamilyIndex, 0, &copyQueue);
+        
+        // Create queues
+        m_GraphicsQueue = std::make_unique<GraphicsCommandQueueVulKan>(
+            RHICmdType::Graphics, 
+            graphicsQueue,
+            m_GraphicsQueueFamilyIndex,
+            &m_Device
+        );
 
-        // m_ComputeQueueWrapper = std::make_unique<CommandQueueVulKan>(
-            // RHICmdType::Compute, 
-            // m_ComputeQueue,
-            // m_ComputeQueueFamilyIndex,
-            // m_Device
-        // );
+        m_ComputeQueue = std::make_unique<ComputeCommandQueueVulKan>(
+            RHICmdType::Compute, 
+            computeQueue,
+            m_ComputeQueueFamilyIndex,
+            &m_Device
+        );
 
-        // m_CopyQueueWrapper = std::make_unique<CommandQueueVulKan>(
-            // RHICmdType::Copy, 
-            // m_CopyQueue,
-            // m_CopyQueueFamilyIndex,
-            // m_Device
-        // );
+        m_CopyQueue = std::make_unique<CopyCommandQueueVulKan>(
+            RHICmdType::Copy, 
+            copyQueue,
+            m_CopyQueueFamilyIndex,
+            &m_Device
+        );
     }
 
     bool DeviceVulKan::CreateDescriptorPools()
@@ -683,16 +697,46 @@ namespace RHI
         return true;
     }
 
+    bool DeviceVulKan::CreateVulkanWindowSurface(HWND windowHandle)
+    {
+        if (!m_Instance)
+        {
+            ThrowErrorMessage("Vulkan instance not created");
+            return false;
+        }
+
+        VkWin32SurfaceCreateInfoKHR createInfo = {};
+        createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+        createInfo.hwnd = windowHandle;
+        createInfo.hinstance = GetModuleHandle(nullptr);
+
+        VkResult result = vkCreateWin32SurfaceKHR(m_Instance, &createInfo, nullptr, &m_Surface);
+        if (result != VK_SUCCESS)
+        {
+            ThrowErrorMessage("Failed to create Vulkan surface");
+            return false;
+        }
+
+        return true;
+    }
+
     void DeviceVulKan::Shutdown()
     {
+        m_Initialization = InitialState::Shutdown;
         m_pDSVHeap.reset();
         m_pRTVHeap.reset();
         m_pSamplerHeap.reset();
         m_pStandardHeap.reset();
 
-        // m_CopyQueueWrapper.reset();
-        // m_ComputeQueueWrapper.reset();
-        // m_GraphicsQueueWrapper.reset();
+        m_CopyQueue.reset();
+        m_ComputeQueue.reset();
+        m_GraphicsQueue.reset();
+
+        if (m_Surface && m_Instance)
+        {
+            vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
+            m_Surface = nullptr;
+        }
 
         if (m_Device)
         {
@@ -710,7 +754,8 @@ namespace RHI
 
     bool DeviceVulKan::IsValid() const
     {
-        return m_Device != nullptr && m_PhysicalDevice != nullptr && m_Instance != nullptr;
+        return m_Device != nullptr && m_PhysicalDevice != nullptr && m_Instance != nullptr
+                                                     && m_Initialization == InitialState::Initialize;
     }
 
     FeatureLevel DeviceVulKan::GetFeatureLevel() const
@@ -736,7 +781,13 @@ namespace RHI
     {
         switch (Type)
         {
-        default:
+        case RHICmdType::Graphics:
+            return m_GraphicsQueue.get();
+        case RHICmdType::Compute:
+            return m_ComputeQueue.get();
+        case RHICmdType::Copy:
+            return m_CopyQueue.get();
+               default:
             return nullptr;
         }
     }

@@ -106,10 +106,9 @@ namespace RHI
         virtual void EndFrame() = 0;
         virtual void WaitForGPU() = 0;
 
-        // 同步操作
+        // Synchronous operation
         virtual void Signal(uint64_t fenceValue) = 0;
         virtual bool GetTimestampFrequency(uint64_t* frequency) = 0;
-        virtual bool SetEventOnCompletion(uint64_t fenceValue, void* hEvent) = 0;
         virtual uint64_t GetFrameIndex() const = 0;
 
     protected:

@@ -220,7 +220,7 @@ int main(int argc, char* argv[])
         std::wcout << L"Device initialized successfully: " << device->GetAdapterName() << std::endl;
         
         RHI::SwapChainDesc swapChainDesc = {};
-        swapChainDesc.WindowHandle = hwnd;
+        swapChainDesc.WindowHandleRef = hwnd;
         swapChainDesc.Width = 800;
         swapChainDesc.Height = 600;
         swapChainDesc.VSync = false;

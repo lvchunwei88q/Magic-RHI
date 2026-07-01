@@ -92,7 +92,7 @@ namespace RHI
         }
 
         inline uint32_t                 GetIndex() const { return Index; }
-        inline RHIDescriptorHeapType GetType() const { return (RHIDescriptorHeapType)Type; }
+        inline RHIDescriptorHeapType    GetType() const { return (RHIDescriptorHeapType)Type; }
         inline uint8_t                  GetRawType() const { return Type; }
 
         inline bool IsValid() const { return Index != MAX_uint32_t && Type != (uint8_t)RHIDescriptorHeapType::Invalid; }
@@ -275,6 +275,7 @@ namespace RHI
     {
     public:
         RHITexture(const TextureDesc& InDesc) : RHIResource(RRT_Texture), m_Desc(InDesc) {}
+        RHITexture() : RHIResource(RRT_Texture) {}
         virtual ~RHITexture() = default;
 
         virtual uint64_t GetSize()              const = 0;

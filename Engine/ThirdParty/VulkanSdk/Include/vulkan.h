@@ -1,5 +1,4 @@
-#ifndef VULKAN_H_
-#define VULKAN_H_ 1
+#pragma once
 
 /*
 ** Copyright 2015-2026 The Khronos Group Inc.
@@ -32,5 +31,3 @@
 #ifdef VK_ENABLE_BETA_EXTENSIONS
 #include "vulkan_beta.h"
 #endif
-
-#endif // VULKAN_H_

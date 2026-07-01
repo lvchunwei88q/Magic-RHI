@@ -25,6 +25,8 @@ namespace RHI
     public:
         DeviceD3D12();
         ~DeviceD3D12() override;
+        DeviceD3D12(const DeviceD3D12&) = delete;
+        DeviceD3D12& operator=(const DeviceD3D12&) = delete;
 
         bool Initialize() override;
         void Shutdown() override;
@@ -97,6 +99,8 @@ namespace RHI
     public:
         SwapChainD3D12();
         ~SwapChainD3D12() override;
+        SwapChainD3D12(const SwapChainD3D12&) = delete;
+        SwapChainD3D12& operator=(const SwapChainD3D12&) = delete;
 
         bool Initialize(Device* device, const SwapChainDesc& desc) override;
         void Shutdown() override;
@@ -119,7 +123,7 @@ namespace RHI
     private:
         DeviceD3D12* m_pRHI;
         
-        void CreateRTVs();
+        void CreateRenderTargetView();
 
         ComPtr<IDXGISwapChain3> m_pSwapChain3;
         ComPtr<IDXGISwapChain1> m_pSwapChain1;

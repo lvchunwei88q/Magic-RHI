@@ -8,16 +8,18 @@ namespace RHI
 
     bool ShaderCompilerBackendVulKan::Initialize()
     {
+        m_Initialization = InitialState::Initialize;
         return true;
     }
 
     void ShaderCompilerBackendVulKan::Shutdown()
     {
+        m_Initialization = InitialState::Shutdown;
     }
 
     bool ShaderCompilerBackendVulKan::IsValid() const
     {
-        return true;
+        return m_Initialization == InitialState::Initialize;
     }
 
     ShaderCompileOptionInternal ShaderCompilerBackendVulKan::AddBackendArguments(const ShaderCompileOptions& options)

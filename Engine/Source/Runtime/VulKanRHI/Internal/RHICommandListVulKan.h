@@ -1,9 +1,11 @@
 #pragma once
+#include <CoreMinimal.h>
 
 #include <vulkan.h>
 #include <Common/Check.h>
 #include <Common/RHIConfig.h>
 #include <RHICommandList.h>
+#include "RHIResourceVulKan.h"
 
 namespace RHI
 {
@@ -96,32 +98,72 @@ namespace RHI
         VkCommandBuffer m_CommandBuffer;
     };
 
+    using GraphicsCommandListVulKan = CommandListVulKan;
+    using ComputeCommandListVulKan = CommandListVulKan;
+    using CopyCommandListVulKan = CommandListVulKan;
+
     class CommandQueueVulKan : public RHICommandQueue
     {
     public:
-        CommandQueueVulKan(RHICmdType InType, VkQueue queue, uint32_t queueFamilyIndex, VkDevice device)
+        CommandQueueVulKan(RHICmdType InType, VkQueue queue, uint32_t queueFamilyIndex, VkDevice* device)
             : RHICommandQueue(InType)
             , m_Queue(queue)
             , m_QueueFamilyIndex(queueFamilyIndex)
-            , m_Device(device) {}
-        ~CommandQueueVulKan() override = default;
+            , m_Device(device) {
+                // Create Timeline Semaphore
+                VkSemaphoreTypeCreateInfo timelineInfo{};
+                timelineInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
+                timelineInfo.semaphoreType = VK_SEMAPHORE_TYPE_TIMELINE;
+                timelineInfo.initialValue = 0;
+
+                VkSemaphoreCreateInfo semaphoreInfo{};
+                semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+                semaphoreInfo.pNext = &timelineInfo;
+
+                VkResult result = vkCreateSemaphore(GetDevice(), &semaphoreInfo, nullptr,
+                 &m_TimelineSemaphore);
+                if (result != VK_SUCCESS) 
+                    Core::ErrorCapture::Capture("Failed to create timeline semaphore");
+            }
+        ~CommandQueueVulKan() override {
+            WaitForGPU(); // Wait for GPU to finish
+            // Destroy timeline semaphore
+            if (m_TimelineSemaphore != VK_NULL_HANDLE) {
+                vkDestroySemaphore(GetDevice(), m_TimelineSemaphore, nullptr);
+                m_TimelineSemaphore = VK_NULL_HANDLE;
+            }
+        };
+        // No copying
+        CommandQueueVulKan(const CommandQueueVulKan&) = delete;
+        CommandQueueVulKan& operator=(const CommandQueueVulKan&) = delete;
 
         void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override;
         void BeginFrame() override;
         void EndFrame() override;
         void WaitForGPU() override;
 
-        VkQueue GetQueue() const { return m_Queue; }
+         // Synchronous operation
+        void Signal(uint64_t fenceValue) override;
+        bool GetTimestampFrequency(uint64_t* frequency) override;
+        uint64_t GetFrameIndex() const override;
+
+        const VkDevice GetDevice() const;
+        const VkQueue GetQueue() const { return m_Queue; }
         uint32_t GetQueueFamilyIndex() const { return m_QueueFamilyIndex; }
-
     private:
-        VkQueue m_Queue;
-        uint32_t m_QueueFamilyIndex;
-        VkDevice m_Device;
+        const VkQueue m_Queue;
+        const uint32_t m_QueueFamilyIndex;
+        // Here we just store device handle references
+        const VkDevice* m_Device;
 
-        VkFence m_Fence = nullptr;
+        // use Timeline semaphore
+        VkSemaphore m_TimelineSemaphore = VK_NULL_HANDLE;
         uint64_t m_FenceValues[RHI_MULTI_BUFFERING] = {0};
         uint64_t m_NextFenceValue = 1;
         uint32_t m_CurrentFrame = 0;
     };
+
+    using GraphicsCommandQueueVulKan = CommandQueueVulKan;
+    using ComputeCommandQueueVulKan = CommandQueueVulKan;
+    using CopyCommandQueueVulKan = CommandQueueVulKan;
 }

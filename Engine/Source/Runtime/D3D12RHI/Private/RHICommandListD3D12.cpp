@@ -222,11 +222,6 @@ namespace RHI
         return SUCCEEDED(m_pCommandQueue->GetTimestampFrequency(frequency));
     }
 
-    bool CommandQueueD3D12::SetEventOnCompletion(uint64_t fenceValue, void* hEvent)
-    {
-        return SUCCEEDED(m_Fence->SetEventOnCompletion(fenceValue, (HANDLE)hEvent));
-    }
-
     uint64_t CommandQueueD3D12::GetFrameIndex() const
     {
         return m_currentFrame;

@@ -38,6 +38,16 @@ namespace RHI
         }
     }
 
+    const VkDevice CommandQueueVulKan::GetDevice() const
+    {
+        if (!m_Device)
+        {
+            ThrowErrorMessage("CommandQueueVulKan: Device is null");
+            return VK_NULL_HANDLE;
+        }
+        return *m_Device;
+    }
+
     void CommandQueueVulKan::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists)
     {
         if (cmdLists.empty())
@@ -55,51 +65,79 @@ namespace RHI
             }
         }
 
+        // Create submit info
         VkSubmitInfo submitInfo = {};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         submitInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
         submitInfo.pCommandBuffers = commandBuffers.data();
 
-        if (m_Fence == nullptr)
-        {
-            VkFenceCreateInfo fenceInfo = {};
-            fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-            vkCreateFence(m_Device, &fenceInfo, nullptr, &m_Fence);
-        }
-
-        VkResult result = vkQueueSubmit(m_Queue, 1, &submitInfo, m_Fence);
+        // Submit command buffers
+        VkResult result = vkQueueSubmit(m_Queue, 1, &submitInfo, VK_NULL_HANDLE);
         if (result != VK_SUCCESS)
-        {
             ThrowErrorMessage("Failed to submit command buffer");
-        }
+        
     }
 
     void CommandQueueVulKan::BeginFrame()
     {
-        m_CurrentFrame = (m_CurrentFrame + 1) % RHI_MULTI_BUFFERING;
-
-        if (m_FenceValues[m_CurrentFrame] != 0)
-        {
-            vkWaitForFences(m_Device, 1, &m_Fence, VK_TRUE, UINT64_MAX);
-            vkResetFences(m_Device, 1, &m_Fence);
-        }
+        // NOT IMPLEMENTED
     }
 
     void CommandQueueVulKan::EndFrame()
     {
         m_FenceValues[m_CurrentFrame] = m_NextFenceValue++;
+        Signal(m_FenceValues[m_CurrentFrame]);
+        m_CurrentFrame = (m_CurrentFrame + 1) % RHI_MULTI_BUFFERING;
     }
 
     void CommandQueueVulKan::WaitForGPU()
     {
-        if (m_Fence == nullptr)
-        {
-            VkFenceCreateInfo fenceInfo = {};
-            fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-            vkCreateFence(m_Device, &fenceInfo, nullptr, &m_Fence);
-        }
+        uint64_t fenceValue = m_FenceValues[m_CurrentFrame];
+        if (fenceValue == 0) return;
 
-        vkQueueSubmit(m_Queue, 0, nullptr, m_Fence);
-        vkWaitForFences(m_Device, 1, &m_Fence, VK_TRUE, UINT64_MAX);
+        VkSemaphoreWaitInfo waitInfo{};
+        waitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
+        waitInfo.semaphoreCount = 1;
+        waitInfo.pSemaphores = &m_TimelineSemaphore;
+        waitInfo.pValues = &fenceValue;
+
+        vkWaitSemaphores(GetDevice(), &waitInfo, UINT64_MAX);
+    }
+
+    void CommandQueueVulKan::Signal(uint64_t fenceValue)
+    {
+        // Configure Timeline Semaphore submit info
+        VkTimelineSemaphoreSubmitInfo timelineInfo{};
+        timelineInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
+        timelineInfo.signalSemaphoreValueCount = 1;
+        timelineInfo.pSignalSemaphoreValues = &fenceValue;
+
+        // Configure submit info
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.pNext = &timelineInfo;
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = &m_TimelineSemaphore;
+
+        // Submit submit info
+        VkResult result = vkQueueSubmit(m_Queue, 1, &submitInfo, VK_NULL_HANDLE);
+        if (result != VK_SUCCESS) {
+            // Error handling
+            Core::ErrorCapture::Capture("Failed to signal timeline semaphore");
+        }
+    }
+
+    bool CommandQueueVulKan::GetTimestampFrequency(uint64_t* frequency)
+    {
+        if (!frequency) {
+            return false;
+        }
+        *frequency = 0;
+        return true;
+    }
+
+    uint64_t CommandQueueVulKan::GetFrameIndex() const
+    {
+        return m_CurrentFrame;
     }
 }

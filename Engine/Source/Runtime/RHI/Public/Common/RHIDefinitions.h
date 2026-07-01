@@ -12,7 +12,7 @@ namespace RHI
 // Swap Chain Description
 struct SwapChainDesc
 {
-    void* WindowHandle;
+    void* WindowHandleRef;
     uint32_t Width;
     uint32_t Height;
     bool VSync = false;

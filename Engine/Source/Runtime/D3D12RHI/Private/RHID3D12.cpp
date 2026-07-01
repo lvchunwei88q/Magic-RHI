@@ -9,7 +9,7 @@
 #include "RHIRootSignatureD3D12.h"
 #include "RHICommandListD3D12.h"
 #include "RHID3D12.h"
-#include "DirectXConfig.h"
+#include "D3D12Config.h"
 
 namespace RHI
 {

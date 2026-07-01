@@ -5,9 +5,11 @@
 #include <RHIResource.h>
 #include <cstdint>
 
-// Includes the required platform definitions
+// Use Win32 platform
 #define VK_USE_PLATFORM_WIN32_KHR
+#include <windows.h>
 #include <vulkan.h>
+#include "vulkan_win32.h"
 
 // DescriptorHeap
 #include "DescriptorHeapVulKan.h"
@@ -28,6 +30,8 @@ namespace RHI
     public:
         DeviceVulKan();
         ~DeviceVulKan() override;
+        DeviceVulKan(const DeviceVulKan&) = delete;
+        DeviceVulKan& operator=(const DeviceVulKan&) = delete;
 
         bool Initialize() override;
         void Shutdown() override;
@@ -73,9 +77,16 @@ namespace RHI
 
         [[nodiscard]] RHIDescriptorHeap* GetDescriptorHeap(RHIDescriptorHeapType type) const override;
 
-        VkDevice GetDevice() const { return m_Device; }
-        VkPhysicalDevice GetPhysicalDevice() const { return m_PhysicalDevice; }
-        VkInstance GetInstance() const { return m_Instance; }
+        [[nodiscard]] const VkDevice* GetDevice()                   const { return &m_Device; }
+        [[nodiscard]] const VkPhysicalDevice* GetPhysicalDevice()   const { return &m_PhysicalDevice; }
+        [[nodiscard]] const VkInstance* GetInstance()               const { return &m_Instance; }
+        [[nodiscard]] const VkSurfaceKHR* GetVulkanWindowSSurface() const { return &m_Surface; }
+        // Create a Vulkan window surface
+        bool CreateVulkanWindowSurface(HWND windowHandle);
+
+        uint32_t GetGraphicsQueueFamilyIndex() const { return m_GraphicsQueueFamilyIndex; }
+        uint32_t GetComputeQueueFamilyIndex() const { return m_ComputeQueueFamilyIndex; }
+        uint32_t GetCopyQueueFamilyIndex() const { return m_CopyQueueFamilyIndex; }
 
     private:
         bool CreateInstance();
@@ -86,6 +97,7 @@ namespace RHI
         VkInstance m_Instance = nullptr;
         VkPhysicalDevice m_PhysicalDevice = nullptr;
         VkDevice m_Device = nullptr;
+        VkSurfaceKHR m_Surface = nullptr;
 
         std::wstring m_AdapterName;
         uint32_t ApiVersion = VK_API_VERSION_1_0;
@@ -94,9 +106,9 @@ namespace RHI
         uint32_t m_ComputeQueueFamilyIndex = UINT32_MAX;
         uint32_t m_CopyQueueFamilyIndex = UINT32_MAX;
 
-        //std::unique_ptr<GraphicsCommandQueueVulKan> m_GraphicsQueueWrapper;
-        //std::unique_ptr<ComputeCommandQueueVulKan>  m_ComputeQueueWrapper;
-        //std::unique_ptr<CopyCommandQueueVulKan>     m_CopyQueueWrapper;
+        std::unique_ptr<GraphicsCommandQueueVulKan> m_GraphicsQueue;
+        std::unique_ptr<ComputeCommandQueueVulKan>  m_ComputeQueue;
+        std::unique_ptr<CopyCommandQueueVulKan>     m_CopyQueue;
 
         std::unique_ptr<DescriptorHeapVulKan> m_pStandardHeap;
         std::unique_ptr<DescriptorHeapVulKan> m_pSamplerHeap;
@@ -109,6 +121,8 @@ namespace RHI
     public:
         SwapChainVulKan();
         ~SwapChainVulKan() override;
+        SwapChainVulKan(const SwapChainVulKan&) = delete;
+        SwapChainVulKan& operator=(const SwapChainVulKan&) = delete;
 
         bool Initialize(Device* device, const SwapChainDesc& desc) override;
         void Shutdown() override;
@@ -116,16 +130,48 @@ namespace RHI
 
         void Present(uint32_t syncInterval, uint32_t presentFlags) override;
         void Resize(uint32_t width, uint32_t height) override;
-        uint32_t GetFrameIndex() const override { return 0; }
+        uint32_t GetFrameIndex() const override { return m_CurrentFrame; }
 
         uint32_t GetWidth() const override { return m_desc.Width; }
         uint32_t GetHeight() const override { return m_desc.Height; }
         RHIRenderTargetView* GetRenderTargetView(uint32_t index) const override;
         RHITexture* GetBackBuffer(uint32_t index) const override;
 
+        VkSwapchainKHR GetSwapChain() const { return m_SwapChain; }
+        VkFormat GetFormat() const { return m_SwapChainFormat; }
+        uint32_t AcquireNextImage();
+
+        // Get the Vulkan device.
+        VkDevice GetDevice() const;
+        VkPhysicalDevice GetPhysicalDevice() const;
+        // Create and Get the Vulkan window surface.
+        VkSurfaceKHR GetVulkanWindowSurface() const;
+        bool CreateVulkanWindowSurface(HWND windowHandle);
+
     private:
-        DeviceVulKan* m_pRHI;
+        bool VkCreateSwapChain();
+        bool VkCreateRenderTargetViews();
+        bool VkCreateSemaphores();
+        VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+        VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+        VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+
+        DeviceVulKan* m_pRHI = nullptr;
         SwapChainDesc m_desc;
+        InitialState m_Initialization = InitialState::Shutdown;
+
+        VkSwapchainKHR m_SwapChain = nullptr;
+        VkFormat m_SwapChainFormat = VK_FORMAT_UNDEFINED;
+        VkExtent2D m_SwapChainExtent = {};
+        uint32_t m_CurrentFrame = 0;
+
+        // Because the Vulkan driver might optimize some settings,
+        // the final number of buffers could end up being greater than or equal to what we set, so we use a vector.
+        std::vector<std::unique_ptr<RHITexture>> m_pBackBuffers;
+        std::vector<std::unique_ptr<RHIRenderTargetView>> m_pRenderTargetViews;
+
+        VkSemaphore m_RenderFinishedSemaphore = nullptr;
+        VkSemaphore m_ImageAvailableSemaphore = nullptr;
     };
 
     class VULKANRHI_API ShaderCompilerBackendVulKan : public ShaderCompilerBackend

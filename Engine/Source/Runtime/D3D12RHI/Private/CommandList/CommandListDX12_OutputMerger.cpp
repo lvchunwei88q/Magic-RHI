@@ -1,4 +1,4 @@
-#include "DirectXConfig.h"
+#include "D3D12Config.h"
 #include "RHICommandListD3D12.h"
 
 namespace RHI

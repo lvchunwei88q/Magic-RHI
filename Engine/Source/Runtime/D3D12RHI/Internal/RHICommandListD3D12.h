@@ -132,6 +132,9 @@ namespace RHI
         ~CommandQueueD3D12() override {
             CloseHandle(m_fenceEvent);
         };
+        // No copying
+        CommandQueueD3D12(const CommandQueueD3D12&) = delete;
+        CommandQueueD3D12& operator=(const CommandQueueD3D12&) = delete;
 
         void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override;
         void BeginFrame() override;
@@ -141,7 +144,6 @@ namespace RHI
         // Synchronization operation
         void Signal(uint64_t fenceValue) override;
         bool GetTimestampFrequency(uint64_t* frequency) override; // Get timestamp frequency 只需要获取一次
-        bool SetEventOnCompletion(uint64_t fenceValue, void* hEvent) override;
         uint64_t GetFrameIndex() const override;
 
         ID3D12CommandQueue* GetCommandQueue() const { return m_pCommandQueue.Get(); }

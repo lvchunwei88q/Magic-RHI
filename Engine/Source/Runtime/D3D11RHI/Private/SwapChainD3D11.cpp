@@ -20,6 +20,9 @@ namespace RHI
     bool SwapChainD3D11::Initialize(Device* device, const SwapChainDesc& desc)
     {
         m_Initialization = InitialState::Initialize;
+        // Get the window handle from the device
+        HWND windowHandle = static_cast<HWND>(desc.WindowHandleRef);
+
         m_pRHI = static_cast<DeviceD3D11*>(device);
         if (!m_pRHI)
         {
@@ -45,7 +48,7 @@ namespace RHI
         swapChainDesc.BufferDesc.RefreshRate.Numerator = 60;
         swapChainDesc.BufferDesc.RefreshRate.Denominator = 1;
         swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-        swapChainDesc.OutputWindow = static_cast<HWND>(desc.WindowHandle);
+        swapChainDesc.OutputWindow = windowHandle;
         swapChainDesc.SampleDesc.Count = 1;
         swapChainDesc.SampleDesc.Quality = 0;
         swapChainDesc.Windowed = TRUE;
@@ -60,7 +63,7 @@ namespace RHI
 
 #if RHI_SWAP_CHAIN_CLOSE_FULL_SCREEN
         // This RHI does not support fullscreen transitions.
-        ThrowIfFailed(factory->MakeWindowAssociation(static_cast<HWND>(desc.WindowHandle), DXGI_MWA_NO_ALT_ENTER));
+        ThrowIfFailed(factory->MakeWindowAssociation(windowHandle, DXGI_MWA_NO_ALT_ENTER));
 #endif
 
         ComPtr<ID3D11Texture2D> backBuffer;

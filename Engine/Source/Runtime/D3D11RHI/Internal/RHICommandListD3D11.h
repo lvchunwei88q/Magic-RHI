@@ -180,7 +180,7 @@ namespace RHI
         // Synchronous operation
         void Signal(uint64_t fenceValue) override;
         bool GetTimestampFrequency(uint64_t* frequency) override;
-        bool SetEventOnCompletion(uint64_t fenceValue, void* hEvent) override;
+        bool SetEventOnCompletion(uint64_t fenceValue, void* hEvent);
         uint64_t GetFrameIndex() const override;
 
     private:
