@@ -2,9 +2,12 @@
 #include <Common/RHIFeatureLevel.h>
 #include "RHICommandListVulKan.h"
 #include "RHIVulKan.h"
-#include "IO.h"
+#include <IO.h>
 #include <algorithm>
 #include <set>
+
+// SetEnvironmentVariable
+#include <windows.h>
 
 namespace RHI
 {
@@ -341,6 +344,15 @@ namespace RHI
     bool DeviceVulKan::Initialize()
     {
         m_Initialization = InitialState::Initialize;
+
+		// Set the environment variable to specify the path for Vulkan layers
+		std::wstring layerPath = IO::AbsolutePath::Get().GetExecutableDirectory();
+        if (!SetEnvironmentVariableW(L"VK_ADD_LAYER_PATH", layerPath.c_str()))
+        {
+            ThrowErrorMessage("Failed to set environment variable for Vulkan layers");
+            return false;
+        }
+
         // Create Vulkan instance 
         if (!CreateInstance())
         {
