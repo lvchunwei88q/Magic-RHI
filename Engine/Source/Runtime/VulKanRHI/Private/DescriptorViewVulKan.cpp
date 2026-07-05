@@ -21,12 +21,12 @@ namespace RHI
         return {};
     }
 
-    RHIDescriptorHandle DeviceVulKan::CreateRTVHeapDescriptorView(RHIRenderTargetView* InView)
+    RHIDescriptorHandle DeviceVulKan::CreateRTVHeapDescriptorView(RHITexture* Texture)
     {
         return {};
     }
 
-    RHIDescriptorHandle DeviceVulKan::CreateDSVHeapDescriptorView(RHIDepthStencilView* InView)
+    RHIDescriptorHandle DeviceVulKan::CreateDSVHeapDescriptorView(RHITexture* Texture)
     {
         return {};
     }

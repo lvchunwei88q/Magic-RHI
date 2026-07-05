@@ -35,3 +35,6 @@ target_link_libraries(D3D11RHI PRIVATE spirv-cross-backend)
 
 target_link_libraries(D3D11RHI PRIVATE RHI)
 target_link_libraries(D3D11RHI PRIVATE Core)
+
+
+message(DEPRECATION "D3D11RHI is deprecated and will be removed in the future. Please switch to D3D12RHI or VulkanRHI.")

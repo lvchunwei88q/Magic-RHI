@@ -38,8 +38,8 @@ namespace RHI
         RHIDescriptorHandle CreateStandardHeapDescriptorView(RHIBuffer* Buffer,DescriptorRangeType Type) override;
         RHIDescriptorHandle CreateStandardHeapDescriptorView(RHITexture* Texture,DescriptorRangeType Type) override;
         RHIDescriptorHandle CreateSamplerHeapDescriptorView(const SamplerStateDesc& desc) override;
-        RHIDescriptorHandle CreateRTVHeapDescriptorView(RHIRenderTargetView* InView) override;
-        RHIDescriptorHandle CreateDSVHeapDescriptorView(RHIDepthStencilView* InView) override;
+        RHIDescriptorHandle CreateRTVHeapDescriptorView(RHITexture* Texture) override;
+        RHIDescriptorHandle CreateDSVHeapDescriptorView(RHITexture* Texture) override;
 
         [[nodiscard]] std::unique_ptr<RHIVertexShader> CreateVertexShader(const CreateShaderDesc& desc) override;
         [[nodiscard]] std::unique_ptr<RHIPixelShader> CreatePixelShader(const CreateShaderDesc& desc) override;

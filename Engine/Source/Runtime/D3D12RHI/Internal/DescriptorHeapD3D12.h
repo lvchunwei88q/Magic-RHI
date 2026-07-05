@@ -54,12 +54,12 @@ namespace RHI
         D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(uint32_t index) const;
         D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(uint32_t index) const;
 
+        // Set descriptor view
         void SetCBVDescriptor(RHIDescriptorHandle handle, ConstantBufferViewD3D12* pCBV);
         void SetSRVDescriptor(RHIDescriptorHandle handle, ShaderResourceViewD3D12* pSRV);
         void SetUAVDescriptor(RHIDescriptorHandle handle, UnorderedAccessViewD3D12* pUAV);
         void SetRTVDescriptor(RHIDescriptorHandle handle, RenderTargetViewD3D12* pRTV);
         void SetDSVDescriptor(RHIDescriptorHandle handle, DepthStencilViewD3D12* pDSV);
-        
         void SetSamplerDescriptor(RHIDescriptorHandle handle, SamplerStateD3D12* pSampler);
 
         const DescriptorData* GetAnyDescriptor(RHIDescriptorHandle handle) const;

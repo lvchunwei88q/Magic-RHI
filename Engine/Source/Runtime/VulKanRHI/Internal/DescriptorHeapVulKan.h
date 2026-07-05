@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vulkan.h>
-#include <RHIResource.h>
+#include "RHIResourceVulKan.h"
 #include <vector>
 #include <memory>
 
@@ -9,21 +9,19 @@ namespace RHI
 {
     struct DescriptorData
     {
-        DescriptorRangeType Type;
-        uint64_t BufferAddress = 0;
-        VkImageView ImageView = VK_NULL_HANDLE;
-        VkImageLayout ImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-        VkSampler Sampler = VK_NULL_HANDLE;
-        uint32_t BufferRange = 0;
+        std::unique_ptr<ConstantBufferViewVulKan> pCBV;
+        std::unique_ptr<ShaderResourceViewVulKan> pSRV;
+        std::unique_ptr<UnorderedAccessViewVulKan> pUAV;
+        std::unique_ptr<RenderTargetViewVulKan> pRTV;
+        std::unique_ptr<DepthStencilViewVulKan> pDSV;
+        std::unique_ptr<SamplerStateVulKan> pSampler;
+        RHIResourceType ViewType;
 
-        void Reset()
-        {
-            Type = DescriptorRangeType::CBV;
-            BufferAddress = 0;
-            ImageView = VK_NULL_HANDLE;
-            ImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-            Sampler = VK_NULL_HANDLE;
-            BufferRange = 0;
+        void Release(){
+            pCBV.reset();pSRV.reset();
+            pUAV.reset();pRTV.reset();
+            pDSV.reset();pSampler.reset();
+            ViewType = RHIResourceType::RRT_None;
         }
     };
 
@@ -31,10 +29,9 @@ namespace RHI
     {
     public:
         DescriptorHeapVulKan(
-            VkDevice* device,
+            const VkDevice* device,
             RHIDescriptorHeapType type,
-            uint32_t capacity,
-            const std::vector<VkDescriptorPoolSize>& poolSizes
+            const VkDescriptorPoolCreateInfo& poolInfo
         );
         ~DescriptorHeapVulKan() override;
 
@@ -43,12 +40,13 @@ namespace RHI
         RHIResource* GetDescriptorHeapView(RHIDescriptorHandle handle) const override;
         bool IsFull() const override;
 
-        bool SetCBV(RHIDescriptorHandle handle, uint64_t bufferAddress, uint32_t range = VK_WHOLE_SIZE);
-        bool SetSRV(RHIDescriptorHandle handle, uint64_t bufferAddress, uint32_t range = VK_WHOLE_SIZE);
-        bool SetSRV(RHIDescriptorHandle handle, VkImageView imageView, VkImageLayout layout);
-        bool SetUAV(RHIDescriptorHandle handle, uint64_t bufferAddress, uint32_t range = VK_WHOLE_SIZE);
-        bool SetUAV(RHIDescriptorHandle handle, VkImageView imageView, VkImageLayout layout);
-        bool SetSampler(RHIDescriptorHandle handle, VkSampler sampler);
+        // Set descriptor view
+        bool SetCBVDescriptor(RHIDescriptorHandle handle, ConstantBufferViewVulKan* CBV);
+        bool SetSRVDescriptor(RHIDescriptorHandle handle, ShaderResourceViewVulKan* SRV);
+        bool SetUAVDescriptor(RHIDescriptorHandle handle, UnorderedAccessViewVulKan* UAV);
+        bool SetRTVDescriptor(RHIDescriptorHandle handle, RenderTargetViewVulKan* RTV);
+        bool SetDSVDescriptor(RHIDescriptorHandle handle, DepthStencilViewVulKan* DSV);
+        bool SetSamplerDescriptor(RHIDescriptorHandle handle, SamplerStateVulKan* sampler);
 
         const DescriptorData* GetDescriptor(RHIDescriptorHandle handle) const;
         const VkDevice GetDevice() const;

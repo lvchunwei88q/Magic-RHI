@@ -108,7 +108,7 @@ namespace RHI
         return m_pSamplerHeap->Allocate();
     }
 
-    RHIDescriptorHandle DeviceD3D12::CreateRTVHeapDescriptorView(RHIRenderTargetView* /*InView*/)
+    RHIDescriptorHandle DeviceD3D12::CreateRTVHeapDescriptorView(RHITexture* Texture)
     {
         if (!m_pRTVHeap || m_pRTVHeap->IsFull())
         {
@@ -118,7 +118,7 @@ namespace RHI
         return m_pRTVHeap->Allocate();
     }
 
-    RHIDescriptorHandle DeviceD3D12::CreateDSVHeapDescriptorView(RHIDepthStencilView* /*InView*/)
+    RHIDescriptorHandle DeviceD3D12::CreateDSVHeapDescriptorView(RHITexture* Texture)
     {
         if (!m_pDSVHeap || m_pDSVHeap->IsFull())
         {

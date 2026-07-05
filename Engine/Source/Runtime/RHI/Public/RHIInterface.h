@@ -73,8 +73,8 @@ namespace RHI
         virtual RHIDescriptorHandle CreateStandardHeapDescriptorView(RHIBuffer* Buffer,DescriptorRangeType Type) = 0;
         virtual RHIDescriptorHandle CreateStandardHeapDescriptorView(RHITexture* Texture,DescriptorRangeType Type) = 0;
         virtual RHIDescriptorHandle CreateSamplerHeapDescriptorView(const SamplerStateDesc& desc) = 0;
-        virtual RHIDescriptorHandle CreateRTVHeapDescriptorView(class RHIRenderTargetView* InView) = 0;
-        virtual RHIDescriptorHandle CreateDSVHeapDescriptorView(class RHIDepthStencilView* InView) = 0;
+        virtual RHIDescriptorHandle CreateRTVHeapDescriptorView(RHITexture* Texture) = 0;
+        virtual RHIDescriptorHandle CreateDSVHeapDescriptorView(RHITexture* Texture) = 0;
 
         /* In our design, all the work of compiling shaders should be fully done in RHIShaderCompiler.
         * Here, we only deal with creating the shader structures for the corresponding platform,

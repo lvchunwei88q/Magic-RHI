@@ -18,6 +18,7 @@ namespace RHI
         const VkPipelineRasterizationStateCreateInfo& GetRasterizationInfo() const { return m_RasterizationInfo; }
 
     private:
+        VkDescriptorType m_DescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
         VkPipelineRasterizationStateCreateInfo m_RasterizationInfo;
     };
 
@@ -31,6 +32,7 @@ namespace RHI
         const VkPipelineColorBlendStateCreateInfo& GetBlendInfo() const { return m_BlendInfo; }
 
     private:
+        VkDescriptorType m_DescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
         VkPipelineColorBlendStateCreateInfo m_BlendInfo;
     };
 
@@ -44,6 +46,7 @@ namespace RHI
         const VkPipelineDepthStencilStateCreateInfo& GetDepthStencilInfo() const { return m_DepthStencilInfo; }
 
     private:
+        VkDescriptorType m_DescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
         VkPipelineDepthStencilStateCreateInfo m_DepthStencilInfo;
     };
 
@@ -60,6 +63,7 @@ namespace RHI
         VkDevice GetDevice() const { return *m_Device; }
 
     private:
+        VkDescriptorType m_DescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
         VkSampler m_Sampler;
         const VkDevice* m_Device;
     };
@@ -89,6 +93,7 @@ namespace RHI
     private:
         VkDevice GetDevice() const { return *m_Device; }
     private:
+        VkDescriptorType m_DescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
         VkBuffer m_Buffer;
         VkDeviceMemory m_Memory;
         const VkDevice* m_Device;
@@ -115,6 +120,7 @@ namespace RHI
     private:
         VkDevice GetDevice() const { return *m_Device; }
     private:
+        VkDescriptorType m_DescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
         VkImage m_Image;
         VkDeviceMemory m_Memory;
         const VkDevice* m_Device;
@@ -136,6 +142,7 @@ namespace RHI
         uint64_t GetGPUVirtualAddress() const override;
 
     private:
+        VkDescriptorType m_DescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
         VkBuffer m_Buffer;
         uint64_t m_Offset;
         uint64_t m_Range;
@@ -166,6 +173,7 @@ namespace RHI
     private:
         VkDevice GetDevice() const { return *m_Device; }
     private:
+        VkDescriptorType m_DescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
         VkImageView m_ImageView = VK_NULL_HANDLE;
         VkImageLayout m_ImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         VkBuffer m_Buffer = VK_NULL_HANDLE;
@@ -198,6 +206,7 @@ namespace RHI
     private:
         VkDevice GetDevice() const { return *m_Device; }
     private:
+        VkDescriptorType m_DescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
         VkImageView m_ImageView = VK_NULL_HANDLE;
         VkImageLayout m_ImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
         VkBuffer m_Buffer = VK_NULL_HANDLE;
@@ -219,6 +228,7 @@ namespace RHI
     private:
         VkDevice GetDevice() const { return *m_Device; }
     private:
+        VkDescriptorType m_DescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
         VkImageView m_ImageView;
         const VkDevice* m_Device;
     };
@@ -236,6 +246,7 @@ namespace RHI
     private:
         VkDevice GetDevice() const { return *m_Device; }
     private:
+        VkDescriptorType m_DescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
         VkImageView m_ImageView;
         const VkDevice* m_Device;
     };

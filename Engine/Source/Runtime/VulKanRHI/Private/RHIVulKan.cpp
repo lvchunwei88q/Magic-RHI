@@ -648,15 +648,17 @@ namespace RHI
         };
 
         VkDescriptorPoolCreateInfo standardPoolInfo = {};
+        uint32_t standardPoolSizeCount = sizeof(standardPoolSizes) / sizeof(standardPoolSizes[0]);
         standardPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-        standardPoolInfo.poolSizeCount = sizeof(standardPoolSizes) / sizeof(standardPoolSizes[0]);
+        standardPoolInfo.poolSizeCount = standardPoolSizeCount;
         standardPoolInfo.pPoolSizes = standardPoolSizes;
-        standardPoolInfo.maxSets = RHI_DESCRIPTOR_HEAP_SIZE_STANDARD * 5;  // 5 types, each can allocate up to RHI_DESCRIPTOR_HEAP_SIZE_STANDARD
+        standardPoolInfo.maxSets = RHI_DESCRIPTOR_HEAP_SIZE_STANDARD;  // Each type can be assigned up to RHI_DESCRIPTOR_HEAP_SIZE_STANDARD.
 
-        //VkResult result = vkCreateDescriptorPool(m_device, &standardPoolInfo, nullptr, &m_standardDescriptorPool);
-        //if (result != VK_SUCCESS) {
-        //    return false;
-        //}
+        m_pStandardHeap = std::make_unique<DescriptorHeapVulKan>(
+            GetDevice(),
+            RHIDescriptorHeapType::Standard,
+            standardPoolInfo
+        );
 
         // Sampler Pool - Specifically for samplers
         VkDescriptorPoolSize samplerPoolSizes[] = {
@@ -669,10 +671,11 @@ namespace RHI
         samplerPoolInfo.pPoolSizes = samplerPoolSizes;
         samplerPoolInfo.maxSets = RHI_DESCRIPTOR_HEAP_SIZE_SAMPLER;  // Each type can be assigned up to RHI_DESCRIPTOR_HEAP_SIZE_SAMPLER.
 
-        //result = vkCreateDescriptorPool(m_device, &samplerPoolInfo, nullptr, &m_samplerDescriptorPool);
-        //if (result != VK_SUCCESS) {
-        //    return false;
-        //}
+        m_pSamplerHeap = std::make_unique<DescriptorHeapVulKan>(
+            GetDevice(),
+            RHIDescriptorHeapType::Sampler,
+            samplerPoolInfo
+        );
 
         // RTV Pool - Used for render targets (using STORAGE_IMAGE or COMBINED_IMAGE_SAMPLER)
         VkDescriptorPoolSize rtvPoolSizes[] = {
@@ -687,10 +690,11 @@ namespace RHI
         rtvPoolInfo.pPoolSizes = rtvPoolSizes;
         rtvPoolInfo.maxSets = RHI_DESCRIPTOR_HEAP_SIZE_RENDER_TARGET;
 
-        //result = vkCreateDescriptorPool(m_device, &rtvPoolInfo, nullptr, &m_rtvDescriptorPool);
-        //if (result != VK_SUCCESS) {
-        //    return false;
-        //}
+        m_pRTVHeap = std::make_unique<DescriptorHeapVulKan>(
+            GetDevice(),
+            RHIDescriptorHeapType::RenderTarget,
+            rtvPoolInfo
+        );
 
         // DSV Pool - Deep Template Texture (using COMBINED_IMAGE_SAMPLER or STORAGE_IMAGE)
         VkDescriptorPoolSize dsvPoolSizes[] = {
@@ -705,10 +709,11 @@ namespace RHI
         dsvPoolInfo.pPoolSizes = dsvPoolSizes;
         dsvPoolInfo.maxSets = RHI_DESCRIPTOR_HEAP_SIZE_DEPTH_STENCIL;// Each type can be assigned up to RHI_DESCRIPTOR_HEAP_SIZE_DEPTH_STENCIL.
 
-        //result = vkCreateDescriptorPool(m_device, &dsvPoolInfo, nullptr, &m_dsvDescriptorPool);
-        //if (result != VK_SUCCESS) {
-        //    return false;
-        //}
+        m_pDSVHeap = std::make_unique<DescriptorHeapVulKan>(
+            GetDevice(),
+            RHIDescriptorHeapType::DepthStencil,
+            dsvPoolInfo
+        );
 
         return true;
     }
