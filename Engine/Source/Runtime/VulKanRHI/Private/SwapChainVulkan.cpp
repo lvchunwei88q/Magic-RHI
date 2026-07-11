@@ -21,6 +21,7 @@ namespace RHI
         Shutdown();
     }
 
+    // =========================================================================== Interface
     VkDevice SwapChainVulKan::GetDevice() const
     {
         if (m_pRHI->GetDevice() == nullptr)
@@ -50,6 +51,8 @@ namespace RHI
         }
         return *m_pRHI->GetVulkanWindowSSurface();
     }
+
+    // ===========================================================================
 
     bool SwapChainVulKan::CreateVulkanWindowSurface(HWND windowHandle)
     {
@@ -267,6 +270,7 @@ namespace RHI
 
         VkSwapchainCreateInfoKHR createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+        createInfo.flags = 0;
         createInfo.surface = GetVulkanWindowSurface();
         createInfo.minImageCount = imageCount;
         createInfo.imageFormat = surfaceFormat.format;
@@ -279,6 +283,7 @@ namespace RHI
         uint32_t computeQueueFamilyIndex = m_pRHI->GetComputeQueueFamilyIndex();
         uint32_t queueFamilyIndices[] = { graphicsQueueFamilyIndex, computeQueueFamilyIndex };
 
+        // Check if they are the same queue use queue family index
         if (graphicsQueueFamilyIndex != computeQueueFamilyIndex)
         {
             createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;

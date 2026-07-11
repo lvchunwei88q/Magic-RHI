@@ -3,16 +3,68 @@
 
 namespace RHI
 {
+    namespace
+    {
+        uint32_t GetQueueFamilyIndex(const DeviceVulKan* device, RHICmdType type)
+        {
+            switch (type)
+            {
+            case RHICmdType::Graphics:  //Graphics queue family index
+                return device->GetGraphicsQueueFamilyIndex();
+            case RHICmdType::Compute:   //Compute queue family index
+                return device->GetComputeQueueFamilyIndex();
+            case RHICmdType::Copy:      //Copy queue family index
+                return device->GetCopyQueueFamilyIndex();
+            default:
+#ifdef RHI_ENABLE_DEBUG_INFO
+                // Throw an exception if in debug mode
+                ThrowErrorMessage("Invalid RHICmdType");
+#endif
+                return 0;
+            }
+        }
+    }
     // ===========================================================================
     // Create command dispatcher
     std::shared_ptr<RHICommandAllocator> DeviceVulKan::CreateCommandAllocator(RHICmdType type)
     {
-        return nullptr;
+        // Fill create command pool info
+        VkCommandPoolCreateInfo poolInfo{};
+        poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+        poolInfo.queueFamilyIndex = GetQueueFamilyIndex(this, type);
+        poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+        // Create command pool
+        VkCommandPool commandPool;
+        VkResult result = vkCreateCommandPool(m_Device, &poolInfo, nullptr, &commandPool);
+        if (result != VK_SUCCESS)
+            ThrowErrorMessage("Failed to create command pool");
+        
+        return std::make_shared<CommandAllocatorVulKan>(type, commandPool);
     }
 
     std::shared_ptr<RHICommandList> DeviceVulKan::CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator)
     {
-        return nullptr;
+        CommandAllocatorVulKan* pAllocator = SafeCast<CommandAllocatorVulKan>(allocator.get());
+        if (pAllocator == nullptr) {
+            ThrowErrorMessage("CommandAllocatorVulKan is nullptr");
+            return nullptr;
+        }
+        RHICmdType type = pAllocator->GetCmdType();
+
+        VkCommandBufferAllocateInfo allocInfo = {};
+        allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        allocInfo.commandPool = pAllocator->GetCommandPool();
+        // Note that here we've made a trade-off: we force all Cmds to use the main buffer, and only one can be created at a time.
+        allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        allocInfo.commandBufferCount = 1;
+
+        VkCommandBuffer commandBuffer;
+        VkResult result = vkAllocateCommandBuffers(m_Device, &allocInfo, &commandBuffer);
+        if (result != VK_SUCCESS)
+            ThrowErrorMessage("Failed to allocate command buffer");
+        
+        return std::make_shared<CommandListVulKan>(pAllocator, commandBuffer);
     }
     // ===========================================================================
 

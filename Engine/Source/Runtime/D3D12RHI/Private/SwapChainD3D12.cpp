@@ -121,6 +121,7 @@ namespace RHI
     }
 
     bool SwapChainD3D12::IsValid() const {
+        // check if swap chain is valid
         return (m_pSwapChain1 != nullptr || m_pSwapChain3 != nullptr) 
             && m_Initialization == InitialState::Initialize;
     }

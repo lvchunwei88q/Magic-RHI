@@ -521,6 +521,8 @@ namespace RHI
         m_AdapterName = IO::ToWideString(candidates[0].properties.deviceName);
         PhysicalDeviceApiVersion = candidates[0].properties.apiVersion;
 
+#if RHI_ENABLE_DEBUG_INFO
+        // If in debug mode, output detailed information
         char debugBuffer[512];
         const auto& best = candidates[0];
         sprintf_s(debugBuffer,
@@ -545,6 +547,7 @@ namespace RHI
             m_CopyQueueFamilyIndex
         );
         Core::InfoCapture::Capture(debugBuffer);
+#endif
 
         candidates.clear();
         return true;

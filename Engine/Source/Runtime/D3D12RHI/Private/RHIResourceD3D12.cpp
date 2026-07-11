@@ -1,5 +1,6 @@
 /*
- * 因为使用到了前向声明所以需要先引入声明定义
+ * Because we used a forward declaration with smart pointers,
+ * we need to include the header file with the implementation first.
  */
  #include <Common/Check.h>
 #include "RHICommandListD3D12.h"
@@ -9,7 +10,7 @@ namespace RHI
 {
     namespace
     {
-        // D3D12 转换
+        // D3D12 Conversion
         D3D12_HEAP_TYPE ToD3D12HeapType(BufferHeapType type)
         {
             switch (type)
@@ -197,14 +198,14 @@ namespace RHI
 
         std::shared_ptr<BufferD3D12> buffer = std::make_shared<BufferD3D12>(pResource.Get(), desc, m_pDevice.Get());
 
-        if(desc.HeapType == BufferHeapType::Default && desc.InitialData != nullptr){ // 需要Copy数据到Default堆
+        if(desc.HeapType == BufferHeapType::Default && desc.InitialData != nullptr){ // Need to copy data to Default heap
             // create Upload heap
             D3D12_HEAP_PROPERTIES uploadHeapProps = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
             ComPtr<ID3D12Resource> pUploadBuffer;
             
             D3D12_RESOURCE_DESC uploadDesc = CD3DX12_RESOURCE_DESC::Buffer(
             desc.SizeInBytes, 
-                D3D12_RESOURCE_FLAG_NONE  // 强制无任何标志
+                D3D12_RESOURCE_FLAG_NONE  // Force no flags
             );
             
             ThrowIfFailed(m_pDevice->CreateCommittedResource(
@@ -224,24 +225,24 @@ namespace RHI
             m_CopyQueue.get()->BeginFrame();
             cmdList->BeginRecording();
             
-            // Default 资源初始状态是 COMMON，需要转换到 COPY_DEST
+            // Default resource initial state is COMMON, need to transition to the COPY_DEST
             RHI::BarrierDesc barrier = {};
             barrier.Type                        = RHI::ResourceBarrierType::Transition;
             barrier.ResourceType                = BarrierResourceType::Buffer;
             barrier.Flags                       = RHI::ResourceBarrierFlags::None;
             barrier.Transition.pResource        = buffer.get();
-            barrier.Transition.Subresource      = ~0u;  // 所有子资源
+            barrier.Transition.Subresource      = ~0u;  // All subresources
             barrier.Transition.StateBefore      = RHIResourceState::Common;
             barrier.Transition.StateAfter       = RHIResourceState::CopyDest;
 
             cmdList->ResourceBarrier(1, &barrier);
             
             cmdList->CopyBufferRegion(
-                buffer.get(),         // 目标：Default 堆缓冲区
-                0,                     // 目标偏移
-                uploadBuffer.get(),   // 源：Upload 堆缓冲区
-                0,                     // 源偏移
-                desc.SizeInBytes        // 复制大小
+                buffer.get(),         // Target: Default heap buffer
+                0,                     // Target offset
+                uploadBuffer.get(),   // Source: Upload heap buffer
+                0,                     // Source offset
+                desc.SizeInBytes        // Copy size
             );
 
             RHI::BarrierDesc finalBarrier = {};
@@ -249,7 +250,7 @@ namespace RHI
             finalBarrier.ResourceType                = BarrierResourceType::Buffer;
             finalBarrier.Flags                       = RHI::ResourceBarrierFlags::None;
             finalBarrier.Transition.pResource        = buffer.get();
-            finalBarrier.Transition.Subresource      = ~0u;
+            finalBarrier.Transition.Subresource      = ~0u;  // All subresources
             finalBarrier.Transition.StateBefore      = RHIResourceState::CopyDest;
             finalBarrier.Transition.StateAfter       = RHIResourceState::Common;
             cmdList->ResourceBarrier(1, &finalBarrier);

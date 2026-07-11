@@ -100,6 +100,7 @@ namespace RHI
         std::vector<D3D12_ROOT_PARAMETER> rootParameters;
         rootParameters.reserve(desc.Parameters.size());
 
+        // A root signature can have multiple slots
         for (const auto& paramDesc : desc.Parameters)
         {
             D3D12_ROOT_PARAMETER rootParam = {};
@@ -132,7 +133,7 @@ namespace RHI
                 rootParam.Constants.Num32BitValues = paramDesc.Constants.Num32BitValues;
                 break;
 
-            // 一个根签名可以有多个槽位，其中DescriptorTable有可以有多个资源描述符数组，每个资源描述符数组又可以指向多个资源
+            // DescriptorTable can have multiple descriptor ranges, each range can point to multiple resources
             case RootParameterType::DescriptorTable:
                 rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
                 rootParam.DescriptorTable.NumDescriptorRanges = paramDesc.DescriptorTable.NumDescriptorRanges;
@@ -144,7 +145,7 @@ namespace RHI
             rootParameters.push_back(rootParam);
         }
 
-        // 创建根签名描述符 可以有多个 槽位描述符
+        // Create root signature descriptor
         CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(
             static_cast<UINT>(rootParameters.size()),
             rootParameters.data(),
@@ -175,11 +176,13 @@ namespace RHI
 
     void RHIRootSignatureD3D12::Shutdown()
     {
+        // release root signature
         m_pRootSignature.Reset();
     }
 
     bool RHIRootSignatureD3D12::IsValid() const
     {
+        // check if root signature is valid
         return m_pRootSignature != nullptr;
     }
 }

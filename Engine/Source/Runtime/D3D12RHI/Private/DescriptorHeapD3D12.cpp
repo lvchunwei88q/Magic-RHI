@@ -83,7 +83,7 @@ namespace RHI
         uint32_t index = m_FreeList.back();
         m_FreeList.pop_back();
         
-        // 更新已分配数量
+        // Update current index
         CurrentIndex = Capacity - static_cast<uint32_t>(m_FreeList.size());
         
         return RHIDescriptorHandle(HeapType, index);
@@ -98,19 +98,19 @@ namespace RHI
         
         uint32_t index = handle.GetIndex();
         
-        // 验证索引范围
+        // Validate index range
         if (index >= Capacity)
         {
             ThrowErrorMessage("Error Unknown index range");
             return;
         }
         
-        // 防止重复释放
+        // Prevent double free
 #if _DEBUG
         auto it = std::find(m_FreeList.begin(), m_FreeList.end(), index);
         if (it != m_FreeList.end())
         {
-            // 已经空闲，重复释放
+            // If already free, double free detected
             ThrowErrorMessage("Double free detected");
             return;
         }
