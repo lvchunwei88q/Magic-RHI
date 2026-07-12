@@ -169,6 +169,7 @@ namespace RHI
         uint64_t m_FenceValues[RHI_MULTI_BUFFERING] = {0};
         uint64_t m_NextFenceValue = 1;
         uint32_t m_CurrentFrame = 0;
+        uint64_t m_LastSubmittedFenceValue = 0;
     };
 
     using GraphicsCommandQueueVulKan = CommandQueueVulKan;

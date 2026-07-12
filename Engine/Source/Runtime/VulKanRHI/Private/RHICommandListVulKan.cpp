@@ -149,12 +149,14 @@ namespace RHI
     {
         m_FenceValues[m_CurrentFrame] = m_NextFenceValue++;
         Signal(m_FenceValues[m_CurrentFrame]);
+        // Just jot down the value of the ending frame
+        m_LastSubmittedFenceValue = m_FenceValues[m_CurrentFrame];
         m_CurrentFrame = (m_CurrentFrame + 1) % RHI_MULTI_BUFFERING;
     }
 
     void CommandQueueVulKan::WaitForGPU()
     {
-        uint64_t fenceValue = m_FenceValues[m_CurrentFrame];
+        uint64_t fenceValue = m_LastSubmittedFenceValue;
         if (fenceValue == 0) return;
 
         VkSemaphoreWaitInfo waitInfo{};

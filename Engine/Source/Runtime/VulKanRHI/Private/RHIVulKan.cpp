@@ -582,7 +582,8 @@ namespace RHI
         // Set device extensions
         std::vector<const char*> deviceExtensions = {
             // Swapchain extension (must) 
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+            VK_KHR_SWAPCHAIN_MUTABLE_FORMAT_EXTENSION_NAME
         };
 
         VkDeviceCreateInfo createInfo = {};
