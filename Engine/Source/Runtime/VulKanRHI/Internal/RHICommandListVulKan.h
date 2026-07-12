@@ -6,6 +6,7 @@
 #include <Common/RHIConfig.h>
 #include <RHICommandList.h>
 #include "RHIResourceVulKan.h"
+#include "RHIRootSignatureVulKan.h"
 
 namespace RHI
 {
@@ -96,6 +97,10 @@ namespace RHI
 
     private:
         VkCommandBuffer m_CommandBuffer;
+
+        // Cached currently-bound root signatures (for vkCmdBindDescriptorSets / vkCmdPushConstants access)
+        RHIRootSignatureVulKan* m_pCurrentGraphicsRS = nullptr;
+        RHIRootSignatureVulKan* m_pCurrentComputeRS = nullptr;
     };
 
     using GraphicsCommandListVulKan = CommandListVulKan;

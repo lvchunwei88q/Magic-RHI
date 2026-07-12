@@ -75,9 +75,8 @@ namespace RHI
                 auto it = mergedSizes.find(range.stageFlags);
                 if (it != mergedSizes.end()) {
                     it->second = max(it->second, range.size);
-                } else {
+                } else
                     mergedSizes[range.stageFlags] = range.size;
-                }
             }
 
             // ============================================================
@@ -128,8 +127,7 @@ namespace RHI
 
                 // Align to alignment
                 currentOffset = (currentOffset + alignment - 1) & ~(alignment - 1);
-                range.offset = currentOffset;
-                currentOffset += range.size;
+                range.offset = currentOffset;currentOffset += range.size;
 
                 result.push_back(range);
             }
@@ -194,16 +192,31 @@ namespace RHI
         }
         m_Device = vkDevice->GetDevice();
 
+        // Deep-copy the desc so bind-time code can access ranges / param types later.
+        m_Desc = desc;
+        // Initialize slots (one per root parameter, default to None)
+        m_ParamSlots.resize(desc.Parameters.size());
+
         // Used for the subsequent PipelineLayout: one Set per DescriptorTable parameter, keeping the order consistent with the parameters in RootSignatureDesc.Parameters.
         std::vector<VkDescriptorSetLayout> layoutHandles;
         layoutHandles.reserve(desc.Parameters.size());
-        // Constants parameter as PushConstant
-        std::vector<VkPushConstantRange> temp_PushConstantRanges;  
+        // Constants parameters become PushConstantRanges (one per param; offsets computed in order to avoid overlap)
+        std::vector<VkPushConstantRange> temp_pushConstantRanges;
+
+        auto CreateDescriptorSetLayout = [this](const VkDescriptorSetLayoutCreateInfo& info, VkDescriptorSetLayout& outLayout) -> bool {
+            if (vkCreateDescriptorSetLayout(GetDevice(), &info, nullptr, &outLayout) != VK_SUCCESS)
+            {
+                ThrowErrorMessage("RHIRootSignatureVulKan::Initialize - Failed to create descriptor set layout");
+                Shutdown();return false;
+            }
+            return true;
+        };
 
         // Scan All RootParameter
         for (uint32_t paramIdx = 0; paramIdx < static_cast<uint32_t>(desc.Parameters.size()); ++paramIdx)
         {
             const RootParameterDesc& param = desc.Parameters[paramIdx];
+            RootParameterSlotVK& slot = m_ParamSlots[paramIdx];
             // Get Shader Stage Flags
             const VkShaderStageFlags stageFlags = ShaderVisibilityToStageFlags(param.Visibility);
 
@@ -212,36 +225,31 @@ namespace RHI
                 // ============ Descriptor Table ============
                 case RootParameterType::DescriptorTable:
                 {
-                    // CreateDescriptorSetLayout Function
-                    auto CreateDescriptorSetLayout = [this](const VkDescriptorSetLayoutCreateInfo& info,VkDescriptorSetLayout& Layout) -> bool {
-                        if (vkCreateDescriptorSetLayout(GetDevice(), &info, nullptr, &Layout) != VK_SUCCESS)
-                        {
-                            ThrowErrorMessage("RHIRootSignatureVulKan::Initialize - Failed to create empty descriptor set layout");
-                            Shutdown();return false;
-                        }
-                        return true;
-                    };
+                    slot.Type = VKParamSlotType::DescriptorSet;
+
+                    const uint32_t descriptorSetIndex = static_cast<uint32_t>(m_SetLayouts.size());
 
                     const uint32_t rangeCount = param.DescriptorTable.NumDescriptorRanges;
                     const DescriptorRangeDesc* pRanges = param.DescriptorTable.pDescriptorRanges;
                     if (rangeCount == 0 || pRanges == nullptr)
                     {
-                        // Empty table, skip (keep one empty layout to ensure the Set numbers match and avoid misalignment of Set numbers later)
+                        // Empty table, create an empty layout to keep set numbers aligned with DescriptorTable count
                         VkDescriptorSetLayoutCreateInfo emptyInfo = {};
                         emptyInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
                         emptyInfo.bindingCount = 0;
                         emptyInfo.pBindings = nullptr;
                         VkDescriptorSetLayout emptyLayout = VK_NULL_HANDLE;
-                        if(!CreateDescriptorSetLayout(emptyInfo,emptyLayout)) return false;
+                        if (!CreateDescriptorSetLayout(emptyInfo, emptyLayout)) return false;
 
 #if RHI_ENABLE_DEBUG_INFO
                         // if empty table, capture warning message
-                        Core::WarningCapture::Capture("RHIRootSignatureVulKan::Initialize - DescriptorTable " 
+                        Core::WarningCapture::Capture("RHIRootSignatureVulKan::Initialize - DescriptorTable "
                             + std::to_string(paramIdx) + " is empty, create empty descriptor set layout");
 #endif
-
                         layoutHandles.push_back(emptyLayout);
                         m_SetLayouts.push_back({ emptyLayout, paramIdx });
+
+                        slot.DescriptorSetIndex = descriptorSetIndex;
                         break;
                     }
 
@@ -254,17 +262,18 @@ namespace RHI
                         const DescriptorRangeDesc& range = pRanges[i];
 
                         VkDescriptorSetLayoutBinding binding = {};
-                        binding.binding = range.ShaderRegister;  // Corresponds to HLSL's register(t0, space0) etc
-                        // TODO: 处理 descriptorType
+                        // binding number = ShaderRegister + RegisterSpace * REG_SPACE_BASE.
+                        // For simplicity and compatibility with simple shaders that only use space0, we just use ShaderRegister.
+                        // If you later need multi-space support, define REG_SPACE_BASE = 65536 or use separate sets per space.
+                        binding.binding = range.ShaderRegister;
                         binding.descriptorType = DescriptorRangeTypeToVk(range.RangeType);
                         binding.descriptorCount = range.NumDescriptors;
                         binding.stageFlags = stageFlags;
-                        binding.pImmutableSamplers = nullptr;  // not using immutable sampler
+                        binding.pImmutableSamplers = nullptr;
                         bindings.push_back(binding);
 
-                        // TODO: 处理 OffsetInDescriptorsFromTableStart and RegisterSpace
-                        (void)range.OffsetInDescriptorsFromTableStart;
-                        (void)range.RegisterSpace; // 注意：Vulkan 没有 RegisterSpace 概念，空间映射由上层统一约定。
+                        (void)range.OffsetInDescriptorsFromTableStart; // Used at bind-time (SetGraphicsRootDescriptorTable), not layout-creation time
+                        (void)range.RegisterSpace; // See binding.binding comment above
                     }
 
                     // Fill DescriptorSetLayoutCreateInfo
@@ -275,54 +284,62 @@ namespace RHI
 
                     // Create DescriptorSetLayout
                     VkDescriptorSetLayout setLayout = VK_NULL_HANDLE;
-                    if(!CreateDescriptorSetLayout(layoutInfo,setLayout)) return false;
+                    if (!CreateDescriptorSetLayout(layoutInfo, setLayout)) return false;
 
                     layoutHandles.push_back(setLayout);
                     m_SetLayouts.push_back({ setLayout, paramIdx });
+
+                    slot.Type = VKParamSlotType::DescriptorSet;
+                    slot.DescriptorSetIndex = descriptorSetIndex;
                     break;
                 }
 
-                // TODO: 处理 Root CBV/SRV/UAV
+                // ============ Root CBV/SRV/UAV ============
                 case RootParameterType::CBV:
                 case RootParameterType::SRV:
                 case RootParameterType::UAV:
                 {
-                    // 注意：Vulkan 中没有直接的 RootDescriptor 概念，这里把它们当作 push constant range 预留出来。
-                    // 后续 SetGraphicsRoot*View 时通过 UpdateDescriptorSet / Push Descriptor 或 push constant 完成绑定。
-                    // 这里只是为了保证与 D3D12 RootSignature 结构对齐，实际上不占 SetLayout（由上层 CommandList 决定如何上传）
-                    const VkDescriptorType descType = RootParamToVkDescType(param.Type);
-                    (void)descType;
+                    slot.Type = VKParamSlotType::RootDescriptor;
 
-                    // 我们不把 PushConstantRange 直接加在这里 —— 因为 Constants 参数才是真正的 PushConstant，
-                    // 而 Root Descriptor 在 Vulkan 通常使用 UpdateDescriptorSet + BindDescriptorSets 方式完成。
+                    slot.RootDescType = RootParamToVkDescType(param.Type);
+                    slot.RootDescShaderRegister = param.Descriptor.ShaderRegister;
+                    slot.RootDescRegisterSpace = param.Descriptor.RegisterSpace;
                     break;
                 }
 
                 // ============ Constants: Push Constant ============
                 case RootParameterType::Constants:
                 {
-                    // Constants.Num32BitValues * 4 bytes, aligned to 4 bytes
+                    slot.Type = VKParamSlotType::PushConstant;
+
+                    uint32_t num32 = (param.Constants.Num32BitValues == 0) ? 1u : param.Constants.Num32BitValues;
+                    uint32_t sizeBytes = num32 * 4;
+
                     VkPushConstantRange pushRange = {};
-                    pushRange.stageFlags = stageFlags;
-                    // The offset is handled by the CommandList when merging multiple PushConstantRanges; just reserve it here for now.
+                    pushRange.stageFlags = (stageFlags == 0) ? VK_SHADER_STAGE_ALL : stageFlags;
+                    //  Set it to 0 by default for now 
                     pushRange.offset = 0;
-                    pushRange.size = param.Constants.Num32BitValues * 4;
-                    if (pushRange.size == 0)
-                        pushRange.size = 4; // Vulkan PushConstant size can't be 0
-                    
-                    temp_PushConstantRanges.push_back(pushRange);
+                    pushRange.size = sizeBytes;
+
+                    const uint32_t pushRangeIndex = static_cast<uint32_t>(temp_pushConstantRanges.size());
+                    temp_pushConstantRanges.push_back(pushRange);
+
+                    slot.PushRangeIndex = pushRangeIndex;
+                    // We never merge constants across params, so each param starts at 0 within its own range
+                    slot.PushConstantBaseOffset32 = 0;  
+                    slot.PushConstantCount32 = num32;
                     break;
                 }
 
                 default:
+                    slot.Type = VKParamSlotType::None;
                     break;
             }
         }
 
         // Merge PushConstant ranges: Vulkan requires that ranges with the same stageFlags do not overlap
         // Note: Here we assume the device's maximum supported constant buffer size is 256.
-        std::vector<VkPushConstantRange> PushConstantRanges;  
-        PushConstantRanges = MergePushConstantRanges(temp_PushConstantRanges);
+        m_PushConstantRanges = MergePushConstantRanges(temp_pushConstantRanges);
 
         // ============ Fill Create PipelineLayout ============
         VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
@@ -335,8 +352,8 @@ namespace RHI
          * Then Vk reads the values we set in PushConstantRange for the Shader.
          * But if there are two PushConstants whose VkShaderStageFlags overlap, it will cause an error.
         */
-        pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(PushConstantRanges.size());
-        pipelineLayoutInfo.pPushConstantRanges = PushConstantRanges.empty() ? nullptr : PushConstantRanges.data();
+        pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(m_PushConstantRanges.size());
+        pipelineLayoutInfo.pPushConstantRanges = m_PushConstantRanges.empty() ? nullptr : m_PushConstantRanges.data();
 
         // Create PipelineLayout
         if (vkCreatePipelineLayout(GetDevice(), &pipelineLayoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS)
@@ -366,9 +383,8 @@ namespace RHI
                     info.Layout = VK_NULL_HANDLE;
                 }
             }
-            m_SetLayouts.clear();
-            // We are just referencing the device pointer, no need to free it.
-            // GetDevice() = VK_NULL_HANDLE;
+            m_SetLayouts.clear();m_PushConstantRanges.clear();
+            m_ParamSlots.clear();m_Desc.Parameters.clear();
         }
     }
 
