@@ -106,6 +106,8 @@ namespace RHI
         }
 #endif
 
+        // Release the previously allocated descriptor sets (they were allocated from the same descriptor pool and will be automatically released with reset/free,
+        // But here, since we use per-handle sets, we manage them uniformly by releasing the pool, so here we just set the resources to null.
         m_Descriptors[index].Release();
         m_DescriptorSets[index] = VK_NULL_HANDLE;
         m_DescriptorTypes[index] = VK_DESCRIPTOR_TYPE_MAX_ENUM;
@@ -147,11 +149,28 @@ namespace RHI
         return CurrentIndex >= Capacity;
     }
 
+    VkDescriptorSet DescriptorHeapVulKan::GetDescriptorSet(RHIDescriptorHandle handle) const
+    {
+        if (!handle.IsValid() || handle.GetType() != HeapType) return VK_NULL_HANDLE;
+        uint32_t index = handle.GetIndex();
+        if (index >= Capacity) return VK_NULL_HANDLE;
+        return m_DescriptorSets[index];
+    }
+
+    VkDescriptorType DescriptorHeapVulKan::GetDescriptorType(RHIDescriptorHandle handle) const
+    {
+        if (!handle.IsValid() || handle.GetType() != HeapType) return VK_DESCRIPTOR_TYPE_MAX_ENUM;
+        uint32_t index = handle.GetIndex();
+        if (index >= Capacity) return VK_DESCRIPTOR_TYPE_MAX_ENUM;
+        return m_DescriptorTypes[index];
+    }
+
     bool DescriptorHeapVulKan::AllocateDescriptorSet(VkDescriptorType type, VkDescriptorSet& outSet)
     {
         /*
-        * Here, we use a descriptor set to bind just one resource in order to align with other APIs.
-        */
+         * Use a 1-binding descriptor set layout to allocate sets from the pool.
+         * This way, each resource gets its own VkDescriptorSet, making it easier to bind flexibly later in the CommandList (SetGraphicsRootDescriptorTable).
+         */
         VkDescriptorSetLayout layout = VK_NULL_HANDLE;
 
         VkDescriptorSetLayoutBinding binding = {};
@@ -159,6 +178,7 @@ namespace RHI
         binding.descriptorType = type;
         binding.descriptorCount = 1;
         binding.stageFlags = VK_SHADER_STAGE_ALL;
+        binding.pImmutableSamplers = nullptr;
 
         VkDescriptorSetLayoutCreateInfo layoutInfo = {};
         layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -179,6 +199,8 @@ namespace RHI
         allocInfo.pSetLayouts = &layout;
 
         result = vkAllocateDescriptorSets(GetDevice(), &allocInfo, &outSet);
+
+        // After the descriptor set is created, the set layout can be destroyed immediately: the descriptor set keeps its own internal copy of the layout reference.
         vkDestroyDescriptorSetLayout(GetDevice(), layout, nullptr);
 
         if (result != VK_SUCCESS)
@@ -190,61 +212,220 @@ namespace RHI
         return true;
     }
 
+    // ============ Write the view information into the descriptor set ============
+
+    void DescriptorHeapVulKan::WriteCBVToSet(VkDescriptorSet set, ConstantBufferViewVulKan* CBV)
+    {
+        if (!CBV || set == VK_NULL_HANDLE) return;
+
+        VkDescriptorBufferInfo bufferInfo = {};
+        bufferInfo.buffer = CBV->GetBuffer();
+        bufferInfo.offset = CBV->GetOffset();
+        bufferInfo.range  = CBV->GetRange();
+
+        VkWriteDescriptorSet write = {};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = set;
+        write.dstBinding = 0;
+        write.dstArrayElement = 0;
+        write.descriptorCount = 1;
+        write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        write.pBufferInfo = &bufferInfo;
+
+        vkUpdateDescriptorSets(GetDevice(), 1, &write, 0, nullptr);
+    }
+
+    void DescriptorHeapVulKan::WriteSRVToSet(VkDescriptorSet set, ShaderResourceViewVulKan* SRV)
+    {
+        if (!SRV || set == VK_NULL_HANDLE) return;
+
+        VkWriteDescriptorSet write = {};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = set;
+        write.dstBinding = 0;
+        write.dstArrayElement = 0;
+        write.descriptorCount = 1;
+
+        // if SRV is Image
+        if (SRV->GetImageView() != VK_NULL_HANDLE)
+        {
+            // === Image SRV ===
+            VkDescriptorImageInfo imageInfo = {};
+            imageInfo.imageView = SRV->GetImageView();
+            imageInfo.imageLayout = SRV->GetImageLayout();
+            imageInfo.sampler = VK_NULL_HANDLE;
+
+            write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+            write.pImageInfo = &imageInfo;
+        }
+        else // if SRV is not Image        
+        {
+            // === Buffer SRV(ByteAddressBuffer/StructuredBuffer ...) ===
+            VkDescriptorBufferInfo bufferInfo = {};
+            bufferInfo.buffer = SRV->GetBuffer();
+            bufferInfo.offset = SRV->GetOffset();
+            bufferInfo.range  = SRV->GetRange();
+
+            write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            write.pBufferInfo = &bufferInfo;
+        }
+
+        vkUpdateDescriptorSets(GetDevice(), 1, &write, 0, nullptr);
+    }
+
+    void DescriptorHeapVulKan::WriteUAVToSet(VkDescriptorSet set, UnorderedAccessViewVulKan* UAV)
+    {
+        if (!UAV || set == VK_NULL_HANDLE) return;
+
+        VkWriteDescriptorSet write = {};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = set;
+        write.dstBinding = 0;
+        write.dstArrayElement = 0;
+        write.descriptorCount = 1;
+
+        // if UAV is Image
+        if (UAV->GetImageView() != VK_NULL_HANDLE)
+        {
+            // === Image UAV ===
+            VkDescriptorImageInfo imageInfo = {};
+            imageInfo.imageView = UAV->GetImageView();
+            imageInfo.imageLayout = UAV->GetImageLayout();
+            imageInfo.sampler = VK_NULL_HANDLE;
+
+            write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+            write.pImageInfo = &imageInfo;
+        }
+        else// if UAV is not Image
+        {
+            // === Buffer UAV ===
+            VkDescriptorBufferInfo bufferInfo = {};
+            bufferInfo.buffer = UAV->GetBuffer();
+            bufferInfo.offset = UAV->GetOffset();
+            bufferInfo.range  = UAV->GetRange();
+
+            write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+            write.pBufferInfo = &bufferInfo;
+        }
+
+        vkUpdateDescriptorSets(GetDevice(), 1, &write, 0, nullptr);
+    }
+
+    void DescriptorHeapVulKan::WriteSamplerToSet(VkDescriptorSet set, SamplerStateVulKan* sampler)
+    {
+        if (!sampler || set == VK_NULL_HANDLE) return;
+
+        VkDescriptorImageInfo samplerInfo = {};
+        samplerInfo.sampler = sampler->GetSampler();
+        samplerInfo.imageView = VK_NULL_HANDLE;
+        samplerInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+        VkWriteDescriptorSet write = {};
+        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write.dstSet = set;
+        write.dstBinding = 0;
+        write.dstArrayElement = 0;
+        write.descriptorCount = 1;
+        write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+        write.pImageInfo = &samplerInfo;
+
+        vkUpdateDescriptorSets(GetDevice(), 1, &write, 0, nullptr);
+    }
+
+    // ============ SetXxxDescriptor Interface ============
     bool DescriptorHeapVulKan::SetCBVDescriptor(RHIDescriptorHandle handle, ConstantBufferViewVulKan* CBV)
     {
-        // Check descriptor handle
+        if (!CBV) return false;
         DESCRIPTOR_SET_CHECK();
 
-        m_DescriptorTypes[index] = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        if (!AllocateDescriptorSet(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, m_DescriptorSets[index]))
-            ThrowErrorMessage("DescriptorHeapVulKan: Failed to allocate descriptor set");
-        
+        VkDescriptorSet& set = m_DescriptorSets[index];
+        if (set == VK_NULL_HANDLE)
+        {
+            m_DescriptorTypes[index] = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            if (!AllocateDescriptorSet(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, set))
+            {
+                ThrowErrorMessage("DescriptorHeapVulKan::SetCBVDescriptor - AllocateDescriptorSet failed");return false;
+            }
+        }
+
         m_Descriptors[index].ViewType = RHIResourceType::RRT_ConstantBufferView;
         m_Descriptors[index].pCBV = std::unique_ptr<ConstantBufferViewVulKan>(CBV);
+
+        WriteCBVToSet(set, m_Descriptors[index].pCBV.get());
 
         return true;
     }
 
     bool DescriptorHeapVulKan::SetSRVDescriptor(RHIDescriptorHandle handle, ShaderResourceViewVulKan* SRV)
     {
-        // Check descriptor handle
+        if (!SRV) return false;
         DESCRIPTOR_SET_CHECK();
 
-        m_DescriptorTypes[index] = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-        if (!AllocateDescriptorSet(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, m_DescriptorSets[index]))
-            ThrowErrorMessage("DescriptorHeapVulKan: Failed to allocate descriptor set");
-        
+        // Choose the correct descriptor type based on Image vs Buffer
+        const VkDescriptorType descType = (SRV->GetImageView() != VK_NULL_HANDLE)
+            ? VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
+            : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+
+        VkDescriptorSet& set = m_DescriptorSets[index];
+        if (set == VK_NULL_HANDLE)
+        {
+            m_DescriptorTypes[index] = descType;
+            if (!AllocateDescriptorSet(descType, set))
+            {
+                ThrowErrorMessage("DescriptorHeapVulKan::SetSRVDescriptor - AllocateDescriptorSet failed");return false;
+            }
+        }
+
         m_Descriptors[index].ViewType = RHIResourceType::RRT_ShaderResourceView;
         m_Descriptors[index].pSRV = std::unique_ptr<ShaderResourceViewVulKan>(SRV);
+
+        WriteSRVToSet(set, m_Descriptors[index].pSRV.get());
 
         return true;
     }
 
     bool DescriptorHeapVulKan::SetUAVDescriptor(RHIDescriptorHandle handle, UnorderedAccessViewVulKan* UAV)
     {
-        // Check descriptor handle
+        if (!UAV) return false;
         DESCRIPTOR_SET_CHECK();
 
-        m_DescriptorTypes[index] = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-        if (!AllocateDescriptorSet(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, m_DescriptorSets[index]))
-            ThrowErrorMessage("DescriptorHeapVulKan: Failed to allocate descriptor set");
-        
+        // Choose the correct descriptor type based on Image vs Buffer
+        const VkDescriptorType descType = (UAV->GetImageView() != VK_NULL_HANDLE)
+            ? VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
+            : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+
+        VkDescriptorSet& set = m_DescriptorSets[index];
+        if (set == VK_NULL_HANDLE)
+        {
+            m_DescriptorTypes[index] = descType;
+            if (!AllocateDescriptorSet(descType, set))
+            {
+                ThrowErrorMessage("DescriptorHeapVulKan::SetUAVDescriptor - AllocateDescriptorSet failed");return false;
+            }
+        }
+
         m_Descriptors[index].ViewType = RHIResourceType::RRT_UnorderedAccessView;
         m_Descriptors[index].pUAV = std::unique_ptr<UnorderedAccessViewVulKan>(UAV);
+
+        WriteUAVToSet(set, m_Descriptors[index].pUAV.get());
 
         return true;
     }
 
     bool DescriptorHeapVulKan::SetRTVDescriptor(RHIDescriptorHandle handle, RenderTargetViewVulKan* RTV)
     {
-        // Check descriptor handle
+        /*
+        * Note: In Vulkan, a Render Target View (VkImageView as a color attachment) is not a descriptor.
+        * It gets bound during rendering via VkFramebuffer / VkRenderPass.
+        * Here, we don't allocate a descriptor set or call vkUpdateDescriptorSets;
+        * we just save the pointer to the RTV for later use when creating a Framebuffer.
+        */
+        if (!RTV) return false;
         DESCRIPTOR_SET_CHECK();
 
-        // TODO: RTV descriptor type
+        // Do not allocate descriptor set, m_DescriptorSets[index] remains VK_NULL_HANDLE
         m_DescriptorTypes[index] = VK_DESCRIPTOR_TYPE_MAX_ENUM;
-        if (!AllocateDescriptorSet(VK_DESCRIPTOR_TYPE_MAX_ENUM, m_DescriptorSets[index]))
-            ThrowErrorMessage("DescriptorHeapVulKan: Failed to allocate descriptor set");
-        
+
         m_Descriptors[index].ViewType = RHIResourceType::RRT_RenderTargetView;
         m_Descriptors[index].pRTV = std::unique_ptr<RenderTargetViewVulKan>(RTV);
 
@@ -253,14 +434,15 @@ namespace RHI
 
     bool DescriptorHeapVulKan::SetDSVDescriptor(RHIDescriptorHandle handle, DepthStencilViewVulKan* DSV)
     {
-        // Check descriptor handle
+        /*
+        * Similar to RTV: DSV in Vulkan is not a descriptor type, but a depth/stencil attachment of VkFramebuffer.
+        * Here we only store the view data, without allocating a descriptor set.
+        */
+        if (!DSV) return false;
         DESCRIPTOR_SET_CHECK();
 
-        // TODO: DSV descriptor type
         m_DescriptorTypes[index] = VK_DESCRIPTOR_TYPE_MAX_ENUM;
-        if (!AllocateDescriptorSet(VK_DESCRIPTOR_TYPE_MAX_ENUM, m_DescriptorSets[index]))
-            ThrowErrorMessage("DescriptorHeapVulKan: Failed to allocate descriptor set");
-        
+
         m_Descriptors[index].ViewType = RHIResourceType::RRT_DepthStencilView;
         m_Descriptors[index].pDSV = std::unique_ptr<DepthStencilViewVulKan>(DSV);
 
@@ -269,15 +451,23 @@ namespace RHI
 
     bool DescriptorHeapVulKan::SetSamplerDescriptor(RHIDescriptorHandle handle, SamplerStateVulKan* sampler)
     {
-        // Check descriptor handle
+        if (!sampler) return false;
         DESCRIPTOR_SET_CHECK();
 
-        m_DescriptorTypes[index] = VK_DESCRIPTOR_TYPE_SAMPLER;
-        if (!AllocateDescriptorSet(VK_DESCRIPTOR_TYPE_SAMPLER, m_DescriptorSets[index]))
-            ThrowErrorMessage("DescriptorHeapVulKan: Failed to allocate descriptor set");
-        
+        VkDescriptorSet& set = m_DescriptorSets[index];
+        if (set == VK_NULL_HANDLE)
+        {
+            m_DescriptorTypes[index] = VK_DESCRIPTOR_TYPE_SAMPLER;
+            if (!AllocateDescriptorSet(VK_DESCRIPTOR_TYPE_SAMPLER, set))
+            {
+                ThrowErrorMessage("DescriptorHeapVulKan::SetSamplerDescriptor - AllocateDescriptorSet failed");return false;
+            }
+        }
+
         m_Descriptors[index].ViewType = RHIResourceType::RRT_SamplerState;
         m_Descriptors[index].pSampler = std::unique_ptr<SamplerStateVulKan>(sampler);
+
+        WriteSamplerToSet(set, m_Descriptors[index].pSampler.get());
 
         return true;
     }

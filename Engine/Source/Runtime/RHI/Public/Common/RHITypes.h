@@ -443,31 +443,31 @@ enum class RootSignatureFlags : uint32_t
 	AllowStreamOutput = 0x2,
 
 	// ===== Stage access control =====
-    DenyVertexShaderRootAccess       = 0x4,    // 禁止 VS 
-    DenyHullShaderRootAccess         = 0x8,    // 禁止 HS
-    DenyDomainShaderRootAccess       = 0x10,   // 禁止 DS
-    DenyGeometryShaderRootAccess     = 0x20,   // 禁止 GS
-    DenyPixelShaderRootAccess        = 0x40,   // 禁止 PS
-    DenyComputeShaderRootAccess      = 0x200,  // 禁止 CS
+    DenyVertexShaderRootAccess       = 0x4,    // Prohibit VS 
+    DenyHullShaderRootAccess         = 0x8,    // Prohibit HS
+    DenyDomainShaderRootAccess       = 0x10,   // Prohibit DS
+    DenyGeometryShaderRootAccess     = 0x20,   // Prohibit GS
+    DenyPixelShaderRootAccess        = 0x40,   // Prohibit PS
+    DenyComputeShaderRootAccess      = 0x200,  // Prohibit CS
 
 	// ===== Mesh Shading pipeline =====
-	AllowAmplificationShaderRootAccess  = 0x80, // 允许 AM（放大着色器）
-	AllowMeshShaderRootAccess        	= 0x100, // 允许 MS（网格着色器）
+	AllowAmplificationShaderRootAccess  = 0x80, // Allow AM（放大着色器）
+	AllowMeshShaderRootAccess        	= 0x100, // Allow MS（网格着色器）
 };
 ENUM_CLASS_FLAGS(RootSignatureFlags);
 
 enum class ShaderVisibility : uint8_t
 {
-    None        = 0,    // 无
-    All         = 1,    // 所有阶段可见
-    Vertex      = 2,    // 仅顶点着色器
-    Hull        = 3,    // 仅外壳着色器
-    Domain      = 4,    // 仅域着色器
-    Geometry    = 5,    // 仅几何着色器
-    Pixel       = 6,    // 仅像素着色器
-    Amplification = 7,  // 仅放大着色器
-    Mesh        = 8,    // 仅网格着色器
-    Compute     = 9,    // 仅计算着色器
+    None = 0, 	           // None
+    All = 1, 	           // Visible in all stages
+    Vertex = 2,            // Vertex shader only
+    Hull = 3,              // Hull shader only
+    Domain = 4,            // Domain shader only
+    Geometry = 5,          // Geometry shader only
+    Pixel = 6,             // Pixel shader only
+    Amplification = 7,     // Amplification shader only
+    Mesh = 8,              // Mesh shader only
+    Compute = 9,           // Compute shader only
 };
 
 // Resource Barrier Type

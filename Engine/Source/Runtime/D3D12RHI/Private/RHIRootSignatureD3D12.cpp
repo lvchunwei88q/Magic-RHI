@@ -19,7 +19,7 @@ namespace RHI
             if (vis == ShaderVisibility::Amplification) return D3D12_SHADER_VISIBILITY_AMPLIFICATION;
             if (vis == ShaderVisibility::Mesh)     return D3D12_SHADER_VISIBILITY_MESH;
             if (vis == ShaderVisibility::All) return D3D12_SHADER_VISIBILITY_ALL;
-            // 对于计算着色器它有自己的 根签名 所有可见性都为 ALL
+            // For the compute shader, it has its own root signature, and all visibility is set to ALL.
             if (vis == ShaderVisibility::Compute) return D3D12_SHADER_VISIBILITY_ALL;
 
             // default → return ALL

@@ -51,9 +51,24 @@ namespace RHI
         const DescriptorData* GetDescriptor(RHIDescriptorHandle handle) const;
         const VkDevice GetDevice() const;
 
+        VkDescriptorSet GetDescriptorSet(RHIDescriptorHandle handle) const;
+        VkDescriptorType GetDescriptorType(RHIDescriptorHandle handle) const;
+
     private:
+        // Allocate a descriptor set for a single resource
         bool AllocateDescriptorSet(VkDescriptorType type, VkDescriptorSet& outSet);
 
+        // Actually write descriptor data into the allocated descriptor set
+        void WriteCBVToSet(VkDescriptorSet set, ConstantBufferViewVulKan* CBV);
+        void WriteSRVToSet(VkDescriptorSet set, ShaderResourceViewVulKan* SRV);
+        void WriteUAVToSet(VkDescriptorSet set, UnorderedAccessViewVulKan* UAV);
+        void WriteSamplerToSet(VkDescriptorSet set, SamplerStateVulKan* sampler);
+        /*
+         * Note: In Vk, there isn’t a direct equivalent of RTV and DSV in the descriptions, so that’s something to keep in mind.
+         * void WriteRTVToSet(VkDescriptorSet set, RenderTargetViewVulKan* RTV);
+         * void WriteDSVToSet(VkDescriptorSet set, DepthStencilViewVulKan* DSV);
+         */
+         
         // Here we just store device handle references
         const VkDevice* m_Device;
         VkDescriptorPool m_DescriptorPool;

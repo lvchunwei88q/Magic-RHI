@@ -9,18 +9,18 @@ namespace RHI
     class Device; // forward declaration
 
     /*
-    根签名（布局定义）
+    RootSignature ( Layout Definition)
     ┌─────────────────────────────────────────┐
-    │ 参数0: CBV (b0)                          │  ← 说："参数0是一个常量缓冲区"
-    │ 参数1: DescriptorTable (t0-t4)           │  ← 说："参数1是5个纹理"
-    │ 参数2: Constants (根常量)                 │  ← 说："参数2是4个32位常量"
+    │ arg0: CBV (b0)                          │  ← 说："参数0是一个常量缓冲区"
+    │ arg1: DescriptorTable (t0-t4)           │  ← 说："参数1是5个纹理"
+    │ arg2: Constants (根常量)                 │  ← 说："参数2是4个32位常量"
     └─────────────────────────────────────────┘
 
-    描述符堆（实际数据）
+    DescriptorHeap (Actual Data)
     ┌─────────────────────────────────────────┐
-    │ 槽位0: 纹理0的描述符                       │
-    │ 槽位1: 纹理1的描述符                       │
-    │ 槽位2: 纹理2的描述符                       │
+    │ slot0: texture0 descriptor              │
+    │ slot1: texture1 descriptor              │
+    │ slot2: texture2 descriptor              │
     └─────────────────────────────────────────┘
 
     渲染时的绑定：
@@ -52,9 +52,9 @@ namespace RHI
         但是ShaderRegister 在多个元素时基本上是必需要设置的。
         **/
         DescriptorRangeType RangeType = DescriptorRangeType::CBV;
-        uint32_t NumDescriptors = 1u;    // 描述符数量
-        uint32_t ShaderRegister = 0u;// 着色器寄存器起始号
-        uint32_t RegisterSpace = 0u; // 寄存器空间号(space0 , space1 , space2 , ...)类似命名空间
+        uint32_t NumDescriptors = 1u;                   // Number of descriptors in the range
+        uint32_t ShaderRegister = 0u;                   // Shader register start index
+        uint32_t RegisterSpace = 0u;                    // Register space (space0 , space1 , space2 , ...)  
         uint32_t OffsetInDescriptorsFromTableStart = ~0u;     // Offset -> Append
     };
 
