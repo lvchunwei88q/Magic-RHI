@@ -35,14 +35,14 @@ namespace RHI
 
         m_FreeList.reserve(capacity);
         m_Descriptors.reserve(capacity);
-        m_DescriptorSets.reserve(capacity);
+        m_DescriptorBindings.reserve(capacity);
         m_DescriptorTypes.reserve(capacity);
 
         for (uint32_t i = 0; i < capacity; ++i)
         {
             m_FreeList.push_back(i);
             m_Descriptors.push_back({});
-            m_DescriptorSets.push_back(VK_NULL_HANDLE);
+            m_DescriptorBindings.push_back({});
             m_DescriptorTypes.push_back(VK_DESCRIPTOR_TYPE_MAX_ENUM);
         }
     }
@@ -109,7 +109,8 @@ namespace RHI
         // Release the previously allocated descriptor sets (they were allocated from the same descriptor pool and will be automatically released with reset/free,
         // But here, since we use per-handle sets, we manage them uniformly by releasing the pool, so here we just set the resources to null.
         m_Descriptors[index].Release();
-        m_DescriptorSets[index] = VK_NULL_HANDLE;
+        // TODO: Release the descriptor set layout as well.
+        m_DescriptorBindings[index].Release();
         m_DescriptorTypes[index] = VK_DESCRIPTOR_TYPE_MAX_ENUM;
         m_FreeList.push_back(index);
         CurrentIndex = Capacity - static_cast<uint32_t>(m_FreeList.size());
@@ -149,12 +150,13 @@ namespace RHI
         return CurrentIndex >= Capacity;
     }
 
-    VkDescriptorSet DescriptorHeapVulKan::GetDescriptorSet(RHIDescriptorHandle handle) const
+    bool DescriptorHeapVulKan::GetDescriptorSetBinding(RHIDescriptorHandle handle, DescriptorSetBinding& outBinding) const
     {
-        if (!handle.IsValid() || handle.GetType() != HeapType) return VK_NULL_HANDLE;
+        if (!handle.IsValid() || handle.GetType() != HeapType) return false;
         uint32_t index = handle.GetIndex();
-        if (index >= Capacity) return VK_NULL_HANDLE;
-        return m_DescriptorSets[index];
+        if (index >= Capacity) return false;
+        outBinding = m_DescriptorBindings[index];
+        return true;
     }
 
     VkDescriptorType DescriptorHeapVulKan::GetDescriptorType(RHIDescriptorHandle handle) const
@@ -165,13 +167,14 @@ namespace RHI
         return m_DescriptorTypes[index];
     }
 
-    bool DescriptorHeapVulKan::AllocateDescriptorSet(VkDescriptorType type, VkDescriptorSet& outSet)
+    bool DescriptorHeapVulKan::AllocateDescriptorSet(VkDescriptorType type, VkDescriptorSet& outSet, VkDescriptorSetLayout& outLayout)
     {
         /*
-         * Use a 1-binding descriptor set layout to allocate sets from the pool.
-         * This way, each resource gets its own VkDescriptorSet, making it easier to bind flexibly later in the CommandList (SetGraphicsRootDescriptorTable).
+          * Allocate a set from the pool using a 1-binding descriptor set layout.
+          * This way, each resource has its own VkDescriptorSet and layout,
+          * making it easier to bind them flexibly later in the CommandList (SetGraphicsRootDescriptorTable).
          */
-        VkDescriptorSetLayout layout = VK_NULL_HANDLE;
+        //VkDescriptorSetLayout layout = VK_NULL_HANDLE;
 
         VkDescriptorSetLayoutBinding binding = {};
         binding.binding = 0;
@@ -185,7 +188,7 @@ namespace RHI
         layoutInfo.bindingCount = 1;
         layoutInfo.pBindings = &binding;
 
-        VkResult result = vkCreateDescriptorSetLayout(GetDevice(), &layoutInfo, nullptr, &layout);
+        VkResult result = vkCreateDescriptorSetLayout(GetDevice(), &layoutInfo, nullptr, &outLayout);
         if (result != VK_SUCCESS)
         {
             ThrowErrorMessage("DescriptorHeapVulKan: Failed to create descriptor set layout");
@@ -196,12 +199,9 @@ namespace RHI
         allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
         allocInfo.descriptorPool = m_DescriptorPool;
         allocInfo.descriptorSetCount = 1;
-        allocInfo.pSetLayouts = &layout;
+        allocInfo.pSetLayouts = &outLayout;
 
         result = vkAllocateDescriptorSets(GetDevice(), &allocInfo, &outSet);
-
-        // After the descriptor set is created, the set layout can be destroyed immediately: the descriptor set keeps its own internal copy of the layout reference.
-        vkDestroyDescriptorSetLayout(GetDevice(), layout, nullptr);
 
         if (result != VK_SUCCESS)
         {
@@ -246,28 +246,34 @@ namespace RHI
         write.dstArrayElement = 0;
         write.descriptorCount = 1;
 
+        // ShaderResourceViewInfo
+        union ShaderResourceViewInfo
+        {
+            VkDescriptorImageInfo imageInfo;
+            VkDescriptorBufferInfo bufferInfo;
+        };
+        ShaderResourceViewInfo srvInfo = {};
+
         // if SRV is Image
         if (SRV->GetImageView() != VK_NULL_HANDLE)
         {
             // === Image SRV ===
-            VkDescriptorImageInfo imageInfo = {};
-            imageInfo.imageView = SRV->GetImageView();
-            imageInfo.imageLayout = SRV->GetImageLayout();
-            imageInfo.sampler = VK_NULL_HANDLE;
+            srvInfo.imageInfo.imageView = SRV->GetImageView();
+            srvInfo.imageInfo.imageLayout = SRV->GetImageLayout();
+            srvInfo.imageInfo.sampler = VK_NULL_HANDLE;
 
             write.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-            write.pImageInfo = &imageInfo;
+            write.pImageInfo = &srvInfo.imageInfo;
         }
         else // if SRV is not Image        
         {
             // === Buffer SRV(ByteAddressBuffer/StructuredBuffer ...) ===
-            VkDescriptorBufferInfo bufferInfo = {};
-            bufferInfo.buffer = SRV->GetBuffer();
-            bufferInfo.offset = SRV->GetOffset();
-            bufferInfo.range  = SRV->GetRange();
+            srvInfo.bufferInfo.buffer = SRV->GetBuffer();
+            srvInfo.bufferInfo.offset = SRV->GetOffset();
+            srvInfo.bufferInfo.range  = SRV->GetRange();
 
             write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            write.pBufferInfo = &bufferInfo;
+            write.pBufferInfo = &srvInfo.bufferInfo;
         }
 
         vkUpdateDescriptorSets(GetDevice(), 1, &write, 0, nullptr);
@@ -284,28 +290,34 @@ namespace RHI
         write.dstArrayElement = 0;
         write.descriptorCount = 1;
 
+        // UnorderedAccessViewInfo
+        union UnorderedAccessViewInfo
+        {
+            VkDescriptorImageInfo imageInfo;
+            VkDescriptorBufferInfo bufferInfo;
+        };
+        UnorderedAccessViewInfo uavInfo = {};
+
         // if UAV is Image
         if (UAV->GetImageView() != VK_NULL_HANDLE)
         {
             // === Image UAV ===
-            VkDescriptorImageInfo imageInfo = {};
-            imageInfo.imageView = UAV->GetImageView();
-            imageInfo.imageLayout = UAV->GetImageLayout();
-            imageInfo.sampler = VK_NULL_HANDLE;
+            uavInfo.imageInfo.imageView = UAV->GetImageView();
+            uavInfo.imageInfo.imageLayout = UAV->GetImageLayout();
+            uavInfo.imageInfo.sampler = VK_NULL_HANDLE;
 
             write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
-            write.pImageInfo = &imageInfo;
+            write.pImageInfo = &uavInfo.imageInfo;
         }
         else// if UAV is not Image
         {
             // === Buffer UAV ===
-            VkDescriptorBufferInfo bufferInfo = {};
-            bufferInfo.buffer = UAV->GetBuffer();
-            bufferInfo.offset = UAV->GetOffset();
-            bufferInfo.range  = UAV->GetRange();
+            uavInfo.bufferInfo.buffer = UAV->GetBuffer();
+            uavInfo.bufferInfo.offset = UAV->GetOffset();
+            uavInfo.bufferInfo.range  = UAV->GetRange();
 
             write.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-            write.pBufferInfo = &bufferInfo;
+            write.pBufferInfo = &uavInfo.bufferInfo;
         }
 
         vkUpdateDescriptorSets(GetDevice(), 1, &write, 0, nullptr);
@@ -338,11 +350,11 @@ namespace RHI
         if (!CBV) return false;
         DESCRIPTOR_SET_CHECK();
 
-        VkDescriptorSet& set = m_DescriptorSets[index];
-        if (set == VK_NULL_HANDLE)
+        DescriptorSetBinding& binding = m_DescriptorBindings[index];
+        if (binding.set == VK_NULL_HANDLE)
         {
             m_DescriptorTypes[index] = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            if (!AllocateDescriptorSet(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, set))
+            if (!AllocateDescriptorSet(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, binding.set, binding.layout))
             {
                 ThrowErrorMessage("DescriptorHeapVulKan::SetCBVDescriptor - AllocateDescriptorSet failed");return false;
             }
@@ -351,7 +363,7 @@ namespace RHI
         m_Descriptors[index].ViewType = RHIResourceType::RRT_ConstantBufferView;
         m_Descriptors[index].pCBV = std::unique_ptr<ConstantBufferViewVulKan>(CBV);
 
-        WriteCBVToSet(set, m_Descriptors[index].pCBV.get());
+        WriteCBVToSet(binding.set, m_Descriptors[index].pCBV.get());
 
         return true;
     }
@@ -366,11 +378,11 @@ namespace RHI
             ? VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE
             : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 
-        VkDescriptorSet& set = m_DescriptorSets[index];
-        if (set == VK_NULL_HANDLE)
+        DescriptorSetBinding& binding = m_DescriptorBindings[index];
+        if (binding.set == VK_NULL_HANDLE)
         {
             m_DescriptorTypes[index] = descType;
-            if (!AllocateDescriptorSet(descType, set))
+            if (!AllocateDescriptorSet(descType, binding.set, binding.layout))
             {
                 ThrowErrorMessage("DescriptorHeapVulKan::SetSRVDescriptor - AllocateDescriptorSet failed");return false;
             }
@@ -379,7 +391,7 @@ namespace RHI
         m_Descriptors[index].ViewType = RHIResourceType::RRT_ShaderResourceView;
         m_Descriptors[index].pSRV = std::unique_ptr<ShaderResourceViewVulKan>(SRV);
 
-        WriteSRVToSet(set, m_Descriptors[index].pSRV.get());
+        WriteSRVToSet(binding.set, m_Descriptors[index].pSRV.get());
 
         return true;
     }
@@ -394,11 +406,11 @@ namespace RHI
             ? VK_DESCRIPTOR_TYPE_STORAGE_IMAGE
             : VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 
-        VkDescriptorSet& set = m_DescriptorSets[index];
-        if (set == VK_NULL_HANDLE)
+        DescriptorSetBinding& binding = m_DescriptorBindings[index];
+        if (binding.set == VK_NULL_HANDLE)
         {
             m_DescriptorTypes[index] = descType;
-            if (!AllocateDescriptorSet(descType, set))
+            if (!AllocateDescriptorSet(descType, binding.set, binding.layout))
             {
                 ThrowErrorMessage("DescriptorHeapVulKan::SetUAVDescriptor - AllocateDescriptorSet failed");return false;
             }
@@ -407,7 +419,7 @@ namespace RHI
         m_Descriptors[index].ViewType = RHIResourceType::RRT_UnorderedAccessView;
         m_Descriptors[index].pUAV = std::unique_ptr<UnorderedAccessViewVulKan>(UAV);
 
-        WriteUAVToSet(set, m_Descriptors[index].pUAV.get());
+        WriteUAVToSet(binding.set, m_Descriptors[index].pUAV.get());
 
         return true;
     }
@@ -454,11 +466,11 @@ namespace RHI
         if (!sampler) return false;
         DESCRIPTOR_SET_CHECK();
 
-        VkDescriptorSet& set = m_DescriptorSets[index];
-        if (set == VK_NULL_HANDLE)
+        DescriptorSetBinding& binding = m_DescriptorBindings[index];
+        if (binding.set == VK_NULL_HANDLE)
         {
             m_DescriptorTypes[index] = VK_DESCRIPTOR_TYPE_SAMPLER;
-            if (!AllocateDescriptorSet(VK_DESCRIPTOR_TYPE_SAMPLER, set))
+            if (!AllocateDescriptorSet(VK_DESCRIPTOR_TYPE_SAMPLER, binding.set, binding.layout))
             {
                 ThrowErrorMessage("DescriptorHeapVulKan::SetSamplerDescriptor - AllocateDescriptorSet failed");return false;
             }
@@ -467,12 +479,12 @@ namespace RHI
         m_Descriptors[index].ViewType = RHIResourceType::RRT_SamplerState;
         m_Descriptors[index].pSampler = std::unique_ptr<SamplerStateVulKan>(sampler);
 
-        WriteSamplerToSet(set, m_Descriptors[index].pSampler.get());
+        WriteSamplerToSet(binding.set, m_Descriptors[index].pSampler.get());
 
         return true;
     }
 
-    const DescriptorData* DescriptorHeapVulKan::GetDescriptor(RHIDescriptorHandle handle) const
+    const DescriptorView* DescriptorHeapVulKan::GetDescriptorView(RHIDescriptorHandle handle) const
     {
         if (!handle.IsValid() || handle.GetType() != HeapType)
         {

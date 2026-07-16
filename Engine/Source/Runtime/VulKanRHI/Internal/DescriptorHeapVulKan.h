@@ -7,7 +7,7 @@
 
 namespace RHI
 {
-    struct DescriptorData
+    struct DescriptorView
     {
         std::unique_ptr<ConstantBufferViewVulKan> pCBV;
         std::unique_ptr<ShaderResourceViewVulKan> pSRV;
@@ -23,6 +23,21 @@ namespace RHI
             pDSV.reset();pSampler.reset();
             ViewType = RHIResourceType::RRT_None;
         }
+    };
+
+    struct DescriptorSetBinding
+    {
+        VkDescriptorSet set;
+        VkDescriptorSetLayout layout;
+
+        void Release(){
+            layout = VK_NULL_HANDLE;
+            set = VK_NULL_HANDLE;
+        }
+
+        DescriptorSetBinding() : layout(VK_NULL_HANDLE), set(VK_NULL_HANDLE) {}
+        DescriptorSetBinding(VkDescriptorSet set, VkDescriptorSetLayout layout) : layout(layout), set(set) {}
+        ~DescriptorSetBinding() {}
     };
 
     class DescriptorHeapVulKan : public RHIDescriptorHeap
@@ -48,15 +63,15 @@ namespace RHI
         bool SetDSVDescriptor(RHIDescriptorHandle handle, DepthStencilViewVulKan* DSV);
         bool SetSamplerDescriptor(RHIDescriptorHandle handle, SamplerStateVulKan* sampler);
 
-        const DescriptorData* GetDescriptor(RHIDescriptorHandle handle) const;
+        const DescriptorView* GetDescriptorView(RHIDescriptorHandle handle) const;
         const VkDevice GetDevice() const;
 
-        VkDescriptorSet GetDescriptorSet(RHIDescriptorHandle handle) const;
+        bool GetDescriptorSetBinding(RHIDescriptorHandle handle, DescriptorSetBinding& outBinding) const;
         VkDescriptorType GetDescriptorType(RHIDescriptorHandle handle) const;
 
     private:
         // Allocate a descriptor set for a single resource
-        bool AllocateDescriptorSet(VkDescriptorType type, VkDescriptorSet& outSet);
+        bool AllocateDescriptorSet(VkDescriptorType type, VkDescriptorSet& outSet, VkDescriptorSetLayout& outLayout);
 
         // Actually write descriptor data into the allocated descriptor set
         void WriteCBVToSet(VkDescriptorSet set, ConstantBufferViewVulKan* CBV);
@@ -75,8 +90,8 @@ namespace RHI
         const uint32_t m_DescriptorSetCapacity;
 
         std::vector<uint32_t> m_FreeList;
-        std::vector<DescriptorData> m_Descriptors;
-        std::vector<VkDescriptorSet> m_DescriptorSets;
+        std::vector<DescriptorView> m_Descriptors;
+        std::vector<DescriptorSetBinding> m_DescriptorBindings;
         std::vector<VkDescriptorType> m_DescriptorTypes;
     };
 }

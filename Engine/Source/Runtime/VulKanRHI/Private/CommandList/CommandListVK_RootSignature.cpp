@@ -90,8 +90,9 @@ namespace RHI
         const RootParameterDesc& tableParam = m_pCurrentGraphicsRS->GetRootParameterDesc(rootParameterIndex);
 
         // TODO : Implement this method
-        VkDescriptorSet set = pHeap->GetDescriptorSet({RHIDescriptorHeapType::Standard,0});
-        if (set == VK_NULL_HANDLE) return;
+        DescriptorSetBinding binding;
+        if (!pHeap->GetDescriptorSetBinding({RHIDescriptorHeapType::Standard,0},binding)) return;
+        if (binding.set == VK_NULL_HANDLE) return;
 
         const uint32_t firstSet = slot.DescriptorSetIndex;
         vkCmdBindDescriptorSets(
@@ -99,7 +100,7 @@ namespace RHI
             VK_PIPELINE_BIND_POINT_GRAPHICS,
             m_pCurrentGraphicsRS->GetPipelineLayout(),
             firstSet,
-            1, &set,
+            1, &binding.set,
             0, nullptr);
     }
 
@@ -193,8 +194,9 @@ namespace RHI
         const RootParameterDesc& tableParam = m_pCurrentComputeRS->GetRootParameterDesc(rootParameterIndex);
 
         // TODO : Implement this method
-        VkDescriptorSet set = pHeap->GetDescriptorSet({RHIDescriptorHeapType::Standard,0});
-        if (set == VK_NULL_HANDLE) return;
+        DescriptorSetBinding binding;
+        if (!pHeap->GetDescriptorSetBinding({RHIDescriptorHeapType::Standard,0},binding)) return;
+        if (binding.set == VK_NULL_HANDLE) return;
 
         const uint32_t firstSet = slot.DescriptorSetIndex;
         vkCmdBindDescriptorSets(
@@ -202,7 +204,7 @@ namespace RHI
             VK_PIPELINE_BIND_POINT_COMPUTE,
             m_pCurrentComputeRS->GetPipelineLayout(),
             firstSet,
-            1, &set,
+            1, &binding.set,
             0, nullptr);
     }
 
