@@ -73,7 +73,7 @@ namespace RHI
         virtual CreateShaderDesc CreateShaderDescription() { return CreateShaderDesc {}; }
         
     protected:
-        // Compile HLSL → SPIR-V
+        // Compile HLSL → SPIR-V ByteCode or HLSL ByteCode
         virtual ShaderCompileResult CompileFromString(const std::string& hlslSource, const ShaderCompileOptionInternal& options) { return ShaderCompileResult {}; }
         virtual ShaderCompileResult CompileFromFile(const std::string& filePath, const ShaderCompileOptionInternal& options) { return ShaderCompileResult {}; };
         

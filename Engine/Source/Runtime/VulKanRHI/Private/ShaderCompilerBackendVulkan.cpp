@@ -41,9 +41,10 @@ namespace RHI
         out_result = in_result;
     }
     
-    ShaderReflectionGenerationMode ShaderCompilerBackendVulKan::GetShaderReflectionGenerationMode()
+    ShaderPipelineGenerationMode ShaderCompilerBackendVulKan::GetShaderPipelineGenerationMode()
     {
-        return ShaderReflectionGenerationMode{ShaderReflectionGenerationMode::ReflectionGenerationMode::Use_CompileResultCache};
+        return ShaderPipelineGenerationMode{
+            ShaderPipelineGenerationMode::ReflectionGenerationMode::Use_CompileResultCache,ShaderPipelineGenerationMode::ShaderSaveMode::Use_UINT32};
     }
 
     // ==================================================== Tools ====================================================

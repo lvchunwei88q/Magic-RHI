@@ -42,9 +42,10 @@ namespace RHI
         out_result = in_result;
     }
 
-    ShaderReflectionGenerationMode ShaderCompilerBackendD3D12::GetShaderReflectionGenerationMode()
+    ShaderPipelineGenerationMode ShaderCompilerBackendD3D12::GetShaderPipelineGenerationMode()
     {
-        return ShaderReflectionGenerationMode{ShaderReflectionGenerationMode::ReflectionGenerationMode::Use_SourceCacheCompile};
+        return ShaderPipelineGenerationMode{
+            ShaderPipelineGenerationMode::ReflectionGenerationMode::Use_SourceCacheCompile,ShaderPipelineGenerationMode::ShaderSaveMode::Use_UINT8};
     }
 
     // ==================================================== Tools ====================================================

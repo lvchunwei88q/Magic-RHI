@@ -215,25 +215,30 @@ struct ShaderCompileSource
     std::shared_ptr<ShaderPostProcessArgs> postProcessArgs;
 };
 
-// Shader Reflection Generation Mode
-struct ShaderReflectionGenerationMode {
-    enum class ReflectionGenerationMode {
+// Shader Pipeline Generation Mode
+struct ShaderPipelineGenerationMode {
+    enum class ReflectionGenerationMode : uint8_t {
         Use_InitialCompileCache = 1,
         Use_CompileResultCache = 2,
         Use_SourceCacheCompile = 3,
     };
-    ReflectionGenerationMode mode = ReflectionGenerationMode::Use_InitialCompileCache;
+    enum class ShaderSaveMode : uint8_t {
+        Use_UINT8 = 1,
+        Use_UINT32 = 2,
+    };
+    ReflectionGenerationMode generationMode = ReflectionGenerationMode::Use_InitialCompileCache;
+    ShaderSaveMode saveMode = ShaderSaveMode::Use_UINT8;
 };
 
 // Create Shader Description
 struct CreateShaderDesc
 {   
+    // Shader Byte Code
     std::variant<std::vector<uint8_t>, std::vector<uint32_t>> byteCode;
 
     const std::vector<uint8_t>& GetUINT8ByteCode() const {
         return std::get<std::vector<uint8_t>>(byteCode);
     }
-    
     const std::vector<uint32_t>& GetUINT32ByteCode() const {
         return std::get<std::vector<uint32_t>>(byteCode);
     }

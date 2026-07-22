@@ -139,7 +139,7 @@ namespace RHI
         virtual ShaderCompileOptionInternal AddBackendArguments(const ShaderCompileOptions& options) = 0;
         virtual void PostProcessShader(const ShaderCompileOptions& options, const ShaderPostProcessArgs* postProcessArgs, 
             const ShaderCompileResult& in_result, ShaderCompileResult& out_result) = 0;
-        virtual ShaderReflectionGenerationMode GetShaderReflectionGenerationMode() = 0;
+        virtual ShaderPipelineGenerationMode GetShaderPipelineGenerationMode() = 0;
 
         // ------------------- Tools -------------------
         virtual std::string SPIRVCompileEnvironment() const = 0;

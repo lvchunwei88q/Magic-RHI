@@ -128,7 +128,7 @@ namespace RHI
         ShaderCompileOptionInternal AddBackendArguments(const ShaderCompileOptions& options) override;
         void PostProcessShader(const ShaderCompileOptions& options, const ShaderPostProcessArgs* postProcessArgs, 
             const ShaderCompileResult& in_result, ShaderCompileResult& out_result) override;
-        ShaderReflectionGenerationMode GetShaderReflectionGenerationMode() override;
+        ShaderPipelineGenerationMode GetShaderPipelineGenerationMode() override;
 
         // ------------------- Tools -------------------
         std::string SPIRVCompileEnvironment() const override;

@@ -156,8 +156,8 @@ namespace RHI {
             ThrowErrorMessage("Shader compiler backend is null");
         }
 
-        // Get shader reflection generation mode
-        ShaderReflectionGenerationMode reflectionMode = backend->GetShaderReflectionGenerationMode();
+        // Get shader pipeline generation mode
+        ShaderPipelineGenerationMode pipelineMode = backend->GetShaderPipelineGenerationMode();
         // SPIRV compile result
         ShaderCompileResult ReflectionGeneratedSource;
         
@@ -183,14 +183,14 @@ namespace RHI {
             }
         };
         // Select a mode to generate SPIRV reflection source
-        switch (reflectionMode.mode) {
-            case ShaderReflectionGenerationMode::ReflectionGenerationMode::Use_CompileResultCache:
+        switch (pipelineMode.generationMode) {
+            case ShaderPipelineGenerationMode::ReflectionGenerationMode::Use_CompileResultCache:
                 ReflectionGeneratedSource = cache->CompileResultCache;
                 break;
-            case ShaderReflectionGenerationMode::ReflectionGenerationMode::Use_InitialCompileCache:
+            case ShaderPipelineGenerationMode::ReflectionGenerationMode::Use_InitialCompileCache:
                 ReflectionGeneratedSource = cache->InitialCompileCache;
                 break;
-            case ShaderReflectionGenerationMode::ReflectionGenerationMode::Use_SourceCacheCompile:
+            case ShaderPipelineGenerationMode::ReflectionGenerationMode::Use_SourceCacheCompile:
                 ReflectionGeneratedSource = SPIRVCompileLambda();
                 break;
             default: ThrowErrorMessage("Not implemented");
@@ -238,8 +238,37 @@ namespace RHI {
 
         // Get cache
         const LocalCompilerPipelineCache* cache = controller->GetCompilerPipelineCache();
+        // Get backend
+        ShaderCompilerBackend* backend = controller->GetCompilerContext()->m_Backend.get();
+        if (!backend || !backend->IsValid()) {
+            ThrowErrorMessage("Shader compiler backend is null");
+        }
+        // Get shader pipeline generation mode
+        ShaderPipelineGenerationMode pipelineMode = backend->GetShaderPipelineGenerationMode();
+
         CreateShaderDesc shaderDesc;
-        shaderDesc.byteCode.emplace<std::vector<uint8_t>>(cache->CompileResultCache.byteCode);
+        if(pipelineMode.saveMode == ShaderPipelineGenerationMode::ShaderSaveMode::Use_UINT8){
+            shaderDesc.byteCode.emplace<std::vector<uint8_t>>(cache->CompileResultCache.byteCode);
+        }else if(pipelineMode.saveMode == ShaderPipelineGenerationMode::ShaderSaveMode::Use_UINT32){
+            // Convert uint8_t to uint32_t
+            const std::vector<uint8_t>& data8 = cache->CompileResultCache.byteCode;
+            std::vector<uint32_t> data32;
+            const size_t sizeInBytes = data8.size();
+            // Check if the size is multiple of sizeof(uint32_t)
+            if(sizeInBytes % sizeof(uint32_t) != 0){
+#if RHI_ENABLE_DEBUG_INFO
+                ThrowErrorMessage("Shader byte code size is not multiple of sizeof(uint32_t)");
+#endif
+            }
+            size_t elementCount = (sizeInBytes + 3) / sizeof(uint32_t);
+            data32.resize(elementCount); // Resize to uint32_t size
+            std::memcpy(data32.data(), data8.data(), sizeInBytes); // Copy data
+
+            shaderDesc.byteCode.emplace<std::vector<uint32_t>>(data32);
+        }else{
+            ThrowErrorMessage("Not implemented");
+            return {};
+        }
 
         if(cache->CompileResultCache.success == false || cache->CompileResultCache.errorMessage.size() > 0){
             Core::ErrorCapture::Capture( "Create shader description failed: " + cache->CompileResultCache.errorMessage);
