@@ -99,6 +99,7 @@ namespace RHI
                 return false;
             }
 
+            // Bind buffer memory Here, we’ll assume that a buffer is first bound to a corresponding memory handle (but for standard Vk, we are allowed to bind one memory handle to multiple buffers at the same time).
             vkBindBufferMemory(device, outBuffer, outMemory, 0);
             return true;
         }
