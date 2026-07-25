@@ -237,6 +237,7 @@ namespace RHI
         VkSurfaceCapabilitiesKHR capabilities;
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(GetPhysicalDevice(), GetVulkanWindowSurface(), &capabilities);
 
+        // Get surface formats list
         std::vector<VkSurfaceFormatKHR> formats;
         uint32_t formatCount = 0;
         vkGetPhysicalDeviceSurfaceFormatsKHR(GetPhysicalDevice(), GetVulkanWindowSurface(), &formatCount, nullptr);
@@ -246,6 +247,7 @@ namespace RHI
             vkGetPhysicalDeviceSurfaceFormatsKHR(GetPhysicalDevice(), GetVulkanWindowSurface(), &formatCount, formats.data());
         }
 
+        // Get present modes list
         std::vector<VkPresentModeKHR> presentModes;
         uint32_t presentModeCount = 0;
         vkGetPhysicalDeviceSurfacePresentModesKHR(GetPhysicalDevice(), GetVulkanWindowSurface(), &presentModeCount, nullptr);
@@ -310,8 +312,8 @@ namespace RHI
             return false;
         }
 
+        // The images in the swapchain are automatically managed by the Vulkan driver, so you don't need to, and actually shouldn't, call vkAllocateMemory to allocate their memory yourself.
         std::vector<VkImage> images;
-
         vkGetSwapchainImagesKHR(GetDevice(), m_SwapChain, &imageCount, nullptr);
         m_pBackBuffers.resize(imageCount);
         images.resize(imageCount);

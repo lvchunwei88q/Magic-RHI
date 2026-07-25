@@ -183,8 +183,8 @@ namespace RHI
                 uploadBufferHandle, uploadMemoryHandle, uploadDesc, GetDevice());
 
             // Use the copy queue to copy from upload to default heap
-            auto cmdAllocator = CreateCommandAllocator(RHICmdType::Copy);
-            auto cmdList = CreateCommandList(cmdAllocator);
+            auto cmdPool = CreateCommandPool(RHICmdType::Copy);
+            auto cmdList = CreateCommandList(cmdPool);
             GetCommandQueue(RHICmdType::Copy)->BeginFrame();
             cmdList->BeginRecording();
 

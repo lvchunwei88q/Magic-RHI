@@ -14,15 +14,17 @@ using Microsoft::WRL::ComPtr;
 
 namespace RHI
 {
-    class CommandAllocatorD3D12 : public RHICommandAllocator
+    class CommandPoolD3D12 : public RHICommandPool
     {
         public:
-            CommandAllocatorD3D12(RHICmdType type, ID3D12CommandAllocator* pCmdAllocator)
-                : RHICommandAllocator(type)
+            CommandPoolD3D12(RHICmdType type, ID3D12CommandAllocator* pCmdAllocator)
+                : RHICommandPool(type)
                 , m_pCommandAllocator(pCmdAllocator) {}
-            virtual ~CommandAllocatorD3D12() = default;
+            virtual ~CommandPoolD3D12() = default;
 
             ID3D12CommandAllocator* GetCommandAllocator() const { return m_pCommandAllocator.Get(); }
+            // reset command pool memory
+            virtual void Reset() const override;
 
         private:
             ComPtr<ID3D12CommandAllocator> m_pCommandAllocator;
@@ -31,9 +33,11 @@ namespace RHI
     class CommandListD3D12 : public RHICommandList
     {
     public:
-        CommandListD3D12(RHICommandAllocator* pCmdAllocator, ID3D12GraphicsCommandList* pCmdList)
-            : RHICommandList(pCmdAllocator)
-            , m_pCommandList(pCmdList) {}
+        CommandListD3D12(CommandPoolD3D12* pCmdPool, ID3D12GraphicsCommandList* pCmdList)
+            : RHICommandList()
+            , m_pCmdPool(pCmdPool)
+            , m_pCommandList(pCmdList)
+        {}
         ~CommandListD3D12() override = default;
 
         // The start and end of the recording
@@ -98,18 +102,9 @@ namespace RHI
         ID3D12GraphicsCommandList* GetCommandList() const { return m_pCommandList.Get(); }
 
     private:
-        // Here, use this function to quickly get the allocator
-        CommandAllocatorD3D12* GetAllocator() { 
-            if(m_pAllocator == nullptr){
-#if RHI_ENABLE_DEBUG_INFO
-                ThrowErrorMessage("CommandAllocatorD3D12 is nullptr");
-#endif
-                return nullptr;
-            }
-            return SafeCast<CommandAllocatorD3D12>(m_pAllocator);
-        }
-
         ComPtr<ID3D12GraphicsCommandList> m_pCommandList;
+        // Command pool ref
+        const CommandPoolD3D12* m_pCmdPool;
     };
 
     using GraphicsCommandListD3D12 = CommandListD3D12;
@@ -136,9 +131,10 @@ namespace RHI
         CommandQueueD3D12(const CommandQueueD3D12&) = delete;
         CommandQueueD3D12& operator=(const CommandQueueD3D12&) = delete;
 
-        void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override;
         void BeginFrame() override;
+        void ResetCommandPoolMemory(const RHICommandPool* cmdPool) override;
         void EndFrame() override;
+        void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override;
         void WaitForGPU() override;
 
         // Synchronization operation

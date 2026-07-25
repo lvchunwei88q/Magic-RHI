@@ -10,25 +10,29 @@
 
 namespace RHI
 {
-    class CommandAllocatorVulKan : public RHICommandAllocator
+    class CommandPoolVulKan : public RHICommandPool
     {
     public:
-        CommandAllocatorVulKan(RHICmdType type, VkCommandPool commandPool)
-            : RHICommandAllocator(type)
+        CommandPoolVulKan(RHICmdType type, VkCommandPool commandPool, const VkDevice* device)
+            : RHICommandPool(type)
+            , m_Device(device)
             , m_CommandPool(commandPool) {}
-        virtual ~CommandAllocatorVulKan() = default;
+        virtual ~CommandPoolVulKan() = default;
 
         VkCommandPool GetCommandPool() const { return m_CommandPool; }
+        // reset command pool memory
+        virtual void Reset() const override;
 
     private:
         VkCommandPool m_CommandPool;
+        const VkDevice* m_Device = nullptr;
     };
 
     class CommandListVulKan : public RHICommandList
     {
     public:
-        CommandListVulKan(RHICommandAllocator* pCmdAllocator, VkCommandBuffer commandBuffer)
-            : RHICommandList(pCmdAllocator)
+        CommandListVulKan(VkCommandBuffer commandBuffer)
+            : RHICommandList()
             , m_CommandBuffer(commandBuffer) {}
         ~CommandListVulKan() override = default;
 
@@ -143,9 +147,10 @@ namespace RHI
         CommandQueueVulKan(const CommandQueueVulKan&) = delete;
         CommandQueueVulKan& operator=(const CommandQueueVulKan&) = delete;
 
-        void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override;
         void BeginFrame() override;
+        void ResetCommandPoolMemory(const RHICommandPool* cmdPool) override;
         void EndFrame() override;
+        void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override;
         void WaitForGPU() override;
 
          // Synchronous operation

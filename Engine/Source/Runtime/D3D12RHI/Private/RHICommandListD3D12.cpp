@@ -112,31 +112,31 @@ namespace RHI
 
     // ===========================================================================
     // Create command dispatcher
-    std::shared_ptr<RHICommandAllocator> DeviceD3D12::CreateCommandAllocator(RHICmdType type)
+    std::shared_ptr<RHICommandPool> DeviceD3D12::CreateCommandPool(RHICmdType type)
     {
         D3D12_COMMAND_LIST_TYPE d3dType = ConvertRHICmdTypeToD3D12(type);
 
         // Create command allocator this is the only interface that has no version 1，2，3 etc
         ComPtr<ID3D12CommandAllocator> pAllocator;
         ThrowIfFailed(m_pDevice->CreateCommandAllocator(d3dType, IID_PPV_ARGS(&pAllocator)));
-        return std::make_shared<CommandAllocatorD3D12>(type, pAllocator.Get());
+        return std::make_shared<CommandPoolD3D12>(type, pAllocator.Get());
     }
     
-    std::shared_ptr<RHICommandList> DeviceD3D12::CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator)
+    std::shared_ptr<RHICommandList> DeviceD3D12::CreateCommandList(std::shared_ptr<RHICommandPool>& pool)
     {
-        CommandAllocatorD3D12* pAllocator = SafeCast<CommandAllocatorD3D12>(allocator.get());
-        if (pAllocator == nullptr) {
-            ThrowErrorMessage("CommandAllocatorD3D12 is nullptr");
+        CommandPoolD3D12* pPool = SafeCast<CommandPoolD3D12>(pool.get());
+        if (pPool == nullptr) {
+            ThrowErrorMessage("CommandPoolD3D12 is nullptr");
             return nullptr;
         }
-        RHICmdType type = pAllocator->GetCmdType();
+        RHICmdType type = pPool->GetCmdType();
         D3D12_COMMAND_LIST_TYPE d3dType = ConvertRHICmdTypeToD3D12(type);
     
         // Create command list
         ComPtr<ID3D12GraphicsCommandList> pCmdList = CreateLevelCommandList(
             m_pDevice.Get(),
             d3dType,
-            pAllocator->GetCommandAllocator(),
+            pPool->GetCommandAllocator(),
             GetFeatureLevel()
         );
 
@@ -144,24 +144,28 @@ namespace RHI
         ThrowIfFailed(pCmdList->Close());
     
         // Create RHI wrapper object
-        return std::make_shared<CommandListD3D12>(pAllocator, pCmdList.Get());
+        return std::make_shared<CommandListD3D12>(pPool, pCmdList.Get());
     }
     // ===========================================================================
 
+    // reset command pool memory
+    void CommandPoolD3D12::Reset() const
+    {
+        ThrowIfFailed(m_pCommandAllocator->Reset());
+    }
+
+    // reset command list
     void CommandListD3D12::BeginRecording()
     {
-        // use command allocator
-        CommandAllocatorD3D12* dx12CmdAllocator = GetAllocator();
-
-        if(dx12CmdAllocator == nullptr){
+        if(m_pCmdPool == nullptr){
 #if RHI_ENABLE_DEBUG_INFO
-            ThrowErrorMessage("CommandAllocatorD3D12 is nullptr");
+            ThrowErrorMessage("CommandPoolD3D12 is nullptr");
 #endif
             return;
         }
 
-        ThrowIfFailed(dx12CmdAllocator->GetCommandAllocator()->Reset());
-        ThrowIfFailed(m_pCommandList->Reset(dx12CmdAllocator->GetCommandAllocator(), nullptr));
+        // Reset command list (We don't allow replacing the allocator for the sake of consistency)
+        ThrowIfFailed(m_pCommandList->Reset(m_pCmdPool->GetCommandAllocator(), nullptr));
     }
 
     void CommandListD3D12::EndRecording()
@@ -186,6 +190,15 @@ namespace RHI
     void CommandQueueD3D12::BeginFrame()
     {
         // NOT implemented
+    }
+    
+    void CommandQueueD3D12::ResetCommandPoolMemory(const RHICommandPool* cmdPool)
+    {
+        if (!cmdPool)
+        {
+            ThrowErrorMessage("CommandQueueD3D12: cmdPool is null");return;
+        }
+        cmdPool->Reset();
     }
     
     void CommandQueueD3D12::EndFrame()

@@ -22,7 +22,7 @@ namespace RHI
      * otherwise it will cause undefined issues.
      */
     // CommandList & CommandQueue Forward Declaration
-    class RHICommandAllocator;
+    class RHICommandPool;
     class RHICommandList;
     class RHICommandQueue;
     // forward declarations
@@ -88,8 +88,8 @@ namespace RHI
         [[nodiscard]] virtual std::unique_ptr<RHIComputeShader> CreateComputeShader(const CreateShaderDesc& desc) = 0;
         virtual ShaderModelVersion GetShaderModelVersion() const = 0;
 
-        [[nodiscard]] virtual std::shared_ptr<RHICommandAllocator> CreateCommandAllocator(RHICmdType type) = 0;
-        [[nodiscard]] virtual std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator) = 0;
+        [[nodiscard]] virtual std::shared_ptr<RHICommandPool> CreateCommandPool(RHICmdType type) = 0;
+        [[nodiscard]] virtual std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandPool>& pool) = 0;
         [[nodiscard]] virtual RHICommandQueue* GetCommandQueue(RHICmdType Type) const = 0;
 
         [[nodiscard]] virtual std::shared_ptr<RHIRootSignature> CreateRootSignature(const RootSignatureDesc& desc) = 0;

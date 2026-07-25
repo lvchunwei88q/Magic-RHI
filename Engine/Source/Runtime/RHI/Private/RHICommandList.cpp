@@ -2,12 +2,11 @@
 
 namespace RHI
 {
-    RHICommandAllocator::RHICommandAllocator(RHICmdType InType)
+    RHICommandPool::RHICommandPool(RHICmdType InType)
         : CmdType(InType) {}
-    RHICommandAllocator::~RHICommandAllocator() = default;
+    RHICommandPool::~RHICommandPool() = default;
         
-    RHICommandList::RHICommandList(RHICommandAllocator* pCmdAllocator)
-        : m_pAllocator(pCmdAllocator) {}
+    RHICommandList::RHICommandList() {}
     RHICommandList::~RHICommandList() = default;
 
     RHICommandQueue::RHICommandQueue(RHICmdType InType)

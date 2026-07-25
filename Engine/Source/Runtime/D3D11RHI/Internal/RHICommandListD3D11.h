@@ -42,15 +42,17 @@ namespace RHI
 
     // For DX11, we don't really need an allocator and this concept doesn't even exist,
     //  but we can mimic the design of modern APIs to carry out some tasks that require 'allocation'.
-    class CommandAllocatorD3D11 : public RHICommandAllocator
+    class CommandAllocatorD3D11 : public RHICommandPool
     {
         public:
             CommandAllocatorD3D11(RHICmdType type, ID3D11DeviceContext* pContext)
-                : RHICommandAllocator(type)
+                : RHICommandPool(type)
                 , m_pDeviceContext(pContext) {}
             virtual ~CommandAllocatorD3D11() = default;
 
             ID3D11DeviceContext* GetDeviceContext() const { return m_pDeviceContext; }
+
+            void Reset() const override {};
         private:
             ID3D11DeviceContext* m_pDeviceContext;
     };
@@ -74,8 +76,8 @@ namespace RHI
     class CommandListD3D11 : public RHICommandList
     {
     public:
-        CommandListD3D11(RHICommandAllocator* pCmdAllocator)
-            : RHICommandList(pCmdAllocator) {}
+        CommandListD3D11(CommandAllocatorD3D11* pCmdAllocator)
+            : m_pAllocator(pCmdAllocator) {}
         ~CommandListD3D11() override = default;
 
         // The start and end of the recording
@@ -152,6 +154,8 @@ namespace RHI
             return SafeCast<CommandAllocatorD3D11>(m_pAllocator);
         }
 
+        CommandAllocatorD3D11* m_pAllocator;
+
         // This is current binding assignment
         TempBindingAssignmentD3D11 m_tempBindingAssignment;
     };
@@ -174,6 +178,7 @@ namespace RHI
 
         void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override;
         void BeginFrame() override;
+        void ResetCommandPoolMemory(const RHICommandPool* cmdPool) override {};
         void EndFrame() override;
         void WaitForGPU() override;
 

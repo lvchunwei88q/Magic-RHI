@@ -463,6 +463,7 @@ namespace RHI
         // Check each physical device for suitability
         for (VkPhysicalDevice device : devices)
         {
+            // Get queue families supported
             uint32_t graphicsFamily, computeFamily, transferFamily;
             bool isSoftware = !IsPhysicalDeviceSuitable(device, graphicsFamily, computeFamily, transferFamily);
             

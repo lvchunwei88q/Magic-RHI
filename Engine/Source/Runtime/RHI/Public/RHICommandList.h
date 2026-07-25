@@ -11,13 +11,15 @@
 
 namespace RHI
 {
-    class RHI_API RHICommandAllocator
+    class RHI_API RHICommandPool 
     {
         public:
-            RHICommandAllocator(RHICmdType InType);
-            virtual ~RHICommandAllocator();
+            RHICommandPool (RHICmdType InType);
+            virtual ~RHICommandPool();
 
             RHICmdType GetCmdType() const { return CmdType; }
+            // reset command pool memory
+            virtual void Reset() const = 0;
         private:
             RHICmdType CmdType;
     };
@@ -25,7 +27,7 @@ namespace RHI
     class RHI_API RHICommandList
     {
     public:
-        RHICommandList(RHICommandAllocator* pCmdAllocator);
+        RHICommandList();
         virtual ~RHICommandList();
 
         virtual void BeginRecording() = 0;
@@ -90,7 +92,8 @@ namespace RHI
         virtual void SetComputeRoot32BitConstants(uint32_t rootParameterIndex, uint32_t num32BitValues, const void* pSrcData, uint32_t destOffsetIn32BitValues) = 0;
 
     protected:
-        RHICommandAllocator* m_pAllocator; // Command allocator
+        // We shouldn't store the allocator here.
+        // RHICommandAllocator* m_pAllocator;
     };
 
     class RHI_API RHICommandQueue
@@ -101,9 +104,10 @@ namespace RHI
 
         RHICmdType GetQueueType() const { return QueueType; }
 
-        virtual void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) = 0;
         virtual void BeginFrame() = 0;
         virtual void EndFrame() = 0;
+        virtual void ResetCommandPoolMemory(const RHICommandPool* cmdPool) = 0;
+        virtual void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) = 0;
         virtual void WaitForGPU() = 0;
 
         // Synchronous operation

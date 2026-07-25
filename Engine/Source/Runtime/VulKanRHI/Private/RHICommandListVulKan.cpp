@@ -26,7 +26,7 @@ namespace RHI
     }
     // ===========================================================================
     // Create command dispatcher
-    std::shared_ptr<RHICommandAllocator> DeviceVulKan::CreateCommandAllocator(RHICmdType type)
+    std::shared_ptr<RHICommandPool> DeviceVulKan::CreateCommandPool(RHICmdType type)
     {
         // Fill create command pool info
         VkCommandPoolCreateInfo poolInfo{};
@@ -40,22 +40,22 @@ namespace RHI
         if (result != VK_SUCCESS)
             ThrowErrorMessage("Failed to create command pool");
         
-        return std::make_shared<CommandAllocatorVulKan>(type, commandPool);
+        return std::make_shared<CommandPoolVulKan>(type, commandPool, &m_Device);
     }
 
-    std::shared_ptr<RHICommandList> DeviceVulKan::CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator)
+    std::shared_ptr<RHICommandList> DeviceVulKan::CreateCommandList(std::shared_ptr<RHICommandPool>& pool)
     {
-        CommandAllocatorVulKan* pAllocator = SafeCast<CommandAllocatorVulKan>(allocator.get());
-        if (pAllocator == nullptr) {
-            ThrowErrorMessage("CommandAllocatorVulKan is nullptr");
+        CommandPoolVulKan* pPool = SafeCast<CommandPoolVulKan>(pool.get());
+        if (pPool == nullptr) {
+            ThrowErrorMessage("CommandPoolVulKan is nullptr");
             return nullptr;
         }
-        RHICmdType type = pAllocator->GetCmdType();
+        RHICmdType type = pPool->GetCmdType();
 
         VkCommandBufferAllocateInfo allocInfo = {};
         allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-        allocInfo.commandPool = pAllocator->GetCommandPool();
-        // Note that here we've made a trade-off: we force all Cmds to use the main buffer, and only one can be created at a time.
+        allocInfo.commandPool = pPool->GetCommandPool();
+        // Note, here we made a trade-off: we force all Cmds to use the main buffer, and only create one at a time.
         allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         allocInfo.commandBufferCount = 1;
 
@@ -64,9 +64,23 @@ namespace RHI
         if (result != VK_SUCCESS)
             ThrowErrorMessage("Failed to allocate command buffer");
         
-        return std::make_shared<CommandListVulKan>(pAllocator, commandBuffer);
+        return std::make_shared<CommandListVulKan>(commandBuffer);
     }
     // ===========================================================================
+
+    // reset command pool memory
+    void CommandPoolVulKan::Reset() const
+    {
+        if (!m_Device)
+        {
+            ThrowErrorMessage("CommandPoolVulKan: Device is null");return;
+        }
+        VkResult result = vkResetCommandPool(*m_Device, m_CommandPool, 0);
+        
+        if (result != VK_SUCCESS)
+            ThrowErrorMessage("Failed to reset command pool");
+        
+    }
 
     void CommandListVulKan::BeginRecording()
     {
@@ -143,6 +157,15 @@ namespace RHI
     void CommandQueueVulKan::BeginFrame()
     {
         // NOT IMPLEMENTED
+    }
+
+    void CommandQueueVulKan::ResetCommandPoolMemory(const RHICommandPool* cmdPool)
+    {
+        if (!cmdPool)
+        {
+            ThrowErrorMessage("CommandQueueVulKan: cmdPool is null");return;
+        }
+        cmdPool->Reset();
     }
 
     void CommandQueueVulKan::EndFrame()

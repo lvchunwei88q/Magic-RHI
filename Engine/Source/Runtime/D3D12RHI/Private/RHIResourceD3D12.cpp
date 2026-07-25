@@ -220,8 +220,8 @@ namespace RHI
             InitBufferData(pUploadBuffer);
             std::shared_ptr<BufferD3D12> uploadBuffer = std::make_shared<BufferD3D12>(pUploadBuffer.Get(), desc, m_pDevice.Get());
             
-            auto cmdAllocator = CreateCommandAllocator(RHICmdType::Copy);
-            auto cmdList = CreateCommandList(cmdAllocator);
+            auto cmdPool = CreateCommandPool(RHICmdType::Copy);
+            auto cmdList = CreateCommandList(cmdPool);
             m_CopyQueue.get()->BeginFrame();
             cmdList->BeginRecording();
             

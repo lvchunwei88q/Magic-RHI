@@ -109,15 +109,16 @@ namespace RHI
         return m_pDevice != nullptr && m_Initialization == InitialState::Initialize;
     }
 
-    std::shared_ptr<RHICommandAllocator> DeviceD3D11::CreateCommandAllocator(RHICmdType type)
+    std::shared_ptr<RHICommandPool> DeviceD3D11::CreateCommandPool(RHICmdType type)
     {
         return std::make_shared<CommandAllocatorD3D11>(type, m_pDeviceContext.Get());
     }
 
-    std::shared_ptr<RHICommandList> DeviceD3D11::CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator)
+    std::shared_ptr<RHICommandList> DeviceD3D11::CreateCommandList(std::shared_ptr<RHICommandPool>& allocator)
     {
         // Incoming allocator, Responsible for submitting data to the command list in DX11
-        return std::make_shared<CommandListD3D11>(allocator.get());
+        auto allocatorD3D11 = SafeCast<CommandAllocatorD3D11>(allocator.get());
+        return std::make_shared<CommandListD3D11>(allocatorD3D11);
     }
 
     /*

@@ -459,8 +459,8 @@ int main(int argc, char* argv[])
                         {
                             std::cout << "ComputePipelineState created successfully!" << std::endl;
 
-                            auto cmdAllocator = device->CreateCommandAllocator(RHI::RHICmdType::Graphics);
-                            auto cmdList = device->CreateCommandList(cmdAllocator);
+                            auto cmdPool = device->CreateCommandPool(RHI::RHICmdType::Graphics);
+                            auto cmdList = device->CreateCommandList(cmdPool);
 
                             if(cmdList && cmdList.get() != nullptr){
                                 std::cout << "CommandList created successfully!" << std::endl;
@@ -482,7 +482,10 @@ int main(int argc, char* argv[])
                                     
                                     // 开启帧
                                     device->GetCommandQueue(RHI::RHICmdType::Graphics)->BeginFrame();
-                                    // 开始记录命令
+
+                                    device->GetCommandQueue(RHI::RHICmdType::Graphics)->ResetCommandPoolMemory(cmdPool.get());
+
+                                    // 开始记录命令列表
                                     cmdList->BeginRecording();
                                     uint32_t currentIndex = swapChain->GetFrameIndex();
                                     RHI::RHITexture* BackBufferTexture = swapChain->GetBackBuffer(currentIndex);

@@ -62,8 +62,8 @@ namespace RHI
         // TODO: Get shader model version from device shader model version.
         ShaderModelVersion GetShaderModelVersion() const override;
 
-        [[nodiscard]] std::shared_ptr<RHICommandAllocator> CreateCommandAllocator(RHICmdType type) override;
-        [[nodiscard]] std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandAllocator>& allocator) override;
+        [[nodiscard]] std::shared_ptr<RHICommandPool> CreateCommandPool(RHICmdType type) override;
+        [[nodiscard]] std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandPool>& pool) override;
         [[nodiscard]] RHICommandQueue* GetCommandQueue(RHICmdType Type) const override;
 
         [[nodiscard]] std::shared_ptr<RHIRootSignature> CreateRootSignature(const RootSignatureDesc& desc) override;
