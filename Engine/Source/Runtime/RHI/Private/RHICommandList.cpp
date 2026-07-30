@@ -6,7 +6,8 @@ namespace RHI
         : CmdType(InType) {}
     RHICommandPool::~RHICommandPool() = default;
         
-    RHICommandList::RHICommandList() {}
+    RHICommandList::RHICommandList(RHICommandPoolPtr pCommandPool)
+        : m_pCommandPool(pCommandPool) {}
     RHICommandList::~RHICommandList() = default;
 
     RHICommandQueue::RHICommandQueue(RHICmdType InType)

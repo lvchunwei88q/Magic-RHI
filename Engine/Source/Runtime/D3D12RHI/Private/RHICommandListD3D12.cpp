@@ -157,20 +157,28 @@ namespace RHI
     // reset command list
     void CommandListD3D12::BeginRecording()
     {
-        if(m_pCmdPool == nullptr){
+        CommandPoolD3D12* pCmdPool = SafeCast<CommandPoolD3D12>(m_pCommandPool);
+        if (pCmdPool == nullptr) {
 #if RHI_ENABLE_DEBUG_INFO
             ThrowErrorMessage("CommandPoolD3D12 is nullptr");
 #endif
             return;
         }
+        // Check if recording is already in progress
+        if (pCmdPool->IsRecording()) 
+            ThrowErrorMessage("CommandListD3D12: BeginRecording() was called multiple times, be careful not to use multithreading");
+        // Set is recording to true
+        pCmdPool->SetIsRecording(true);
 
         // Reset command list (We don't allow replacing the allocator for the sake of consistency)
-        ThrowIfFailed(m_pCommandList->Reset(m_pCmdPool->GetCommandAllocator(), nullptr));
+        ThrowIfFailed(m_pCommandList->Reset(pCmdPool->GetCommandAllocator(), nullptr));
     }
 
     void CommandListD3D12::EndRecording()
     {
         ThrowIfFailed(m_pCommandList->Close());
+        // Set is recording to false
+        m_pCommandPool->SetIsRecording(false);
     }
 
     void CommandQueueD3D12::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists)

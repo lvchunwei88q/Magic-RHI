@@ -64,7 +64,7 @@ namespace RHI
         if (result != VK_SUCCESS)
             ThrowErrorMessage("Failed to allocate command buffer");
         
-        return std::make_shared<CommandListVulKan>(commandBuffer);
+        return std::make_shared<CommandListVulKan>(pPool, commandBuffer);
     }
     // ===========================================================================
 
@@ -84,24 +84,28 @@ namespace RHI
 
     void CommandListVulKan::BeginRecording()
     {
+        // Check if recording is already in progress
+        if (m_pCommandPool->IsRecording()) 
+            ThrowErrorMessage("CommandListVulKan: BeginRecording() was called multiple times, be careful not to use multithreading");
+        // Set is recording to true
+        m_pCommandPool->SetIsRecording(true);
+
         VkCommandBufferBeginInfo beginInfo = {};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
         beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
         VkResult result = vkBeginCommandBuffer(m_CommandBuffer, &beginInfo);
         if (result != VK_SUCCESS)
-        {
             ThrowErrorMessage("Failed to begin recording command buffer");
-        }
     }
 
     void CommandListVulKan::EndRecording()
     {
         VkResult result = vkEndCommandBuffer(m_CommandBuffer);
         if (result != VK_SUCCESS)
-        {
             ThrowErrorMessage("Failed to end recording command buffer");
-        }
+        // Set is recording to false
+        m_pCommandPool->SetIsRecording(false);
     }
 
     const VkDevice CommandQueueVulKan::GetDevice() const

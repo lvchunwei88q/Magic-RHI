@@ -34,8 +34,7 @@ namespace RHI
     {
     public:
         CommandListD3D12(CommandPoolD3D12* pCmdPool, ID3D12GraphicsCommandList* pCmdList)
-            : RHICommandList()
-            , m_pCmdPool(pCmdPool)
+            : RHICommandList(pCmdPool)
             , m_pCommandList(pCmdList)
         {}
         ~CommandListD3D12() override = default;
@@ -103,8 +102,6 @@ namespace RHI
 
     private:
         ComPtr<ID3D12GraphicsCommandList> m_pCommandList;
-        // Command pool ref
-        const CommandPoolD3D12* m_pCmdPool;
     };
 
     using GraphicsCommandListD3D12 = CommandListD3D12;

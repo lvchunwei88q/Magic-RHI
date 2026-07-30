@@ -31,8 +31,8 @@ namespace RHI
     class CommandListVulKan : public RHICommandList
     {
     public:
-        CommandListVulKan(VkCommandBuffer commandBuffer)
-            : RHICommandList()
+        CommandListVulKan(RHICommandPoolPtr pCommandPool, VkCommandBuffer commandBuffer)
+            : RHICommandList(pCommandPool)
             , m_CommandBuffer(commandBuffer) {}
         ~CommandListVulKan() override = default;
 

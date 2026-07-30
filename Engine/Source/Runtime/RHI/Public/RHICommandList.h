@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <memory>
+#include <atomic>
 
 namespace RHI
 {
@@ -20,14 +21,23 @@ namespace RHI
             RHICmdType GetCmdType() const { return CmdType; }
             // reset command pool memory
             virtual void Reset() const = 0;
+            // get is recording
+            bool IsRecording() const { return m_IsRecording.load(std::memory_order_relaxed); }
+            // set is recording
+            void SetIsRecording(bool isRecording) { m_IsRecording.store(isRecording, std::memory_order_relaxed); }
         private:
             RHICmdType CmdType;
+            // This is mainly to prevent users from recording with multiple threads.
+            std::atomic<bool> m_IsRecording = false;
     };
+
+    // By default, we use non-constant pointers, but that doesn't mean the actual subclass being pointed to is constant.
+    using RHICommandPoolPtr = RHICommandPool*;
 
     class RHI_API RHICommandList
     {
     public:
-        RHICommandList();
+        RHICommandList(RHICommandPoolPtr pCommandPool);
         virtual ~RHICommandList();
 
         virtual void BeginRecording() = 0;
@@ -92,8 +102,8 @@ namespace RHI
         virtual void SetComputeRoot32BitConstants(uint32_t rootParameterIndex, uint32_t num32BitValues, const void* pSrcData, uint32_t destOffsetIn32BitValues) = 0;
 
     protected:
-        // We shouldn't store the allocator here.
-        // RHICommandAllocator* m_pAllocator;
+        // Command pool pointer
+        RHICommandPoolPtr m_pCommandPool;
     };
 
     class RHI_API RHICommandQueue

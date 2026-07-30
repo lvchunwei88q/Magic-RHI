@@ -77,7 +77,8 @@ namespace RHI
     {
     public:
         CommandListD3D11(CommandAllocatorD3D11* pCmdAllocator)
-            : m_pAllocator(pCmdAllocator) {}
+            : RHICommandList(pCmdAllocator)
+            , m_pAllocator(pCmdAllocator) {}
         ~CommandListD3D11() override = default;
 
         // The start and end of the recording
