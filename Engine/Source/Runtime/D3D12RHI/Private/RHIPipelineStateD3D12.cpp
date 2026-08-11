@@ -307,6 +307,7 @@ namespace RHI
         return Type;
     }
 
+    // ============== DeviceD3D12 ==============
     std::shared_ptr<RHIPipelineState> DeviceD3D12::CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc)
     {
         auto pipelineState = std::make_shared<RHIPipelineStateD3D12>();
@@ -331,7 +332,7 @@ namespace RHI
     {
         if (pipelineState)
         {
-            auto dx12PipelineState = static_cast<RHIPipelineStateD3D12*>(pipelineState.get());
+            auto dx12PipelineState = SafeCast<RHIPipelineStateD3D12>(pipelineState.get());
             if (dx12PipelineState)
             {
                 dx12PipelineState->Shutdown();

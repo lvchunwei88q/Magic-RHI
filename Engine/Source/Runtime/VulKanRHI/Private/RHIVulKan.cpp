@@ -789,20 +789,6 @@ namespace RHI
         return FromVulkanVersionLevel(PhysicalDeviceApiVersion);
     }
 
-    std::shared_ptr<RHIPipelineState> DeviceVulKan::CreateGraphicsPipelineState(const GraphicsPipelineStateDesc& desc)
-    {
-        return nullptr;
-    }
-
-    std::shared_ptr<RHIPipelineState> DeviceVulKan::CreateComputePipelineState(const ComputePipelineStateDesc& desc)
-    {
-        return nullptr;
-    }
-
-    void DeviceVulKan::DeletePipelineState(std::shared_ptr<RHIPipelineState>& pipelineState)
-    {
-    }
-
     RHICommandQueue* DeviceVulKan::GetCommandQueue(RHICmdType Type) const
     {
         switch (Type)
