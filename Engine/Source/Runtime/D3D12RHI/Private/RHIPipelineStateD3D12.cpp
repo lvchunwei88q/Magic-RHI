@@ -188,21 +188,40 @@ namespace RHI
 
     bool RHIPipelineStateD3D12::Initialize(Device* device, const GraphicsPipelineStateDesc& desc)
     {
+        // check params
         if (!device || !desc.pRootSignature || !desc.pVertexShader || !desc.pPixelShader)
+        {
+            ThrowErrorMessage("RHIPipelineStateD3D12::Initialize: Device, RootSignature, VertexShader, or PixelShader is null");
             return false;
+        }
 
-        auto dx12Device = static_cast<DeviceD3D12*>(device);
+        // check d3d12 device
+        auto dx12Device = SafeCast<DeviceD3D12>(device);
         auto d3dDevice = dx12Device->GetDevice();
         if (!d3dDevice)
+        {
+            ThrowErrorMessage("RHIPipelineStateD3D12::Initialize: Device is null");
             return false;
+        }
 
-        auto rootSig = static_cast<RHIRootSignatureD3D12*>(desc.pRootSignature);
+        // check root signature
+        auto rootSig = SafeCast<RHIRootSignatureD3D12>(desc.pRootSignature);
         if (!rootSig->GetRootSignature())
+        {
+            ThrowErrorMessage("RHIPipelineStateD3D12::Initialize: RootSignature is not a RHIRootSignatureD3D12");
             return false;
+        }
 
-        auto vsShader = static_cast<VertexShaderD3D12*>(desc.pVertexShader);
-        auto psShader = static_cast<PixelShaderD3D12*>(desc.pPixelShader);
+        // check vertex and pixel shader
+        auto vsShader = SafeCast<VertexShaderD3D12>(desc.pVertexShader);
+        auto psShader = SafeCast<PixelShaderD3D12>(desc.pPixelShader);
+        if (!vsShader || !psShader)
+        {
+            ThrowErrorMessage("RHIPipelineStateD3D12::Initialize: VertexShader or PixelShader is not a VertexShaderD3D12 or PixelShaderD3D12");
+            return false;
+        }
         
+        // convert input layout
         std::vector<D3D12_INPUT_ELEMENT_DESC> d3d12Elements;
         d3d12Elements.reserve(desc.NumInputElements); 
         for (int i = 0; i < desc.NumInputElements; i++)
@@ -219,19 +238,19 @@ namespace RHI
 
         if (desc.pGeometryShader)
         {
-            auto gsShader = static_cast<GeometryShaderD3D12*>(desc.pGeometryShader);
+            auto gsShader = SafeCast<GeometryShaderD3D12>(desc.pGeometryShader);
             psoDesc.GS = CD3DX12_SHADER_BYTECODE(gsShader->GetBytecode().data(), static_cast<UINT>(gsShader->GetBytecode().size()));
         }
 
         if (desc.pHullShader)
         {
-            auto hsShader = static_cast<HullShaderD3D12*>(desc.pHullShader);
+            auto hsShader = SafeCast<HullShaderD3D12>(desc.pHullShader);
             psoDesc.HS = CD3DX12_SHADER_BYTECODE(hsShader->GetBytecode().data(), static_cast<UINT>(hsShader->GetBytecode().size()));
         }
 
         if (desc.pDomainShader)
         {
-            auto dsShader = static_cast<DomainShaderD3D12*>(desc.pDomainShader);
+            auto dsShader = SafeCast<DomainShaderD3D12>(desc.pDomainShader);
             psoDesc.DS = CD3DX12_SHADER_BYTECODE(dsShader->GetBytecode().data(), static_cast<UINT>(dsShader->GetBytecode().size()));
         }
 
@@ -266,19 +285,34 @@ namespace RHI
 
     bool RHIPipelineStateD3D12::Initialize(Device* device, const ComputePipelineStateDesc& desc)
     {
+        // check params
         if (!device || !desc.pRootSignature || !desc.pComputeShader)
             return false;
 
-        auto dx12Device = static_cast<DeviceD3D12*>(device);
+        // check d3d12 device
+        auto dx12Device = SafeCast<DeviceD3D12>(device);
         auto d3dDevice = dx12Device->GetDevice();
         if (!d3dDevice)
+        {
+            ThrowErrorMessage("RHIPipelineStateD3D12::Initialize: Device is null");
             return false;
+        }
 
-        auto rootSig = static_cast<RHIRootSignatureD3D12*>(desc.pRootSignature);
+        // check root signature
+        auto rootSig = SafeCast<RHIRootSignatureD3D12>(desc.pRootSignature);
         if (!rootSig->GetRootSignature())
+        {
+            ThrowErrorMessage("RHIPipelineStateD3D12::Initialize: RootSignature is not a RHIRootSignatureD3D12");
             return false;
+        }
 
-        auto csShader = static_cast<ComputeShaderD3D12*>(desc.pComputeShader);
+        // check compute shader
+        auto csShader = SafeCast<ComputeShaderD3D12>(desc.pComputeShader);
+        if (!csShader)
+        {
+            ThrowErrorMessage("RHIPipelineStateD3D12::Initialize: ComputeShader is not a ComputeShaderD3D12");
+            return false;
+        }
 
         D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = {};
         psoDesc.pRootSignature = rootSig->GetRootSignature();

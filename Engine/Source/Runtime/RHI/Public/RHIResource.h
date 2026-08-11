@@ -39,16 +39,6 @@ namespace RHI
         uint64_t AllocationSize{};
     };
 
-    struct RHIResourceDebugInfo
-    {
-        std::string Name;
-        RHIResourceType Type{ RRT_None };
-        GPUVRamAllocation VRamAllocation;
-        bool IsTransient{ false };
-        bool bValid{ true };
-        bool bResident{ true };
-    };
-
     /** The base type of RHI resources. */
     class RHI_API RHIResource : public std::enable_shared_from_this<RHIResource>
     {
@@ -62,10 +52,6 @@ namespace RHI
         RHIResourceType GetType() const { return Type; }
         // We probably shouldn’t provide an interface to access resources here because this class itself is a resource.
         //virtual void* GetResource() const { return nullptr; } 
-
-#if RHI_ENABLE_DEBUG_INFO
-        virtual RHIResourceDebugInfo GetInfo() const;
-#endif
 
         // get shared_ptr
         std::shared_ptr<RHIResource> GetSharedPtr()

@@ -1,4 +1,5 @@
 #include "RHIPipelineStateVulkan.h"
+#include "RHIRootSignatureVulKan.h"
 #include "RHIVulKan.h"
 
 namespace RHI
@@ -18,11 +19,76 @@ namespace RHI
 
     bool RHIPipelineStateVulkan::Initialize(Device* device, const GraphicsPipelineStateDesc& desc)
     {
+        // check params
+        if (!device || !desc.pRootSignature || !desc.pVertexShader || !desc.pPixelShader)
+        {
+            ThrowErrorMessage("RHIPipelineStateVulkan::Initialize: Device, RootSignature, VertexShader, or PixelShader is null");
+            return false;
+        }
+
+        // check vulkan device
+        auto vulkanDevice = SafeCast<DeviceVulKan>(device);
+        auto VKDevice = vulkanDevice->GetDevice();
+        if (!VKDevice)
+        {
+            ThrowErrorMessage("RHIPipelineStateVulkan::Initialize: Device is null");
+            return false;
+        }
+
+        // check root signature
+        auto rootSig = SafeCast<RHIRootSignatureVulKan>(desc.pRootSignature);
+        if (!rootSig->IsValid())
+        {
+            ThrowErrorMessage("RHIPipelineStateVulkan::Initialize: RootSignature is not a RHIRootSignatureVulKan");
+            return false;
+        }
+
+        // check vertex and pixel shader
+        auto vsShader = SafeCast<VertexShaderVulKan>(desc.pVertexShader);
+        auto psShader = SafeCast<PixelShaderVulKan>(desc.pPixelShader);
+        if (!vsShader || !psShader)
+        {
+            ThrowErrorMessage("RHIPipelineStateVulkan::Initialize: VertexShader or PixelShader is not a VertexShaderVulKan or PixelShaderVulKan");
+            return false;
+        }
+
         Type = PipelineStateType::Graphics;
         return false;
     }
     bool RHIPipelineStateVulkan::Initialize(Device* device, const ComputePipelineStateDesc& desc)
     {
+        // check params
+        if (!device || !desc.pRootSignature || !desc.pComputeShader)
+        {
+            ThrowErrorMessage("RHIPipelineStateVulkan::Initialize: Device, RootSignature, or ComputeShader is null");
+            return false;
+        }
+
+        // check vulkan device
+        auto vulkanDevice = SafeCast<DeviceVulKan>(device);
+        auto VKDevice = vulkanDevice->GetDevice();
+        if (!VKDevice)
+        {
+            ThrowErrorMessage("RHIPipelineStateVulkan::Initialize: Device is null");
+            return false;
+        }
+
+        // check root signature
+        auto rootSig = SafeCast<RHIRootSignatureVulKan>(desc.pRootSignature);
+        if (!rootSig->IsValid())
+        {
+            ThrowErrorMessage("RHIPipelineStateVulkan::Initialize: RootSignature is not a RHIRootSignatureVulKan");
+            return false;
+        }
+
+        // check compute shader
+        auto computeShader = SafeCast<ComputeShaderVulKan>(desc.pComputeShader);
+        if (!computeShader)
+        {
+            ThrowErrorMessage("RHIPipelineStateVulkan::Initialize: ComputeShader is not a ComputeShaderVulKan");
+            return false;
+        }
+
         Type = PipelineStateType::Compute;
         return false;
     }
