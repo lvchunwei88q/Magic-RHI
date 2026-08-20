@@ -20,7 +20,8 @@ namespace RHI
 
     private:
         PipelineStateType Type = PipelineStateType::Unknown;
-        VkPipeline m_Pipeline;
+        VkPipeline m_Pipeline = VK_NULL_HANDLE;
+        const VkDevice* m_Device = nullptr;
     };
 
 } // namespace RHI

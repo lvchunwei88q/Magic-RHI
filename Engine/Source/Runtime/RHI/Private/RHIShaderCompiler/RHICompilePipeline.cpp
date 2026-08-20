@@ -238,6 +238,7 @@ namespace RHI {
 
         // Get cache
         const LocalCompilerPipelineCache* cache = controller->GetCompilerPipelineCache();
+        const ShaderCompileOptionInternal* CompilerOptions = &cache->CompilerOptionsCache;
         // Get backend
         ShaderCompilerBackend* backend = controller->GetCompilerContext()->m_Backend.get();
         if (!backend || !backend->IsValid()) {
@@ -269,6 +270,8 @@ namespace RHI {
             ThrowErrorMessage("Not implemented");
             return {};
         }
+        // Set entry point
+        shaderDesc.entryPoint = CompilerOptions->entryPoint;
 
         if(cache->CompileResultCache.success == false || cache->CompileResultCache.errorMessage.size() > 0){
             Core::ErrorCapture::Capture( "Create shader description failed: " + cache->CompileResultCache.errorMessage);

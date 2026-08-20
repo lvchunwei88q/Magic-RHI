@@ -233,6 +233,8 @@ struct ShaderPipelineGenerationMode {
 // Create Shader Description
 struct CreateShaderDesc
 {   
+    // Shader Entry Point
+    std::string entryPoint = "main";
     // Shader Byte Code
     std::variant<std::vector<uint8_t>, std::vector<uint32_t>> byteCode;
 

@@ -88,7 +88,7 @@ namespace RHI
             }
 
             VkShaderModule ShaderModule = CreateShaderModule(*Vk_device,desc.GetUINT32ByteCode());
-            return std::make_unique<ShaderType>(Vk_device, ShaderModule,desc.GetUINT32ByteCode());
+            return std::make_unique<ShaderType>(Vk_device, ShaderModule,desc.entryPoint,desc.GetUINT32ByteCode());
         }
     }
 

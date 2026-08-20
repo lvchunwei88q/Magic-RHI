@@ -255,7 +255,8 @@ namespace RHI
     class VertexShaderVulKan : public RHIVertexShader
     {
     public:
-        VertexShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, const std::vector<uint32_t>& spirv) : m_Device(device), VS_Module(ShaderModule)
+        VertexShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, std::string EntryPoint, const std::vector<uint32_t>& spirv) 
+        : m_Device (device), VS_Module (ShaderModule), EntryPoint(EntryPoint)
 #if RHI_ENABLE_DEBUG_INFO
             , m_SPIRV (spirv)
 #endif
@@ -270,10 +271,12 @@ namespace RHI
         const std::vector<uint32_t>& GetSPIRV() const { return m_SPIRV; }
 #endif
         const VkShaderModule& GetShaderModule () const { return VS_Module; }
+        const std::string& GetEntryPoint () const { return EntryPoint; }
     private:
         // device ref
         const VkDevice* m_Device;
         VkShaderModule VS_Module;
+        std::string EntryPoint = "main";
 #if RHI_ENABLE_DEBUG_INFO
         std::vector<uint32_t> m_SPIRV;
 #endif
@@ -282,7 +285,8 @@ namespace RHI
     class PixelShaderVulKan : public RHIPixelShader
     {
     public:
-        PixelShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, const std::vector<uint32_t>& spirv) : m_Device (device), PS_Module (ShaderModule)
+        PixelShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, std::string EntryPoint, const std::vector<uint32_t>& spirv) 
+        : m_Device (device), PS_Module (ShaderModule), EntryPoint(EntryPoint)
 #if RHI_ENABLE_DEBUG_INFO
             , m_SPIRV (spirv)
 #endif
@@ -297,10 +301,12 @@ namespace RHI
         const std::vector<uint32_t>& GetSPIRV () const { return m_SPIRV; }
 #endif
         const VkShaderModule& GetShaderModule () const { return PS_Module; }
+        const std::string& GetEntryPoint () const { return EntryPoint; }
     private:
         // device ref
         const VkDevice* m_Device;
         VkShaderModule PS_Module;
+        std::string EntryPoint = "main";
 #if RHI_ENABLE_DEBUG_INFO
         std::vector<uint32_t> m_SPIRV;
 #endif
@@ -309,7 +315,8 @@ namespace RHI
     class GeometryShaderVulKan : public RHIGeometryShader
     {
     public:
-        GeometryShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, const std::vector<uint32_t>& spirv) : m_Device (device), GS_Module (ShaderModule)
+        GeometryShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, std::string EntryPoint, const std::vector<uint32_t>& spirv) 
+        : m_Device (device), GS_Module (ShaderModule), EntryPoint(EntryPoint)
 #if RHI_ENABLE_DEBUG_INFO
             , m_SPIRV (spirv)
 #endif
@@ -324,10 +331,12 @@ namespace RHI
         const std::vector<uint32_t>& GetSPIRV () const { return m_SPIRV; }
 #endif
         const VkShaderModule& GetShaderModule () const { return GS_Module; }
+        const std::string& GetEntryPoint () const { return EntryPoint; }
     private:
         // device ref
         const VkDevice* m_Device;
         VkShaderModule GS_Module;
+        std::string EntryPoint = "main";
 #if RHI_ENABLE_DEBUG_INFO
         std::vector<uint32_t> m_SPIRV;
 #endif
@@ -336,7 +345,8 @@ namespace RHI
     class HullShaderVulKan : public RHIHullShader
     {
     public:
-        HullShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, const std::vector<uint32_t>& spirv) : m_Device (device), HS_Module (ShaderModule)
+        HullShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, std::string EntryPoint, const std::vector<uint32_t>& spirv) 
+        : m_Device (device), HS_Module (ShaderModule), EntryPoint(EntryPoint)
 #if RHI_ENABLE_DEBUG_INFO
             , m_SPIRV (spirv)
 #endif
@@ -351,10 +361,12 @@ namespace RHI
         const std::vector<uint32_t>& GetSPIRV () const { return m_SPIRV; }
 #endif
         const VkShaderModule& GetShaderModule () const { return HS_Module; }
+        const std::string& GetEntryPoint () const { return EntryPoint; }
     private:
         // device ref
         const VkDevice* m_Device;
         VkShaderModule HS_Module;
+        std::string EntryPoint = "main";
 #if RHI_ENABLE_DEBUG_INFO
         std::vector<uint32_t> m_SPIRV;
 #endif
@@ -363,7 +375,8 @@ namespace RHI
     class DomainShaderVulKan : public RHIDomainShader
     {
     public:
-        DomainShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, const std::vector<uint32_t>& spirv) : m_Device (device), DS_Module (ShaderModule)
+        DomainShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, std::string EntryPoint, const std::vector<uint32_t>& spirv) 
+        : m_Device (device), DS_Module (ShaderModule), EntryPoint(EntryPoint)
 #if RHI_ENABLE_DEBUG_INFO
             , m_SPIRV (spirv)
 #endif
@@ -378,10 +391,12 @@ namespace RHI
         const std::vector<uint32_t>& GetSPIRV () const { return m_SPIRV; }
 #endif
         const VkShaderModule& GetShaderModule () const { return DS_Module; }
+        const std::string& GetEntryPoint () const { return EntryPoint; }
     private:
         // device ref
         const VkDevice* m_Device;
         VkShaderModule DS_Module;
+        std::string EntryPoint = "main";
 #if RHI_ENABLE_DEBUG_INFO
         std::vector<uint32_t> m_SPIRV;
 #endif
@@ -390,7 +405,8 @@ namespace RHI
     class ComputeShaderVulKan : public RHIComputeShader
     {
     public:
-        ComputeShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, const std::vector<uint32_t>& spirv) : m_Device (device), CS_Module (ShaderModule)
+        ComputeShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, std::string EntryPoint, const std::vector<uint32_t>& spirv) 
+        : m_Device (device), CS_Module (ShaderModule), EntryPoint(EntryPoint)
 #if RHI_ENABLE_DEBUG_INFO
             , m_SPIRV (spirv)
 #endif
@@ -405,10 +421,12 @@ namespace RHI
         const std::vector<uint32_t>& GetSPIRV () const { return m_SPIRV; }
 #endif
         const VkShaderModule& GetShaderModule () const { return CS_Module; }
+        const std::string& GetEntryPoint () const { return EntryPoint; }
     private:
         // device ref
         const VkDevice* m_Device;
         VkShaderModule CS_Module;
+        std::string EntryPoint = "main";
 #if RHI_ENABLE_DEBUG_INFO
         std::vector<uint32_t> m_SPIRV;
 #endif
