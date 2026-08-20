@@ -255,60 +255,162 @@ namespace RHI
     class VertexShaderVulKan : public RHIVertexShader
     {
     public:
-        VertexShaderVulKan(const std::vector<uint32_t>& spirv) : m_SPIRV(spirv) {}
-        ~VertexShaderVulKan() override = default;
+        VertexShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, const std::vector<uint32_t>& spirv) : m_Device(device), VS_Module(ShaderModule)
+#if RHI_ENABLE_DEBUG_INFO
+            , m_SPIRV (spirv)
+#endif
+        {}
+        ~VertexShaderVulKan () override {
+            // Parameter (device,ShaderModule,Allocator)
+            if(VS_Module && m_Device){
+                vkDestroyShaderModule (*m_Device, VS_Module, nullptr);
+            }
+        };
+#if RHI_ENABLE_DEBUG_INFO
         const std::vector<uint32_t>& GetSPIRV() const { return m_SPIRV; }
+#endif
+        const VkShaderModule& GetShaderModule () const { return VS_Module; }
     private:
+        // device ref
+        const VkDevice* m_Device;
+        VkShaderModule VS_Module;
+#if RHI_ENABLE_DEBUG_INFO
         std::vector<uint32_t> m_SPIRV;
+#endif
     };
 
     class PixelShaderVulKan : public RHIPixelShader
     {
     public:
-        PixelShaderVulKan(const std::vector<uint32_t>& spirv) : m_SPIRV(spirv) {}
-        ~PixelShaderVulKan() override = default;
-        const std::vector<uint32_t>& GetSPIRV() const { return m_SPIRV; }
+        PixelShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, const std::vector<uint32_t>& spirv) : m_Device (device), PS_Module (ShaderModule)
+#if RHI_ENABLE_DEBUG_INFO
+            , m_SPIRV (spirv)
+#endif
+        {}
+        ~PixelShaderVulKan () override {
+            // Parameter (device,ShaderModule,Allocator)
+            if (PS_Module && m_Device) {
+                vkDestroyShaderModule (*m_Device, PS_Module, nullptr);
+            }
+        };
+#if RHI_ENABLE_DEBUG_INFO
+        const std::vector<uint32_t>& GetSPIRV () const { return m_SPIRV; }
+#endif
+        const VkShaderModule& GetShaderModule () const { return PS_Module; }
     private:
+        // device ref
+        const VkDevice* m_Device;
+        VkShaderModule PS_Module;
+#if RHI_ENABLE_DEBUG_INFO
         std::vector<uint32_t> m_SPIRV;
+#endif
     };
 
     class GeometryShaderVulKan : public RHIGeometryShader
     {
     public:
-        GeometryShaderVulKan(const std::vector<uint32_t>& spirv) : m_SPIRV(spirv) {}
-        ~GeometryShaderVulKan() override = default;
-        const std::vector<uint32_t>& GetSPIRV() const { return m_SPIRV; }
+        GeometryShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, const std::vector<uint32_t>& spirv) : m_Device (device), GS_Module (ShaderModule)
+#if RHI_ENABLE_DEBUG_INFO
+            , m_SPIRV (spirv)
+#endif
+        {}
+        ~GeometryShaderVulKan() override {
+            // Parameter (device,ShaderModule,Allocator)
+            if (GS_Module && m_Device) {
+                vkDestroyShaderModule (*m_Device, GS_Module, nullptr);
+            }
+        };
+#if RHI_ENABLE_DEBUG_INFO
+        const std::vector<uint32_t>& GetSPIRV () const { return m_SPIRV; }
+#endif
+        const VkShaderModule& GetShaderModule () const { return GS_Module; }
     private:
+        // device ref
+        const VkDevice* m_Device;
+        VkShaderModule GS_Module;
+#if RHI_ENABLE_DEBUG_INFO
         std::vector<uint32_t> m_SPIRV;
+#endif
     };
 
     class HullShaderVulKan : public RHIHullShader
     {
     public:
-        HullShaderVulKan(const std::vector<uint32_t>& spirv) : m_SPIRV(spirv) {}
-        ~HullShaderVulKan() override = default;
-        const std::vector<uint32_t>& GetSPIRV() const { return m_SPIRV; }
+        HullShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, const std::vector<uint32_t>& spirv) : m_Device (device), HS_Module (ShaderModule)
+#if RHI_ENABLE_DEBUG_INFO
+            , m_SPIRV (spirv)
+#endif
+        {}
+        ~HullShaderVulKan() override {
+            // Parameter (device,ShaderModule,Allocator)
+            if (HS_Module && m_Device) {
+                vkDestroyShaderModule (*m_Device, HS_Module, nullptr);
+            }
+        };
+#if RHI_ENABLE_DEBUG_INFO
+        const std::vector<uint32_t>& GetSPIRV () const { return m_SPIRV; }
+#endif
+        const VkShaderModule& GetShaderModule () const { return HS_Module; }
     private:
+        // device ref
+        const VkDevice* m_Device;
+        VkShaderModule HS_Module;
+#if RHI_ENABLE_DEBUG_INFO
         std::vector<uint32_t> m_SPIRV;
+#endif
     };
 
     class DomainShaderVulKan : public RHIDomainShader
     {
     public:
-        DomainShaderVulKan(const std::vector<uint32_t>& spirv) : m_SPIRV(spirv) {}
-        ~DomainShaderVulKan() override = default;
-        const std::vector<uint32_t>& GetSPIRV() const { return m_SPIRV; }
+        DomainShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, const std::vector<uint32_t>& spirv) : m_Device (device), DS_Module (ShaderModule)
+#if RHI_ENABLE_DEBUG_INFO
+            , m_SPIRV (spirv)
+#endif
+        {}
+        ~DomainShaderVulKan() override {
+            // Parameter (device,ShaderModule,Allocator)
+            if (DS_Module && m_Device) {
+                vkDestroyShaderModule (*m_Device, DS_Module, nullptr);
+            }
+        };
+#if RHI_ENABLE_DEBUG_INFO
+        const std::vector<uint32_t>& GetSPIRV () const { return m_SPIRV; }
+#endif
+        const VkShaderModule& GetShaderModule () const { return DS_Module; }
     private:
+        // device ref
+        const VkDevice* m_Device;
+        VkShaderModule DS_Module;
+#if RHI_ENABLE_DEBUG_INFO
         std::vector<uint32_t> m_SPIRV;
+#endif
     };
 
     class ComputeShaderVulKan : public RHIComputeShader
     {
     public:
-        ComputeShaderVulKan(const std::vector<uint32_t>& spirv) : m_SPIRV(spirv) {}
-        ~ComputeShaderVulKan() override = default;
-        const std::vector<uint32_t>& GetSPIRV() const { return m_SPIRV; }
+        ComputeShaderVulKan(const VkDevice* device, VkShaderModule ShaderModule, const std::vector<uint32_t>& spirv) : m_Device (device), CS_Module (ShaderModule)
+#if RHI_ENABLE_DEBUG_INFO
+            , m_SPIRV (spirv)
+#endif
+        {}
+        ~ComputeShaderVulKan() override {
+            // Parameter (device,ShaderModule,Allocator)
+            if (CS_Module && m_Device) {
+                vkDestroyShaderModule (*m_Device, CS_Module, nullptr);
+            }
+        };
+#if RHI_ENABLE_DEBUG_INFO
+        const std::vector<uint32_t>& GetSPIRV () const { return m_SPIRV; }
+#endif
+        const VkShaderModule& GetShaderModule () const { return CS_Module; }
     private:
+        // device ref
+        const VkDevice* m_Device;
+        VkShaderModule CS_Module;
+#if RHI_ENABLE_DEBUG_INFO
         std::vector<uint32_t> m_SPIRV;
+#endif
     };
 }

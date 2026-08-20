@@ -57,9 +57,28 @@ namespace RHI
             return ShaderModelVersion::SM_5_0;
         }
 
+        VkShaderModule CreateShaderModule (VkDevice device, const std::vector<uint32_t>& code) {
+            VkShaderModuleCreateInfo createInfo{};
+            createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+            createInfo.codeSize = code.size () * sizeof (uint32_t);
+            createInfo.pCode = code.data ();
+
+            VkShaderModule shaderModule;
+            if (vkCreateShaderModule (device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
+                throw std::runtime_error ("Failed to create shader module!");
+            }
+            return shaderModule;
+        }
+
         template<typename ShaderType>
-        std::unique_ptr<ShaderType> CompileShaderInternal(const CreateShaderDesc& desc)
+        std::unique_ptr<ShaderType> CompileShaderInternal(DeviceVulKan* device,const CreateShaderDesc& desc)
         {
+            const VkDevice* Vk_device = device->GetDevice();
+            // Check Vk_device
+            if (!Vk_device) {
+                ThrowErrorMessage ("CompileShaderInternal:Failed to get VK device!");
+            }
+
             // Check if the shader byte code is empty
             if(desc.GetUINT32ByteCode().size() == 0){
 #if RHI_ENABLE_DEBUG_INFO
@@ -67,7 +86,9 @@ namespace RHI
 #endif 
                 return nullptr;
             }
-            return std::make_unique<ShaderType>(desc.GetUINT32ByteCode());
+
+            VkShaderModule ShaderModule = CreateShaderModule(*Vk_device,desc.GetUINT32ByteCode());
+            return std::make_unique<ShaderType>(Vk_device, ShaderModule,desc.GetUINT32ByteCode());
         }
     }
 
@@ -77,32 +98,32 @@ namespace RHI
      */
     std::unique_ptr<RHIVertexShader> DeviceVulKan::CreateVertexShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<VertexShaderVulKan>(desc);
+        return CompileShaderInternal<VertexShaderVulKan>(this, desc);
     }
 
     std::unique_ptr<RHIPixelShader> DeviceVulKan::CreatePixelShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<PixelShaderVulKan>(desc);
+        return CompileShaderInternal<PixelShaderVulKan>(this, desc);
     }
 
     std::unique_ptr<RHIGeometryShader> DeviceVulKan::CreateGeometryShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<GeometryShaderVulKan>(desc);
+        return CompileShaderInternal<GeometryShaderVulKan>(this, desc);
     }
 
     std::unique_ptr<RHIHullShader> DeviceVulKan::CreateHullShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<HullShaderVulKan>(desc);
+        return CompileShaderInternal<HullShaderVulKan>(this, desc);
     }
 
     std::unique_ptr<RHIDomainShader> DeviceVulKan::CreateDomainShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<DomainShaderVulKan>(desc);
+        return CompileShaderInternal<DomainShaderVulKan>(this, desc);
     }
 
     std::unique_ptr<RHIComputeShader> DeviceVulKan::CreateComputeShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<ComputeShaderVulKan>(desc);
+        return CompileShaderInternal<ComputeShaderVulKan>(this, desc);
     }
 
     ShaderModelVersion DeviceVulKan::GetShaderModelVersion() const
