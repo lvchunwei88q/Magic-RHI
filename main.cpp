@@ -145,8 +145,6 @@ int main(int argc, char* argv[])
         type = RHI::RHIType::D3D11;
         std::cout << "Using D3D11" << std::endl;
     }
-    // 现在模式使用 Vulkan
-    type = RHI::RHIType::VulKan;
 
     Core::SubsystemControl::Init();
 
