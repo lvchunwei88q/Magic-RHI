@@ -13,6 +13,9 @@
 
 namespace RHI
 {
+    // Local D3D12 Shared Context Definition
+    D3D12LoaclSharedContext SharedD3D12ContextLoacl;
+
     // Define Feature Level priorities (from high to low)
     constexpr D3D_FEATURE_LEVEL FeatureLevels[] = {
         D3D_FEATURE_LEVEL_12_2,
@@ -254,6 +257,8 @@ namespace RHI
             if (SUCCEEDED(D3D12CreateDevice(m_pAdapter.Get(), level, 
                                              IID_PPV_ARGS(&m_pDevice)))) {
                 m_FeatureLevel = level;
+				// Set the shared context feature level
+                SharedD3D12ContextLoacl.FeatureLevel = m_FeatureLevel;
                 break;
             }
         }

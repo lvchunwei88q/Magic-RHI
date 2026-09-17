@@ -20,6 +20,18 @@ namespace RHI
     using ComputeCommandQueueD3D12 = CommandQueueD3D12;
     using CopyCommandQueueD3D12 = CommandQueueD3D12;
 
+    struct D3D12LoaclSharedContext
+    {
+        D3D_FEATURE_LEVEL FeatureLevel = D3D_FEATURE_LEVEL_1_0_GENERIC;
+
+        void clear () {
+            FeatureLevel = D3D_FEATURE_LEVEL_1_0_GENERIC;
+        }
+    };
+    // Local D3D12 Shared Context Statement
+    extern D3D12LoaclSharedContext SharedD3D12ContextLoacl;
+
+
     class D3D12RHI_API DeviceD3D12 : public Device
     {
     public:
