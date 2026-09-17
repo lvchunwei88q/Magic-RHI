@@ -11,6 +11,9 @@
 
 namespace RHI
 {
+    // Local Vulkan Shared Context Definition
+    VulkanLoaclSharedContext SharedVulkanContextLoacl;
+
     // ========== Local Required Features ==========
     struct LocalVkPhysicalDeviceFeatures {
         VkPhysicalDeviceFeatures2 GetPhysicalDeviceFeatures() {
@@ -434,6 +437,8 @@ namespace RHI
         if (api_version_result == VK_SUCCESS) {
             // apiVersion now includes the Vulkan version number supported by the instance
             SdkVkApiVersion = apiVersion;
+			// Set the SDK Vulkan API version in the shared context
+            SharedVulkanContextLoacl.SdkVkApiVersion = SdkVkApiVersion;
         }else{
             Core::ErrorCapture::Capture("Failed to enumerate instance version");
         }
@@ -521,6 +526,8 @@ namespace RHI
         // Convert to wide string
         m_AdapterName = IO::ToWideString(candidates[0].properties.deviceName);
         PhysicalDeviceApiVersion = candidates[0].properties.apiVersion;
+		// Set the physical device API version in the shared context
+		SharedVulkanContextLoacl.PhysicalDeviceApiVersion = PhysicalDeviceApiVersion;
 
 #if RHI_ENABLE_DEBUG_INFO
         // If in debug mode, output detailed information

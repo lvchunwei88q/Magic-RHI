@@ -51,6 +51,8 @@ namespace RHI
     // ==================================================== Tools ====================================================
     std::string ShaderCompilerBackendD3D12::SPIRVCompileEnvironment() const
     {
+        // If we're just generating reflection data or compiling HLSL to SPIR-V bytecode,
+        // then we can just fix the version instead of fetching it in real time.
         return "vulkan1.3";
     }
 }

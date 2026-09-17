@@ -108,6 +108,7 @@ namespace RHI {
     // ========== Build DXC arguments ==========
     std::vector<const wchar_t*> CompilerInstance::BuildArguments(
         const ShaderCompileOptionInternal& options,
+        // This is just a temporary container for storing parameters, otherwise the memory will be freed after args is returned.
         std::vector<std::wstring>& m_ArgStorage) {
         
         std::vector<const wchar_t*> args;
@@ -115,7 +116,7 @@ namespace RHI {
         // we just record the index of each parameter, and at the end we give all the parameter pointers to args.
         std::vector<size_t> indexs;
 
-        auto addArg = [&](const std::string& str) {
+        auto addArgToContainer = [&](const std::string& str) {
             // Record the index of the next parameter
             indexs.push_back(args.size());
             m_ArgStorage.push_back(IO::ToWideString(str));
@@ -124,11 +125,11 @@ namespace RHI {
         };
 
         // Base arguments
-        addArg(options.targetCompilerMode);  // Output User Selected Compiler mode
+        addArgToContainer (options.targetCompilerMode);  // Output User Selected Compiler mode
         args.push_back(L"-E");
-        addArg(options.entryPoint);
+        addArgToContainer (options.entryPoint);
         args.push_back(L"-T");
-        addArg(options.targetProfile);
+        addArgToContainer (options.targetProfile);
 
         // Optimization level
         if (options.optimize) {
@@ -154,7 +155,7 @@ namespace RHI {
 
         // HLSL version
         args.push_back(L"-HV");
-        addArg(options.DEFAULT_HLSL_VERSION);
+        addArgToContainer (options.DEFAULT_HLSL_VERSION);
 
         // You only need to enter this parameter when compiling SPIR-V.
         if(options.targetCompilerMode == "-spirv"){
@@ -162,7 +163,7 @@ namespace RHI {
             std::string targetEnv = options.SPIR_V_TargetEnv;
             if (!targetEnv.empty()) {
                 std::string envArg = "-fspv-target-env=" + targetEnv;  // ← append targetEnv to "-fspv-target-env="
-                addArg(envArg);  // add "-fspv-target-env=vulkan1.3"
+                addArgToContainer (envArg);  // add "-fspv-target-env=vulkan1.x"
             }
         }
 
@@ -180,13 +181,13 @@ namespace RHI {
         for (const auto& macro : options.Macros) {
             std::string def = macro.name + "=" + macro.definition;
             args.push_back(L"-D");
-            addArg(def);
+            addArgToContainer (def);
         }
 
         // Include paths
         for (const auto& path : options.includePaths) {
             args.push_back(L"-I");
-            addArg(path);
+            addArgToContainer (path);
         }
 
         // Other common flags

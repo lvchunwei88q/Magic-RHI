@@ -25,6 +25,19 @@ namespace RHI
     using ComputeCommandQueueVulKan = CommandQueueVulKan;
     using CopyCommandQueueVulKan = CommandQueueVulKan;
 
+	struct VulkanLoaclSharedContext
+	{
+        uint32_t SdkVkApiVersion = VK_API_VERSION_1_0;
+        uint32_t PhysicalDeviceApiVersion = VK_API_VERSION_1_0;
+
+        void clear () {
+			SdkVkApiVersion = VK_API_VERSION_1_0;
+			PhysicalDeviceApiVersion = VK_API_VERSION_1_0;
+        }
+	};
+    // Local Vulkan Shared Context Statement
+	extern VulkanLoaclSharedContext SharedVulkanContextLoacl;
+
     class VULKANRHI_API DeviceVulKan : public Device
     {
     public:

@@ -50,6 +50,16 @@ namespace RHI
     // ==================================================== Tools ====================================================
     std::string ShaderCompilerBackendVulKan::SPIRVCompileEnvironment() const
     {
-        return "vulkan1.3";
+        uint32_t PhysicalDeviceApiVersion = SharedVulkanContextLoacl.PhysicalDeviceApiVersion;
+        uint32_t major = VK_VERSION_MAJOR (PhysicalDeviceApiVersion);
+        uint32_t minor = VK_VERSION_MINOR (PhysicalDeviceApiVersion);
+
+        // If a higher version comes out in the future
+        if (major > 1)          return "vulkan1.3";
+        // Convert to string
+        if (minor >= 3)         return "vulkan1.3";
+        if (minor == 2)         return "vulkan1.2";
+        if (minor == 1)         return "vulkan1.1";
+        return "vulkan1.0";
     }
 }
