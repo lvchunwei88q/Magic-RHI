@@ -128,7 +128,8 @@ std::wstring GetRHIWindowName(RHI::RHIType type)
     }
 }
 
-// 是的你没看错这是一个屎山代码😀
+// 测试代码，不作为开发的一部分用完即弃
+// 这个测试代码主要用于验证RHI模块的功能，包括设备初始化、交换链创建、缓冲区创建和着色器编译等。
 int main(int argc, char* argv[])
 {
     std::cout << "Engine Version: " << Core::Core::GetVersion() << std::endl;
