@@ -113,8 +113,8 @@ namespace RHI
         m_Initialization = InitialState::Shutdown;
         for (UINT n = 0; n < RHI_MULTI_BUFFERING; n++)
         {
-            m_pBackBuffers[n].reset();
             m_pRenderTargetViews[n].reset();
+            m_pBackBuffers[n].reset();
         }
         m_pRtvHeap.Reset();
         m_pSwapChain1.Reset();
@@ -138,8 +138,8 @@ namespace RHI
 
         for (UINT n = 0; n < RHI_MULTI_BUFFERING; n++)
         {
-            m_pBackBuffers[n].reset();
             m_pRenderTargetViews[n].reset();
+            m_pBackBuffers[n].reset();
         }
 
         ThrowIfFailed(m_pSwapChain1->ResizeBuffers(
