@@ -331,6 +331,21 @@ namespace RHI
     {
         return GetDesc().Height;
     }
+    
+    uint64_t SwapChainTextureVulKan::GetSize() const
+    {
+        return 0;
+    }
+
+    uint32_t SwapChainTextureVulKan::GetWidth() const
+    {
+        return GetDesc().Width;
+    }
+
+    uint32_t SwapChainTextureVulKan::GetHeight() const
+    {
+        return GetDesc().Height;
+    }
 
     uint64_t ConstantBufferViewVulKan::GetGPUVirtualAddress() const
     {

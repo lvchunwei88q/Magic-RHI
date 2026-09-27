@@ -100,6 +100,7 @@ namespace RHI
         void* m_MappedData = nullptr;
     };
 
+    // ==================================================== Texture
     class TextureVulKan : public RHITexture
     {
     public:
@@ -109,6 +110,33 @@ namespace RHI
             , m_Memory(memory)
             , m_Device(device) {}
         ~TextureVulKan() override;
+
+        uint64_t GetSize() const override;
+        uint32_t GetWidth() const override;
+        uint32_t GetHeight() const override;
+
+        VkImage GetImage() const { return m_Image; }
+        VkDeviceMemory GetMemory() const { return m_Memory; }
+
+    private:
+        VkDevice GetDevice() const { return *m_Device; }
+    private:
+        VkDescriptorType m_DescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
+        VkImage m_Image;
+        VkDeviceMemory m_Memory;
+        const VkDevice* m_Device;
+    };
+
+    // Swap chain image texture
+    class SwapChainTextureVulKan : public RHITexture
+    {
+    public:
+        SwapChainTextureVulKan(VkImage image, VkDeviceMemory memory, const TextureDesc& desc, const VkDevice* device)
+            : RHITexture(desc)
+            , m_Image(image)
+            , m_Memory(memory)
+            , m_Device(device) {}
+        ~SwapChainTextureVulKan() override = default;
 
         uint64_t GetSize() const override;
         uint32_t GetWidth() const override;

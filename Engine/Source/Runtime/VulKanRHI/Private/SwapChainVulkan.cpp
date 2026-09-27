@@ -117,8 +117,10 @@ namespace RHI
             m_ImageAvailableSemaphore = nullptr;
         }
 
-        m_pBackBuffers.clear();
+        // First clear the RTV, let the image memory be handled by the swap chain, and make sure to clear the RTV before deleting the swap chain.
         m_pRenderTargetViews.clear();
+        // Reset
+        m_pBackBuffers.clear();
 
         if (m_SwapChain != VK_NULL_HANDLE)
         {
@@ -206,12 +208,16 @@ namespace RHI
         m_desc.Width = width;
         m_desc.Height = height;
 
-        // clear back buffers and render target views
-        m_pBackBuffers.clear();
+        // First clear the RTV, let the image memory be handled by the swap chain, and make sure to clear the RTV before deleting the swap chain.
         m_pRenderTargetViews.clear();
+        // Reset
+        m_pBackBuffers.clear();
 
-        vkDestroySwapchainKHR(GetDevice(), m_SwapChain, nullptr);
-        m_SwapChain = VK_NULL_HANDLE;
+        if (m_SwapChain != VK_NULL_HANDLE)
+        {
+            vkDestroySwapchainKHR(GetDevice(), m_SwapChain, nullptr);
+            m_SwapChain = VK_NULL_HANDLE;
+        }
 
         VkCreateSwapChain();
         VkCreateRenderTargetViews();
@@ -330,7 +336,7 @@ namespace RHI
             desc.MipLevels = 1;
             desc.ArrayLayers = 1;
             desc.SampleCount = VK_SAMPLE_COUNT_1_BIT;
-            m_pBackBuffers[i] = std::make_unique<TextureVulKan>(image,nullptr,desc,m_pRHI->GetDevice());
+            m_pBackBuffers[i] = std::make_unique<SwapChainTextureVulKan>(image,nullptr,desc,m_pRHI->GetDevice());
         }
 
         return true;
@@ -346,7 +352,7 @@ namespace RHI
         for (size_t i = 0; i < m_pBackBuffers.size(); ++i)
         {
             // Create render target view
-            TextureVulKan* texture = SafeCast<TextureVulKan>(m_pBackBuffers[i].get());
+            SwapChainTextureVulKan* texture = SafeCast<SwapChainTextureVulKan>(m_pBackBuffers[i].get());
             if (texture == nullptr)
             {
                 ThrowErrorMessage("Failed to cast texture");
