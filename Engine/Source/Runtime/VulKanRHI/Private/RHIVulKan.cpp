@@ -403,9 +403,9 @@ namespace RHI
 
         VkApplicationInfo appInfo = {};
         appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-        appInfo.pApplicationName = "DirectXRHI Vulkan";
+        appInfo.pApplicationName = "MagicRHI Vulkan";
         appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.pEngineName = "DirectXRHI";
+        appInfo.pEngineName = "MagicRHI";
         appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
         appInfo.apiVersion = VK_API_VERSION_1_3;
 
