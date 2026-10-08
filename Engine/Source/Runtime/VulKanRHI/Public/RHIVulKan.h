@@ -101,6 +101,7 @@ namespace RHI
 
     private:
         bool CreateInstance();
+        void SetupDebugMessenger();
         bool PickPhysicalDevice();
         bool CreateLogicalDevice();
         void CreateQueues();
@@ -110,6 +111,10 @@ namespace RHI
         VkPhysicalDevice m_PhysicalDevice = nullptr;
         VkDevice m_Device = nullptr;
         VkSurfaceKHR m_Surface = nullptr;
+
+        // Vulkan debug info callback
+        bool m_EnableValidationLayers = false;
+        VkDebugUtilsMessengerEXT m_DebugUtilsMessenger = nullptr;
 
         std::wstring m_AdapterName;
         uint32_t SdkVkApiVersion = VK_API_VERSION_1_0;

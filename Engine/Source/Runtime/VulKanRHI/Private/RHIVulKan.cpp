@@ -81,6 +81,53 @@ namespace RHI
 #endif
         }
 
+        static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback (
+            VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+            VkDebugUtilsMessageTypeFlagsEXT messageType,
+            const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+            void* pUserData) {
+            
+            if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+                Core::ErrorCapture::Capture(pCallbackData->pMessage);
+            }
+            else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+                Core::WarningCapture::Capture(pCallbackData->pMessage);
+            }
+
+            return VK_FALSE;
+        }
+
+        void PopulateDebugMessengerCreateInfo (VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
+            // Fill in debug messenger create info
+            createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+            createInfo.flags = 0;   // Padding bit
+            // The severity and type of messages we want to receive
+            createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+            createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+            // Set callback function
+            createInfo.pfnUserCallback = debugCallback;
+            createInfo.pUserData = nullptr; // Optional
+        }
+
+        // ========================================= Since it's an extension function, it needs to be loaded manually. =========================================
+        VkResult CreateDebugUtilsMessengerEXT (VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
+            auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr (instance, "vkCreateDebugUtilsMessengerEXT");
+            if (func != nullptr) {
+                return func (instance, pCreateInfo, pAllocator, pDebugMessenger);
+            }
+            else {
+                return VK_ERROR_EXTENSION_NOT_PRESENT;
+            }
+        }
+
+        void DestroyDebugUtilsMessengerEXT (VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger, const VkAllocationCallbacks* pAllocator) {
+            auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr (instance, "vkDestroyDebugUtilsMessengerEXT");
+            if (func != nullptr) {
+                func (instance, debugMessenger, pAllocator);
+            }
+        }
+        // ========================================= Since it's an extension function, it needs to be loaded manually. =========================================
+
         std::vector<const char*> GetRequiredExtensions(bool enableValidation)
         {
             // Get all available extensions count
@@ -363,6 +410,12 @@ namespace RHI
             return false;
         }
 
+        // Setup debug messenger
+        if (m_EnableValidationLayers)
+        {
+            SetupDebugMessenger();
+        }
+
         // Pick physical device
         if (!PickPhysicalDevice())
         {
@@ -390,12 +443,12 @@ namespace RHI
 
     bool DeviceVulKan::CreateInstance()
     {
-        bool enableValidation = false;
+        m_EnableValidationLayers = false;
 #ifdef RHI_ENABLE_DEBUG_INFO
-        enableValidation = true;
+        m_EnableValidationLayers = true;
 #endif
-
-        if (enableValidation && !CheckValidationLayerSupport(GetRequiredValidationLayers()))
+        // Check validation layers support
+        if (m_EnableValidationLayers && !CheckValidationLayerSupport(GetRequiredValidationLayers()))
         {
             ThrowErrorMessage("Validation layers requested but not available");
             return false;
@@ -413,16 +466,25 @@ namespace RHI
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &appInfo;
 
-        auto extensions = GetRequiredExtensions(enableValidation);
+        auto extensions = GetRequiredExtensions(m_EnableValidationLayers);
         auto validationLayers = GetRequiredValidationLayers();
 
         createInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
         createInfo.ppEnabledExtensionNames = extensions.data();
 
-        if (enableValidation)
+        VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+        if (m_EnableValidationLayers)
         {
             createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
             createInfo.ppEnabledLayerNames = validationLayers.data();
+            
+            PopulateDebugMessengerCreateInfo (debugCreateInfo);
+            createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+        }
+        else
+        {
+            createInfo.enabledLayerCount = 0;
+            createInfo.ppEnabledLayerNames = nullptr;
         }
 
         VkResult instance_result = vkCreateInstance(&createInfo, nullptr, &m_Instance);
@@ -444,6 +506,18 @@ namespace RHI
         }
 
         return true;
+    }
+
+    void DeviceVulKan::SetupDebugMessenger()
+    {
+        // Create debug messenger
+        VkDebugUtilsMessengerCreateInfoEXT createInfo = {};
+        PopulateDebugMessengerCreateInfo (createInfo);
+        VkResult debugMessenger_result = CreateDebugUtilsMessengerEXT(m_Instance, &createInfo, nullptr, &m_DebugUtilsMessenger);
+        if (debugMessenger_result != VK_SUCCESS)
+        {
+            ThrowErrorMessage("Failed to create debug messenger");
+        }
     }
 
     bool DeviceVulKan::PickPhysicalDevice()
@@ -776,6 +850,12 @@ namespace RHI
             vkDeviceWaitIdle(m_Device);
             vkDestroyDevice(m_Device, nullptr);
             m_Device = nullptr;
+        }
+
+        if (m_DebugUtilsMessenger)
+        {
+            DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugUtilsMessenger, nullptr);
+            m_DebugUtilsMessenger = nullptr;
         }
 
         if (m_Instance)
