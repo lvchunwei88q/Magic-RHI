@@ -18,7 +18,7 @@
 ### 获取源码
 
 ```bash
-git clone https://github.com/lvchunwei88q/DirectXRHI.git
+git clone https://github.com/lvchunwei88q/Magic-RHI.git
 ```
 
 这里也会自动下载 ThirdParty 文件夹中的依赖库。
@@ -29,7 +29,7 @@ git clone https://github.com/lvchunwei88q/DirectXRHI.git
 在构建之前，请确保已安装 Visual Studio 和 CMake，并且已正确设置环境变量。
 
 ```bash
-cd DirectXRHI
+cd Magic-RHI
 # 运行 Build 脚本
 Build.bat
 ```
