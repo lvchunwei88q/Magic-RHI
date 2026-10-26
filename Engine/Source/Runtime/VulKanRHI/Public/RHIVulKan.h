@@ -153,6 +153,7 @@ namespace RHI
         uint32_t GetWidth() const override { return m_desc.Width; }
         uint32_t GetHeight() const override { return m_desc.Height; }
         RHIRenderTargetView* GetRenderTargetView(uint32_t index) const override;
+        RHITextureFormat GetRenderTargetFormat() const override;
         RHITexture* GetBackBuffer(uint32_t index) const override;
 
         VkSwapchainKHR GetSwapChain() const { return m_SwapChain; }

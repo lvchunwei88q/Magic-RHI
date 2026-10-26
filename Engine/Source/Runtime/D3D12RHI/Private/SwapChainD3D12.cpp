@@ -5,10 +5,16 @@
  #include <Common/Check.h>
 #include "RHICommandListD3D12.h"
 #include "RHID3D12.h"
-#include "D3D12Config.h"
 
 namespace RHI
 {
+    namespace
+    {
+        DXGI_FORMAT SwapChainBackBufferFormat_DX12 = DXGI_FORMAT_R8G8B8A8_UNORM; // Use sRGB format for correct color space
+        DXGI_FORMAT SwapChainRTVFormat_DX12 = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB; // Use sRGB format for correct color space
+        RHITextureFormat SwapChainRTVFormat_RHI = RHITextureFormat::R8G8B8A8_SRGB; // Use sRGB format for correct color space
+    }
+
     SwapChainD3D12::SwapChainD3D12()
     {
     }
@@ -38,7 +44,7 @@ namespace RHI
         swapChainDesc.BufferCount = RHI_MULTI_BUFFERING;
         swapChainDesc.Width = desc.Width;
         swapChainDesc.Height = desc.Height;
-        swapChainDesc.Format = DXGI_RTV_FORMAT;
+        swapChainDesc.Format = SwapChainBackBufferFormat_DX12;
         swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
         swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
         swapChainDesc.SampleDesc.Count = 1;
@@ -90,13 +96,20 @@ namespace RHI
         UINT rtvDescriptorSize = dx12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
         CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_pRtvHeap->GetCPUDescriptorHandleForHeapStart());
         
+        // define the render target view description
+        D3D12_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+        rtvDesc.Format = SwapChainRTVFormat_DX12; // Use sRGB format for correct color space
+        rtvDesc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2D;
+        rtvDesc.Texture2D.MipSlice = 0;
+        rtvDesc.Texture2D.PlaneSlice = 0;
+
         for (UINT n = 0; n < RHI_MULTI_BUFFERING; n++)
         {
             ComPtr<ID3D12Resource> pResource;
             ThrowIfFailed(m_pSwapChain1->GetBuffer(n, IID_PPV_ARGS(&pResource)));
-            dx12Device->CreateRenderTargetView(pResource.Get(), nullptr, rtvHandle);
+            dx12Device->CreateRenderTargetView(pResource.Get(), &rtvDesc, rtvHandle);
             
-            TextureDesc back_desc                               = { RHI_RTV_FORMAT, m_desc.Width, m_desc.Height, 1, 1, 1, 0 };
+            TextureDesc back_desc                               = { RHITextureFormat::R8G8B8A8_UNORM , m_desc.Width, m_desc.Height, 1, 1, 1, 0 };
             std::unique_ptr<RenderTargetViewD3D12> pDerived = std::make_unique<RenderTargetViewD3D12>(rtvHandle);
             std::unique_ptr<RHITexture> pBackBuffer             = std::make_unique<TextureD3D12>(pResource.Get(),back_desc);
             // Set descriptor handle offset
@@ -146,7 +159,7 @@ namespace RHI
             RHI_MULTI_BUFFERING,
             width,
             height,
-            DXGI_RTV_FORMAT,
+            SwapChainBackBufferFormat_DX12,
             0
         ));
 
@@ -157,6 +170,12 @@ namespace RHI
     RHIRenderTargetView* SwapChainD3D12::GetRenderTargetView(uint32_t index) const
     {
         return m_pRenderTargetViews[index].get();
+    }
+
+    RHITextureFormat SwapChainD3D12::GetRenderTargetFormat() const
+    {
+        // Return the RHI texture format corresponding to the swap chain format
+        return SwapChainRTVFormat_RHI;
     }
 
     RHITexture*  SwapChainD3D12::GetBackBuffer(uint32_t index) const

@@ -68,7 +68,7 @@ namespace RHI
 
         ComPtr<ID3D11Texture2D> backBuffer;
         ThrowIfFailed(m_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&backBuffer)));
-
+        
         ComPtr<ID3D11RenderTargetView> RenderTargetView;
         ThrowIfFailed(m_pRHI->GetDevice()->CreateRenderTargetView(
             backBuffer.Get(),

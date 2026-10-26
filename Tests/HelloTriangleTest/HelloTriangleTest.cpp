@@ -272,7 +272,7 @@ void TestHelloTriangle()
         graphicsDesc.pVertexShader = vertexShader.get();
         graphicsDesc.pPixelShader = pixelShader.get();
         graphicsDesc.NumRenderTargets = 1;
-        graphicsDesc.RenderTargetFormats[0] = RHI::RHITextureFormat::R8G8B8A8_UNORM;
+        graphicsDesc.RenderTargetFormats[0] = swapChain->GetRenderTargetFormat();
         graphicsDesc.DepthStencilFormat = RHI::RHITextureFormat::Unknown;       
 
         auto graphicsPSO = device->CreateGraphicsPipelineState(graphicsDesc);

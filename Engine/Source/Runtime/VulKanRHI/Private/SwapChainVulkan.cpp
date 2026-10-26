@@ -1,6 +1,5 @@
 #include <Common/Check.h>
 #include <Common/RHIConfig.h>
-#include "VulKanConfig.h"
 #include <algorithm>
 #include <cstddef>
 #include "RHICommandListVulKan.h"
@@ -10,6 +9,9 @@ namespace RHI
 {
     namespace
     {
+        VkFormat SwapChainFormat_Vulkan = VK_FORMAT_B8G8R8A8_SRGB; // Use sRGB format for correct color space
+        VkColorSpaceKHR SwapChainColorSpace_Vulkan = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR; // Use sRGB format for correct color space
+        RHITextureFormat SwapChainFormat_RHI = RHITextureFormat::R8G8B8A8_SRGB; // Use sRGB format for correct color space
     }
 
     SwapChainVulKan::SwapChainVulKan()
@@ -230,6 +232,12 @@ namespace RHI
         return m_pRenderTargetViews[index].get();
     }
 
+    RHITextureFormat SwapChainVulKan::GetRenderTargetFormat() const
+    {
+        // Return the RHI texture format corresponding to the swap chain format
+        return SwapChainFormat_RHI;
+    }
+
     RHITexture* SwapChainVulKan::GetBackBuffer(uint32_t index) const
     {
         if (index >= m_pBackBuffers.size())
@@ -330,7 +338,7 @@ namespace RHI
         {   
             auto& image = images[i];
             TextureDesc desc = {};
-            desc.Format = RHI_RTV_FORMAT;
+            desc.Format = SwapChainFormat_RHI;
             desc.Width = m_SwapChainExtent.width;
             desc.Height = m_SwapChainExtent.height;
             desc.MipLevels = 1;
@@ -413,18 +421,20 @@ namespace RHI
     {
         if (availableFormats.empty())
         {
-            return { VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
+            return { SwapChainFormat_Vulkan, SwapChainColorSpace_Vulkan };
         }
 
+        // Prefer VK_FORMAT_B8G8R8A8_UNORM with VK_COLOR_SPACE_SRGB_NONLINEAR_KHR for correct color space
         for (const auto& availableFormat : availableFormats)
         {
-            if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM &&
-                availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+            if (availableFormat.format == SwapChainFormat_Vulkan &&
+                availableFormat.colorSpace == SwapChainColorSpace_Vulkan)
             {
                 return availableFormat;
             }
         }
 
+        // If not, return the first available one
         return availableFormats[0];
     }
 

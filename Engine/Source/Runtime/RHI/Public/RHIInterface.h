@@ -122,6 +122,7 @@ namespace RHI
         virtual uint32_t GetHeight() const = 0;
 
         virtual RHIRenderTargetView* GetRenderTargetView(uint32_t index) const = 0;
+        virtual RHITextureFormat GetRenderTargetFormat() const = 0;
         virtual RHITexture* GetBackBuffer(uint32_t index) const = 0;
 
     protected:

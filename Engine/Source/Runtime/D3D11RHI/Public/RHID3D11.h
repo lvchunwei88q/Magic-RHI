@@ -102,6 +102,8 @@ namespace RHI
         uint32_t GetHeight() const override { return m_desc.Height; }
         // Get render target view
         RHIRenderTargetView* GetRenderTargetView(uint32_t index) const override;
+        // Get render target format
+        RHITextureFormat GetRenderTargetFormat() const override { return RHITextureFormat::R8G8B8A8_UNORM; }
         // Get back buffer
         RHITexture* GetBackBuffer(uint32_t index) const override;
         // Get swap chain

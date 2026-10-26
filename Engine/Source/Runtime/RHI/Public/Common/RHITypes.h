@@ -141,7 +141,7 @@ enum class RHICmdType : uint8_t
 	Copy
 };
 
-// RHI 抽象层的纹理格式枚举
+// RHI Texture Format
 enum class RHITextureFormat : uint8_t
 {
 	Unknown = 0,
