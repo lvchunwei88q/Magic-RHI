@@ -5,55 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch D3D11 RHI - Debug",
-            "type":"lldb",
+            "name": "运行选定的测试程序",
+            "type": "lldb",
             "request": "launch",
-            "program": "${workspaceRoot}/Binary/Debug/MagicRHI.exe",
-            "args": ["dx11"],
+            "program": "${workspaceRoot}/Binary/Debug/${input:pickExecutable}",
+            "args": [],
             "cwd": "${workspaceRoot}",
-            "console": "integratedTerminal", 
-        },
+            "console": "integratedTerminal"
+        }
+    ],
+    "inputs": [
         {
-            "name": "Launch Vulkan RHI - Debug",
-            "type":"lldb",
-            "request": "launch",
-            "program": "${workspaceRoot}/Binary/Debug/MagicRHI.exe",
-            "args": ["vk"],
-            "cwd": "${workspaceRoot}",
-            "console": "integratedTerminal", 
-        },
-        {
-            "name": "Launch D3D12 RHI - Debug",
-            "type":"lldb",
-            "request": "launch",
-            "program": "${workspaceRoot}/Binary/Debug/MagicRHI.exe",
-            "args": ["dx12"],
-            "cwd": "${workspaceRoot}",
-            "console": "integratedTerminal", 
-        },
-        {
-            "name": "Launch D3D11 RHI - Release",
-            "type":"lldb",
-            "request": "launch",
-            "program": "${workspaceRoot}/Binary/Release/MagicRHI.exe",
-            "args": ["dx11"],
-            "cwd": "${workspaceRoot}"
-        },
-        {
-            "name": "Launch Vulkan RHI - Release",
-            "type":"lldb",
-            "request": "launch",
-            "program": "${workspaceRoot}/Binary/Release/MagicRHI.exe",
-            "args": ["vk"],
-            "cwd": "${workspaceRoot}",
-        },
-        {
-            "name": "Launch D3D12 RHI - Release",
-            "type":"lldb",
-            "request": "launch",
-            "program": "${workspaceRoot}/Binary/Release/MagicRHI.exe",
-            "args": ["dx12"],
-            "cwd": "${workspaceRoot}"
+            "id": "pickExecutable",
+            "type": "pickString",
+            "description": "选择要运行的测试程序:",
+            "options": [
+                "HelloTriangleTest.exe",
+            ]
         }
     ]
 

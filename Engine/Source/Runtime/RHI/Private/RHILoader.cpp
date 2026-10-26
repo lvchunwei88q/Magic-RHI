@@ -1,5 +1,8 @@
 #include "RHILoader.h"
+#include "Tools/EnumClassFlags.h"
 #include <RHI.modules.generated.h>
+
+#include <type_traits>
 
 using namespace Core;
 namespace RHI
@@ -10,8 +13,23 @@ namespace RHI
         return &RHILoader::Get();
     }
 
-    RHILoader::~RHILoader()
-    {
+    RHILoader::~RHILoader(){}
+
+    namespace {
+        bool IsSingleRHIType(RHIType type)
+        {
+            // if the type is None, it's not a valid single RHI type
+            if (type == RHIType::None) return false;
+            // Check if the type is Unknown, which is also not a valid single RHI type
+            if (type == RHIType::Unknown) return false;
+
+            // Convert the RHIType to its underlying integer representation
+            using UnderlyingType = std::underlying_type_t<RHIType>;
+            UnderlyingType val = static_cast<UnderlyingType>(type);
+
+            // Check if the value is a power of two, which indicates that only one bit is set
+            return (val & (val - 1)) == 0;
+        }
     }
 
     bool RHILoader::Init()
@@ -28,20 +46,19 @@ namespace RHI
     {   
         const char* dllName = "";
 
-        switch (type)
-        {
-        case RHIType::D3D12:
-            dllName = RHI_D3D12_DLL_FILE;
-            break;
-        case RHIType::D3D11:
-            dllName = RHI_D3D11_DLL_FILE;
-            break;
-        case RHIType::VulKan:
-            dllName = RHI_VULKAN_DLL_FILE;
-            break;
-        default:
-            return false;       
+        if(!IsSingleRHIType(type)){
+            ErrorCapture::Capture("Invalid RHI type: " + std::string(RHITypeToString(type)) + ". Only single RHI types are allowed.");
+            return false;
         }
+
+        // Determine the DLL name based on the RHI type
+        if (EnumHasAnyFlags(type, RHIType::D3D11)) {
+            dllName = RHI_D3D11_DLL_FILE;
+        }else if (EnumHasAnyFlags(type, RHIType::D3D12)) {
+            dllName = RHI_D3D12_DLL_FILE;
+        }else if (EnumHasAnyFlags(type, RHIType::VulKan)) {
+            dllName = RHI_VULKAN_DLL_FILE;
+        }// ... add more RHI types here as needed
         
         // load dll
         InfoCapture::Capture("Loading RHI DLL: " + std::string(dllName));

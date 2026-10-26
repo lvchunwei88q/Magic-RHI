@@ -1,5 +1,3 @@
-#include "Function.hlsl"
-
 struct VSInput
 {
     float4 position : POSITION; // 对应 InputLayout[0]

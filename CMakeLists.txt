@@ -13,9 +13,11 @@ RuntimeModule(D3D11RHI)
 RuntimeModule(D3D12RHI)
 RuntimeModule(RHI)
 
-add_executable(${PROJECT_NAME} main.cpp)
-target_link_libraries(${PROJECT_NAME} PRIVATE RHI Core)
-
-target_include_directories(${PROJECT_NAME} PUBLIC
+# add executable(HelloTriangleTest Tests/HelloTriangleTest/main.cpp)
+add_executable(HelloTriangleTest Tests/HelloTriangleTest/main.cpp)
+target_link_libraries(HelloTriangleTest PRIVATE RHI Core)
+target_include_directories(HelloTriangleTest PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+# add ...

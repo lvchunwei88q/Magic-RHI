@@ -35,8 +35,19 @@ namespace RHI
     {
     public:
         virtual ~IRHILoader() = default;
-
+        
+        /**
+        * Loads a single RHI backend specified by the type.
+        * @param type The backend to load. Must be a single RHI type (not a combination).
+        * @return true on success, false if the type is invalid or initialization fails.
+        * Note: Although RHIType is a bitmask, this function does not handle multiple backends at once. 
+        * The caller should pre-select the optimal single backend to pass in.
+        */
         virtual bool Load(RHIType type) = 0;
+
+        /**
+        * Unloads the active RHI backend.
+        */
         virtual void Unload() = 0;
         
         virtual std::unique_ptr<Device> CreateDevice() = 0;
