@@ -21,6 +21,8 @@
             "description": "选择要运行的测试程序:",
             "options": [
                 "HelloTriangleTest.exe",
+                "TestSwapChain.exe",
+                "TestShaderCompile.exe"
             ]
         }
     ]

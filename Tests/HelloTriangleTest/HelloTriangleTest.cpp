@@ -182,7 +182,7 @@ void TestHelloTriangle()
         std::cout << "Shader compilation..." << std::endl;
         
         std::string exePath = IO::ToNarrowString(IO::AbsolutePath::Get().GetExecutableDirectory());
-        std::string ShaderPath = exePath + "\\..\\..\\Tests\\HelloTriangleTest";
+        std::string ShaderPath = exePath + "\\..\\..\\Tests\\HelloTriangleTest\\Shader";
         std::string vsshaderPath = ShaderPath + "\\testVS.hlsl"; 
         std::string psshaderPath = ShaderPath + "\\testPS.hlsl";
         
