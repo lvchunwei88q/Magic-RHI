@@ -114,16 +114,17 @@ std::vector<Vertex> GenerateRandomVertices(size_t targetSize)
 
 std::wstring GetRHIWindowName(RHI::RHIType type)
 {
-    switch (type)
-    {
-    case RHI::RHIType::D3D11:
+    if (EnumHasAnyFlags(type, RHI::RHIType::None)) {
+        return L"RHI None Window";
+    }else if (EnumHasAnyFlags(type, RHI::RHIType::D3D11)) {
         return L"RHI D3D11 Window";
-    case RHI::RHIType::D3D12:
+    }else if (EnumHasAnyFlags(type, RHI::RHIType::D3D12)) {
         return L"RHI D3D12 Window";
-    case RHI::RHIType::VulKan:
+    }else if (EnumHasAnyFlags(type, RHI::RHIType::VulKan)) {
         return L"RHI Vulkan Window";
-    case RHI::RHIType::Unknown:
-    default:
+    }else if (EnumHasAnyFlags(type, RHI::RHIType::Unknown)) {
+        return L"RHI Unknown Window";
+    }else{
         return L"RHI Unknown Window";
     }
 }
@@ -135,6 +136,7 @@ int main(int argc, char* argv[])
     std::cout << "Engine Version: " << Core::Core::GetVersion() << std::endl;
 
     RHI::RHIType type = RHI::GetBestAvailableRHI();
+    std::string SupportTable = RHITypeToString(type);
     
     if (argc > 1 && strcmp(argv[1], "dx12") == 0) {
         type = RHI::RHIType::D3D12;

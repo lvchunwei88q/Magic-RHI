@@ -68,11 +68,11 @@ namespace RHI
         // verify type match
         if (m_GetRHIType() != type) {
             Unload();
-            ErrorCapture::Capture("RHI type mismatch: " + std::string(ToString(type)));
+            ErrorCapture::Capture("RHI type mismatch: " + std::string(RHITypeToString(type)));
             return false;
         }
         
-        InfoCapture::Capture("RHI type match: " + std::string(ToString(type)));
+        InfoCapture::Capture("RHI type match: " + std::string(RHITypeToString(type)));
         
         m_loadedType = type;
         return true;

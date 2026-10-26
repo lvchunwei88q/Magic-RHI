@@ -4,7 +4,8 @@
 #include <memory>
 #include "Common/RHI_API.h"
 #include "Common/RHIDefinitions.h"
-#include "Common/RHIPlatformDetection.h"
+// Platform Check
+#include "RHIPlatformDetection.h"
 
 namespace RHI
 {
