@@ -213,7 +213,8 @@ namespace RHI
         GraphicsQueueSwapChainInfo Info;
         Info.imageIndex = m_AvailableSwapChainImageIndex;
         Info.SwapChain = (uint64_t)m_SwapChain;
-        Info.Semaphore = (uint64_t)m_ImageAvailableSemaphore;
+        Info.Semaphore_Vk = (uint64_t)m_ImageAvailableSemaphore;
+        Info.SwapChainBackBufferCount_Vk = (uint32_t)m_pBackBuffers.size();
         Info.VSync = m_desc.VSync;
         return Info;
     }

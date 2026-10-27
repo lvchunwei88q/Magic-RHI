@@ -119,7 +119,7 @@ namespace RHI
         bool IsValid() const override;
 
         void Resize(uint32_t width, uint32_t height) override;
-        uint32_t AvailableSwapChainImageIndex() const override { return m_pSwapChain3->GetCurrentBackBufferIndex(); }// 获取当前帧索引
+        uint32_t AcquireNextImage() override { return m_pSwapChain3->GetCurrentBackBufferIndex(); }// Get current back buffer index
 
         uint32_t GetWidth() const override { return m_desc.Width; }
         uint32_t GetHeight() const override { return m_desc.Height; }

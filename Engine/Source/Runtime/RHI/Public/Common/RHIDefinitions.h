@@ -6,6 +6,8 @@
 #include <variant>
 #include <vector>
 
+#define UINT_INITIAL_VALUE 0
+
 namespace RHI
 {
 
@@ -13,8 +15,8 @@ namespace RHI
 struct SwapChainDesc
 {
     void* WindowHandleRef;
-    uint32_t Width;
-    uint32_t Height;
+    uint32_t Width      = UINT_INITIAL_VALUE;
+    uint32_t Height     = UINT_INITIAL_VALUE;
     bool VSync = false;
 };
 
@@ -24,32 +26,36 @@ struct GraphicsQueueSwapChainInfo
     using SwapChainHandle = uint64_t;
     using SemaphoreHandle = uint64_t;
 
-    uint32_t imageIndex;
-    SwapChainHandle SwapChain;
-    SemaphoreHandle Semaphore;
+    uint32_t imageIndex                     = UINT_INITIAL_VALUE;
+    SwapChainHandle SwapChain               = UINT_INITIAL_VALUE;
     bool VSync = false;
+
+    // Vulkan Semaphore Handle
+    SemaphoreHandle Semaphore_Vk            = UINT_INITIAL_VALUE;
+    // Vulkan Swap Chain Back Buffer Count
+    uint32_t SwapChainBackBufferCount_Vk    = UINT_INITIAL_VALUE;
 };
 
 // Resource Transition Barrier Description
 struct ResourceTransitionBarrier
 {
-	class RHIResource* 			pResource;     // Resource Pointer
-	uint32_t           			Subresource;   // Subresource Index (-1 for all)
-	RHIResourceState            StateBefore;   // State Before Transition
-	RHIResourceState            StateAfter;    // State After Transition
+	class RHIResource* 			pResource       = nullptr;     // Resource Pointer
+	uint32_t           			Subresource     = UINT_INITIAL_VALUE;   // Subresource Index (-1 for all)
+	RHIResourceState            StateBefore     = RHIResourceState::Common;   // State Before Transition
+	RHIResourceState            StateAfter      = RHIResourceState::Common;    // State After Transition
 };
 
 // Resource Aliasing Barrier Description
 struct ResourceAliasingBarrier
 {
-	class RHIResource* pResourceBefore;  // Resource Before Transition
-	class RHIResource* pResourceAfter;   // Resource After Transition
+	class RHIResource* pResourceBefore = nullptr;  // Resource Before Transition
+	class RHIResource* pResourceAfter  = nullptr;   // Resource After Transition
 };
 
 // UAV Barrier Description
 struct ResourceUAVBarrier
 {
-	class RHIResource* pResource;  // UAV Resource（can be nullptr）
+	class RHIResource* pResource = nullptr;  // UAV Resource（can be nullptr）
 };
 
 // Resource Barrier Description
@@ -68,27 +74,27 @@ struct BarrierDesc
 
 struct TextureDesc
 {
-    RHITextureFormat Format;
-    uint32_t Width;
-    uint32_t Height;
-    uint32_t Depth;
-    uint32_t MipLevels;
-    uint32_t ArrayLayers;
-    uint32_t SampleCount;
-    uint32_t SampleQuality;
-    uint32_t Flags;
+    RHITextureFormat Format = RHITextureFormat::Unknown;
+    uint32_t Width          = UINT_INITIAL_VALUE;
+    uint32_t Height         = UINT_INITIAL_VALUE;
+    uint32_t Depth          = UINT_INITIAL_VALUE;
+    uint32_t MipLevels      = UINT_INITIAL_VALUE;
+    uint32_t ArrayLayers    = UINT_INITIAL_VALUE;
+    uint32_t SampleCount    = UINT_INITIAL_VALUE;
+    uint32_t SampleQuality  = UINT_INITIAL_VALUE;
+    uint32_t Flags          = UINT_INITIAL_VALUE;
 };
 
 // Input Element Description
 struct InputElementDesc
 {
-	const char* SemanticName;           		  // Semantic Name
-	uint32_t SemanticIndex;              		  // Semantic Index
-	RHITextureFormat Format;                      // Data Format
-	uint32_t InputSlot;              			  // Input Slot Index（0-15）
-	uint32_t AlignedByteOffset;              	  // Aligned Byte Offset（use APPDEND_ALIGNED_ELEMENT to calculate）
-	InputClassification InputSlotClass;           // Input Classification
-	uint32_t InstanceDataStepRate;                // Instance Data Step Rate
+	const char* SemanticName                = nullptr;           		    // Semantic Name
+	uint32_t SemanticIndex                  = UINT_INITIAL_VALUE;           // Semantic Index
+	RHITextureFormat Format                 = RHITextureFormat::Unknown;    // Data Format
+	uint32_t InputSlot                      = UINT_INITIAL_VALUE;           // Input Slot Index（0-15）
+	uint32_t AlignedByteOffset              = UINT_INITIAL_VALUE;           // Aligned Byte Offset（use APPDEND_ALIGNED_ELEMENT to calculate）
+	InputClassification InputSlotClass;                                     // Input Classification
+	uint32_t InstanceDataStepRate           = UINT_INITIAL_VALUE;           // Instance Data Step Rate
 	// Auxiliary Constants
 	static constexpr uint32_t APPEND_ALIGNED_ELEMENT = 0xFFFFFFFF;
 };
@@ -98,14 +104,14 @@ struct InputElementDesc
  * This struct is used to describe the data layout in a buffer
 */
 struct SPIRVResource {
-    std::string name;           // Resource Name
-    uint32_t binding;           // binding Index (corresponding HLSL register)
-    uint32_t set;               // set Index (corresponding HLSL space)
-    uint32_t size;              // Resource Size（bytes）
-    bool isConstantBuffer;      // Is Constant Buffer Resource
-    bool isTexture;             // Is Texture Resource
-    bool isSampler;             // Is Sampler Resource
-    std::vector<std::pair<std::string, uint32_t>> members; // Member Variables
+    std::string name;                                       // Resource Name
+    uint32_t binding = UINT_INITIAL_VALUE;                  // binding Index (corresponding HLSL register)
+    uint32_t set = UINT_INITIAL_VALUE;                      // set Index (corresponding HLSL space)
+    uint32_t size = UINT_INITIAL_VALUE;                     // Resource Size（bytes）
+    bool isConstantBuffer;                                  // Is Constant Buffer Resource
+    bool isTexture;                                         // Is Texture Resource
+    bool isSampler;                                         // Is Sampler Resource
+    std::vector<std::pair<std::string, uint32_t>> members;  // Member Variables
 };
 
 /*

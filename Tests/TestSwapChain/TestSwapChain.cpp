@@ -88,14 +88,13 @@ void RunTestDeviceAndSwapChain(RHI::RHIType rhiType,const std::wstring& windowTi
             }
 
             device->GetFrameCommandQueue()->BeginFrame();
-            uint64_t ImageIndex = swapChain->AvailableSwapChainImageIndex ();
+            uint32_t ImageIndex = swapChain->AcquireNextImage();
             device->GetFrameCommandQueue()->ResetCommandPoolMemory(cmdPools[ImageIndex].get ());
             RHI::GraphicsQueueSwapChainInfo GQSCInfo = swapChain->GetGraphicsQueueSwapChainInfo();
             device->GetFrameCommandQueue()->SetGraphicsQueueSwapChainInfo(GQSCInfo);
 
             cmdLists[ImageIndex]->BeginRecording ();
-            uint32_t SwapChainImageIndex = swapChain->AvailableSwapChainImageIndex();
-            RHI::RHITexture* backBuffer = swapChain->GetBackBuffer(SwapChainImageIndex);
+            RHI::RHITexture* backBuffer = swapChain->GetBackBuffer(ImageIndex);
 
             RHI::BarrierDesc barrier = {};
             barrier.Type = RHI::ResourceBarrierType::Transition;
@@ -105,7 +104,7 @@ void RunTestDeviceAndSwapChain(RHI::RHIType rhiType,const std::wstring& windowTi
             barrier.Transition.StateAfter = RHI::RHIResourceState::RenderTarget;
             cmdLists[ImageIndex]->ResourceBarrier(1, &barrier);
 
-            RHI::RHIRenderTargetView* pRTV = swapChain->GetRenderTargetView(SwapChainImageIndex);
+            RHI::RHIRenderTargetView* pRTV = swapChain->GetRenderTargetView(ImageIndex);
             cmdLists[ImageIndex]->OMSetRenderTargets(1, &pRTV, false, nullptr);
             
             float clearColor[4] = { 0.2f, 0.2f, 0.2f, 1.0f }; // 灰色

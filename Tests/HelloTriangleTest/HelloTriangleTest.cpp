@@ -303,14 +303,13 @@ void TestHelloTriangle()
             DispatchMessage(&msg);
             
             device->GetFrameCommandQueue()->BeginFrame();
-            uint64_t ImageIndex = swapChain->AvailableSwapChainImageIndex ();
+            uint32_t ImageIndex = swapChain->AcquireNextImage ();
             device->GetFrameCommandQueue()->ResetCommandPoolMemory(cmdPools[ImageIndex].get ());
             RHI::GraphicsQueueSwapChainInfo GQSCInfo = swapChain->GetGraphicsQueueSwapChainInfo();
             device->GetFrameCommandQueue()->SetGraphicsQueueSwapChainInfo(GQSCInfo);
 
             cmdLists[ImageIndex]->BeginRecording ();
-            uint32_t SwapChainImageIndex = swapChain->AvailableSwapChainImageIndex();
-            RHI::RHITexture* BackBufferTexture = swapChain->GetBackBuffer(SwapChainImageIndex);
+            RHI::RHITexture* BackBufferTexture = swapChain->GetBackBuffer(ImageIndex);
 
             RHI::BarrierDesc barrier = {};
             barrier.Type                        = RHI::ResourceBarrierType::Transition;
@@ -323,7 +322,7 @@ void TestHelloTriangle()
             
             cmdLists[ImageIndex]->ResourceBarrier(1, &barrier);
             
-            RHI::RHIRenderTargetView* pRTV = swapChain->GetRenderTargetView(SwapChainImageIndex);
+            RHI::RHIRenderTargetView* pRTV = swapChain->GetRenderTargetView(ImageIndex);
             cmdLists[ImageIndex]->OMSetRenderTargets(1, &pRTV, false, nullptr);
             
             float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};

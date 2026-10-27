@@ -147,7 +147,7 @@ namespace RHI
         bool IsValid() const override;
 
         void Resize(uint32_t width, uint32_t height) override;
-        uint32_t AvailableSwapChainImageIndex () const override { return m_AvailableSwapChainImageIndex; }
+        uint32_t AcquireNextImage() override;
 
         uint32_t GetWidth() const override { return m_desc.Width; }
         uint32_t GetHeight() const override { return m_desc.Height; }
@@ -159,7 +159,6 @@ namespace RHI
 
         VkSwapchainKHR GetSwapChain() const { return m_SwapChain; }
         VkFormat GetFormat() const { return m_SwapChainFormat; }
-        uint32_t AcquireNextImage();
 
         // Get the Vulkan device.
         VkDevice GetDevice() const;

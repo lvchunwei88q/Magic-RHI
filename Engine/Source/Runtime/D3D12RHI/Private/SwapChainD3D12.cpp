@@ -188,7 +188,7 @@ namespace RHI
     GraphicsQueueSwapChainInfo SwapChainD3D12::GetGraphicsQueueSwapChainInfo() const 
     {
         GraphicsQueueSwapChainInfo Info;
-        Info.imageIndex = AvailableSwapChainImageIndex();
+        Info.imageIndex = m_pSwapChain3->GetCurrentBackBufferIndex();
         Info.SwapChain = (uint64_t)m_pSwapChain1.Get();
         Info.VSync = m_desc.VSync;
         return Info;

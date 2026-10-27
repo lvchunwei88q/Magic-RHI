@@ -155,6 +155,26 @@ namespace RHI
         if (cmdLists.empty())
             return;
 
+        // Reset the render-complete semaphore from the previous frame
+        vkResetFences(GetDevice(), 1, &m_inFlightFence);
+        
+        // Adjust the number of render-complete semaphores
+        uint32_t SwapChainBackBufferCount = m_SwapChainInfo.SwapChainBackBufferCount_Vk;
+        if (m_RenderFinishedSemaphores.size() != SwapChainBackBufferCount)
+        {
+            m_RenderFinishedSemaphores.resize(SwapChainBackBufferCount);
+            for (size_t i = 0; i < SwapChainBackBufferCount; ++i)
+            {
+                VkSemaphoreCreateInfo semaphoreInfo = {};
+                semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+                VkResult result = vkCreateSemaphore(GetDevice(), &semaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]);
+                if (result != VK_SUCCESS)
+                {
+                    ThrowErrorMessage("Failed to create render finished semaphore");
+                }
+            }
+        }
+
         std::vector<VkCommandBuffer> commandBuffers;
         EXTRACT_VK_COMMAND_BUFFERS(commandBuffers,cmdLists);
 
@@ -163,7 +183,7 @@ namespace RHI
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
         // Set wait semaphore
-        VkSemaphore vkImageAvailableSemaphore = reinterpret_cast<VkSemaphore>(m_SwapChainInfo.Semaphore);
+        VkSemaphore vkImageAvailableSemaphore = reinterpret_cast<VkSemaphore>(m_SwapChainInfo.Semaphore_Vk);
         VkSemaphore waitSemaphores[] = { vkImageAvailableSemaphore };
         VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
         submitInfo.waitSemaphoreCount = 1;
@@ -174,7 +194,7 @@ namespace RHI
         submitInfo.pCommandBuffers = commandBuffers.data();
 
 		// Set render completion semaphore
-        VkSemaphore signalSemaphores[] = { m_RenderFinishedSemaphores[m_SwapChainInfo.imageIndex]};
+        VkSemaphore signalSemaphores[] = { m_RenderFinishedSemaphores[m_SwapChainInfo.imageIndex] };
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
@@ -196,8 +216,6 @@ namespace RHI
     void GraphicsCommandQueueVulKan::EndFrame()
     {
         m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % RHI_MULTI_BUFFERING;
-        // Reset the render-complete semaphore from the previous frame
-        vkResetFences (GetDevice(), 1, &m_inFlightFence);
     }
 
     void GraphicsCommandQueueVulKan::Present()
