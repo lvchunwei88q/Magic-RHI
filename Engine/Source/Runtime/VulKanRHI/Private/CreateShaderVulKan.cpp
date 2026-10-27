@@ -71,7 +71,7 @@ namespace RHI
         }
 
         template<typename ShaderType>
-        std::unique_ptr<ShaderType> CompileShaderInternal(DeviceVulKan* device,const CreateShaderDesc& desc)
+        std::unique_ptr<ShaderType> CreateShaderInternal(DeviceVulKan* device,const CreateShaderDesc& desc)
         {
             const VkDevice* Vk_device = device->GetDevice();
             // Check Vk_device
@@ -98,32 +98,32 @@ namespace RHI
      */
     std::unique_ptr<RHIVertexShader> DeviceVulKan::CreateVertexShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<VertexShaderVulKan>(this, desc);
+        return CreateShaderInternal<VertexShaderVulKan>(this, desc);
     }
 
     std::unique_ptr<RHIPixelShader> DeviceVulKan::CreatePixelShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<PixelShaderVulKan>(this, desc);
+        return CreateShaderInternal<PixelShaderVulKan>(this, desc);
     }
 
     std::unique_ptr<RHIGeometryShader> DeviceVulKan::CreateGeometryShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<GeometryShaderVulKan>(this, desc);
+        return CreateShaderInternal<GeometryShaderVulKan>(this, desc);
     }
 
     std::unique_ptr<RHIHullShader> DeviceVulKan::CreateHullShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<HullShaderVulKan>(this, desc);
+        return CreateShaderInternal<HullShaderVulKan>(this, desc);
     }
 
     std::unique_ptr<RHIDomainShader> DeviceVulKan::CreateDomainShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<DomainShaderVulKan>(this, desc);
+        return CreateShaderInternal<DomainShaderVulKan>(this, desc);
     }
 
     std::unique_ptr<RHIComputeShader> DeviceVulKan::CreateComputeShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<ComputeShaderVulKan>(this, desc);
+        return CreateShaderInternal<ComputeShaderVulKan>(this, desc);
     }
 
     ShaderModelVersion DeviceVulKan::GetShaderModelVersion() const

@@ -223,10 +223,10 @@ namespace RHI
         VkPipeline computePipeline;
         if (vkCreateComputePipelines(
                 *VKDevice, 
-                nullptr,   // If it's nullptr, don't use the pipeline cache
+                VK_NULL_HANDLE,   // If it's nullptr, don't use the pipeline cache
                 1,
                 &pipelineInfo, 
-                nullptr, 
+                VK_NULL_HANDLE, 
                 &computePipeline) != VK_SUCCESS) {
             // failed to create compute pipeline
             ThrowErrorMessage("RHIPipelineStateVulkan::Initialize: Failed to create compute pipeline");

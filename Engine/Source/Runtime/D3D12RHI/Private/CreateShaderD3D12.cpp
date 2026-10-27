@@ -65,7 +65,7 @@ namespace RHI
         }
 
         template<typename ShaderType>
-        std::unique_ptr<ShaderType> CompileShaderInternal(const CreateShaderDesc& desc)
+        std::unique_ptr<ShaderType> CreateShaderInternal(const CreateShaderDesc& desc)
         {
             if(desc.GetUINT8ByteCode().size() == 0){
 #if RHI_ENABLE_DEBUG_INFO
@@ -79,32 +79,32 @@ namespace RHI
 
     std::unique_ptr<RHIVertexShader> DeviceD3D12::CreateVertexShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<VertexShaderD3D12>(desc);
+        return CreateShaderInternal<VertexShaderD3D12>(desc);
     }
 
     std::unique_ptr<RHIPixelShader> DeviceD3D12::CreatePixelShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<PixelShaderD3D12>(desc);
+        return CreateShaderInternal<PixelShaderD3D12>(desc);
     }
 
     std::unique_ptr<RHIGeometryShader> DeviceD3D12::CreateGeometryShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<GeometryShaderD3D12>(desc);
+        return CreateShaderInternal<GeometryShaderD3D12>(desc);
     }
 
     std::unique_ptr<RHIHullShader> DeviceD3D12::CreateHullShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<HullShaderD3D12>(desc);
+        return CreateShaderInternal<HullShaderD3D12>(desc);
     }
 
     std::unique_ptr<RHIDomainShader> DeviceD3D12::CreateDomainShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<DomainShaderD3D12>(desc);
+        return CreateShaderInternal<DomainShaderD3D12>(desc);
     }
 
     std::unique_ptr<RHIComputeShader> DeviceD3D12::CreateComputeShader(const CreateShaderDesc& desc)
     {
-        return CompileShaderInternal<ComputeShaderD3D12>(desc);
+        return CreateShaderInternal<ComputeShaderD3D12>(desc);
     }
     
     ShaderModelVersion DeviceD3D12::GetShaderModelVersion() const

@@ -107,14 +107,14 @@ namespace RHI
         void CreateQueues();
         bool CreateDescriptorPools();
 
-        VkInstance m_Instance = nullptr;
-        VkPhysicalDevice m_PhysicalDevice = nullptr;
-        VkDevice m_Device = nullptr;
-        VkSurfaceKHR m_Surface = nullptr;
+        VkInstance m_Instance = VK_NULL_HANDLE;
+        VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
+        VkDevice m_Device = VK_NULL_HANDLE;
+        VkSurfaceKHR m_Surface = VK_NULL_HANDLE;
 
         // Vulkan debug info callback
         bool m_EnableValidationLayers = false;
-        VkDebugUtilsMessengerEXT m_DebugUtilsMessenger = nullptr;
+        VkDebugUtilsMessengerEXT m_DebugUtilsMessenger = VK_NULL_HANDLE;
 
         std::wstring m_AdapterName;
         uint32_t SdkVkApiVersion = VK_API_VERSION_1_0;
@@ -179,7 +179,7 @@ namespace RHI
         SwapChainDesc m_desc;
         InitialState m_Initialization = InitialState::Shutdown;
 
-        VkSwapchainKHR m_SwapChain = nullptr;
+        VkSwapchainKHR m_SwapChain = VK_NULL_HANDLE;
         VkFormat m_SwapChainFormat = VK_FORMAT_UNDEFINED;
         VkExtent2D m_SwapChainExtent = {};
         uint32_t m_CurrentFrame = 0;
@@ -189,8 +189,8 @@ namespace RHI
         std::vector<std::unique_ptr<RHITexture>> m_pBackBuffers;
         std::vector<std::unique_ptr<RHIRenderTargetView>> m_pRenderTargetViews;
 
-        VkSemaphore m_RenderFinishedSemaphore = nullptr;
-        VkSemaphore m_ImageAvailableSemaphore = nullptr;
+        VkSemaphore m_RenderFinishedSemaphore = VK_NULL_HANDLE;
+        VkSemaphore m_ImageAvailableSemaphore = VK_NULL_HANDLE;
     };
 
     class VULKANRHI_API ShaderCompilerBackendVulKan : public ShaderCompilerBackend

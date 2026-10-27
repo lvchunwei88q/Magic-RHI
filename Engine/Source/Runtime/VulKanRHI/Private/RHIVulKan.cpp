@@ -842,32 +842,32 @@ namespace RHI
         if (m_Surface && m_Instance)
         {
             vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
-            m_Surface = nullptr;
+            m_Surface = VK_NULL_HANDLE;
         }
 
         if (m_Device)
         {
             vkDeviceWaitIdle(m_Device);
             vkDestroyDevice(m_Device, nullptr);
-            m_Device = nullptr;
+            m_Device = VK_NULL_HANDLE;
         }
 
         if (m_DebugUtilsMessenger)
         {
             DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugUtilsMessenger, nullptr);
-            m_DebugUtilsMessenger = nullptr;
+            m_DebugUtilsMessenger = VK_NULL_HANDLE;
         }
 
         if (m_Instance)
         {
             vkDestroyInstance(m_Instance, nullptr);
-            m_Instance = nullptr;
+            m_Instance = VK_NULL_HANDLE;
         }
     }
 
     bool DeviceVulKan::IsValid() const
     {
-        return m_Device != nullptr && m_PhysicalDevice != nullptr && m_Instance != nullptr
+        return m_Device != VK_NULL_HANDLE && m_PhysicalDevice != VK_NULL_HANDLE && m_Instance != VK_NULL_HANDLE
                                                      && m_Initialization == InitialState::Initialize;
     }
 

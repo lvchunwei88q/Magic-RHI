@@ -1,5 +1,16 @@
 {
     "clangd.arguments": [
         "--compile-commands-dir=${workspaceFolder}/out"
-    ]
+    ],
+    "terminal.integrated.profiles.windows": {
+        "VS Dev CMD": {
+            "path": "C:\\Windows\\System32\\cmd.exe",
+            "args": [
+                "/k",
+                "D:\\VS2026\\Community\\Common7\\Tools\\VsDevCmd.bat",
+                "-arch=x64",
+            ],
+            "icon": "terminal-cmd"
+        }
+    }
 }

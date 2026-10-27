@@ -29,7 +29,7 @@ namespace RHI
         if (m_pRHI->GetDevice() == nullptr)
         {
             ThrowErrorMessage("Vulkan device not created");
-            return nullptr;
+            return VK_NULL_HANDLE;
         }
         return *m_pRHI->GetDevice();
     }
@@ -39,7 +39,7 @@ namespace RHI
         if (m_pRHI->GetPhysicalDevice() == nullptr)
         {
             ThrowErrorMessage("Vulkan physical device not created");
-            return nullptr;
+            return VK_NULL_HANDLE;
         }
         return *m_pRHI->GetPhysicalDevice();
     }
@@ -49,7 +49,7 @@ namespace RHI
         if (m_pRHI->GetVulkanWindowSSurface() == nullptr)
         {
             ThrowErrorMessage("Vulkan surface not created");
-            return nullptr;
+            return VK_NULL_HANDLE;
         }
         return *m_pRHI->GetVulkanWindowSSurface();
     }
@@ -110,13 +110,13 @@ namespace RHI
         if (m_RenderFinishedSemaphore != VK_NULL_HANDLE)
         {
             vkDestroySemaphore(GetDevice(), m_RenderFinishedSemaphore, nullptr);
-            m_RenderFinishedSemaphore = nullptr;
+            m_RenderFinishedSemaphore = VK_NULL_HANDLE;
         }
 
         if (m_ImageAvailableSemaphore != VK_NULL_HANDLE)
         {
             vkDestroySemaphore(GetDevice(), m_ImageAvailableSemaphore, nullptr);
-            m_ImageAvailableSemaphore = nullptr;
+            m_ImageAvailableSemaphore = VK_NULL_HANDLE;
         }
 
         // First clear the RTV, let the image memory be handled by the swap chain, and make sure to clear the RTV before deleting the swap chain.
@@ -344,7 +344,7 @@ namespace RHI
             desc.MipLevels = 1;
             desc.ArrayLayers = 1;
             desc.SampleCount = VK_SAMPLE_COUNT_1_BIT;
-            m_pBackBuffers[i] = std::make_unique<SwapChainTextureVulKan>(image,nullptr,desc,m_pRHI->GetDevice());
+            m_pBackBuffers[i] = std::make_unique<SwapChainTextureVulKan>(image,VK_NULL_HANDLE,desc,m_pRHI->GetDevice());
         }
 
         return true;
