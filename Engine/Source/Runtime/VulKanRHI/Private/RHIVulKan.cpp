@@ -876,12 +876,15 @@ namespace RHI
         return FromVulkanVersionLevel(PhysicalDeviceApiVersion);
     }
 
-    RHICommandQueue* DeviceVulKan::GetCommandQueue(RHICmdType Type) const
+    RHIFrameCommandQueue* DeviceVulKan::GetFrameCommandQueue() const
+    {
+        return m_GraphicsQueue.get();
+    }
+
+    RHICommandQueue* DeviceVulKan::GetBasicCommandQueue(RHICmdType Type) const
     {
         switch (Type)
         {
-        case RHICmdType::Graphics:
-            return m_GraphicsQueue.get();
         case RHICmdType::Compute:
             return m_ComputeQueue.get();
         case RHICmdType::Copy:

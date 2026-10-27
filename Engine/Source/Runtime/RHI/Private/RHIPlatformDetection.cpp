@@ -9,15 +9,6 @@
 * We'll implement Windows detection here
 **/
 #if RHI_PLATFORM_SUPPORTED_WINDOWS 
-static bool IsD3D11Available()
-{
-    static bool available = ([]() {
-        HMODULE dll = LoadLibraryA("d3d11.dll");
-        if (dll) FreeLibrary(dll);
-        return dll != nullptr;
-    })();
-    return available;
-}
 static bool IsD3D12Available()
 {
     static bool available = ([]() {
@@ -53,7 +44,6 @@ namespace RHI
         // Check for the availability of RHI types in order of preference
 #if RHI_PLATFORM_SUPPORTED_WINDOWS // Windows platform
         if (IsD3D12Available()) bestRHI |= RHIType::D3D12;
-        if (IsD3D11Available()) bestRHI |= RHIType::D3D11;
 #endif
         // Vulkan is cross-platform, so we can check for it on all platforms
         if (IsVulkanAvailable()) bestRHI |= RHIType::VulKan;

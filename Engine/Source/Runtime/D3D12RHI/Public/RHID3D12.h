@@ -15,10 +15,9 @@ using Microsoft::WRL::ComPtr;
 namespace RHI
 {
     // CommandQueue Forward Declaration
-    class CommandQueueD3D12;
-    using GraphicsCommandQueueD3D12 = CommandQueueD3D12;
-    using ComputeCommandQueueD3D12 = CommandQueueD3D12;
-    using CopyCommandQueueD3D12 = CommandQueueD3D12;
+    class GraphicsCommandQueueD3D12;
+    class ComputeCommandQueueD3D12;
+    class CopyCommandQueueD3D12;
 
     struct D3D12LoaclSharedContext
     {
@@ -70,7 +69,8 @@ namespace RHI
 
         [[nodiscard]] std::shared_ptr<RHICommandPool> CreateCommandPool(RHICmdType type) override;
         [[nodiscard]] std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandPool>& pool) override;
-        [[nodiscard]] RHICommandQueue* GetCommandQueue(RHICmdType Type) const override;
+        [[nodiscard]] RHIFrameCommandQueue* GetFrameCommandQueue() const override;
+        [[nodiscard]] RHICommandQueue* GetBasicCommandQueue(RHICmdType Type) const override;
 
         [[nodiscard]] std::shared_ptr<RHIRootSignature> CreateRootSignature(const RootSignatureDesc& desc) override;
         void DeleteRootSignature(std::shared_ptr<RHI::RHIRootSignature>& rootSignature) override;
@@ -118,9 +118,8 @@ namespace RHI
         void Shutdown() override;
         bool IsValid() const override;
 
-        void Present(uint32_t syncInterval, uint32_t presentFlags) override;
         void Resize(uint32_t width, uint32_t height) override;
-        uint32_t GetFrameIndex() const override { return m_pSwapChain3->GetCurrentBackBufferIndex(); }// 获取当前帧索引
+        uint32_t AvailableSwapChainImageIndex() const override { return m_pSwapChain3->GetCurrentBackBufferIndex(); }// 获取当前帧索引
 
         uint32_t GetWidth() const override { return m_desc.Width; }
         uint32_t GetHeight() const override { return m_desc.Height; }
@@ -130,6 +129,8 @@ namespace RHI
         RHITextureFormat GetRenderTargetFormat() const override;
         // Get back buffer
         RHITexture* GetBackBuffer(uint32_t index) const override;
+        // Get graphicsQueueSwapChainInfo
+        GraphicsQueueSwapChainInfo GetGraphicsQueueSwapChainInfo() const override;
 
         IDXGISwapChain3* GetSwapChain3() const { return m_pSwapChain3.Get(); }
         IDXGISwapChain1* GetSwapChain() const { return m_pSwapChain1.Get(); }

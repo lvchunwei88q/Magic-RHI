@@ -26,6 +26,7 @@ namespace RHI
     class RHICommandPool;
     class RHICommandList;
     class RHICommandQueue;
+    class RHIFrameCommandQueue;
     // forward declarations
     struct RHIDescriptorHandle;
     class RHIDescriptorHeap;
@@ -91,7 +92,8 @@ namespace RHI
 
         [[nodiscard]] virtual std::shared_ptr<RHICommandPool> CreateCommandPool(RHICmdType type) = 0;
         [[nodiscard]] virtual std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandPool>& pool) = 0;
-        [[nodiscard]] virtual RHICommandQueue* GetCommandQueue(RHICmdType Type) const = 0;
+        [[nodiscard]] virtual RHIFrameCommandQueue* GetFrameCommandQueue() const = 0;
+        [[nodiscard]] virtual RHICommandQueue* GetBasicCommandQueue(RHICmdType Type) const = 0;
 
         [[nodiscard]] virtual std::shared_ptr<RHIRootSignature> CreateRootSignature(const RootSignatureDesc& desc) = 0;
         virtual void DeleteRootSignature(std::shared_ptr<RHIRootSignature>& rootSignature) = 0;
@@ -114,9 +116,8 @@ namespace RHI
         virtual void Shutdown() = 0;
         virtual bool IsValid() const = 0;
 
-        virtual void Present(uint32_t syncInterval, uint32_t presentFlags) = 0;
         virtual void Resize(uint32_t width, uint32_t height) = 0;
-        virtual uint32_t GetFrameIndex() const = 0;
+        virtual uint32_t AvailableSwapChainImageIndex() const = 0;
 
         virtual uint32_t GetWidth() const = 0;
         virtual uint32_t GetHeight() const = 0;
@@ -124,6 +125,7 @@ namespace RHI
         virtual RHIRenderTargetView* GetRenderTargetView(uint32_t index) const = 0;
         virtual RHITextureFormat GetRenderTargetFormat() const = 0;
         virtual RHITexture* GetBackBuffer(uint32_t index) const = 0;
+        virtual GraphicsQueueSwapChainInfo GetGraphicsQueueSwapChainInfo() const = 0;
 
     protected:
         InitialState m_Initialization;

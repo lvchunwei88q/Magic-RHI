@@ -1,6 +1,0 @@
-﻿; D3D11RHI.def
-EXPORTS
-    CreateDevice
-    CreateSwapChain
-    CreateShaderCompilerBackend
-    GetRHIType

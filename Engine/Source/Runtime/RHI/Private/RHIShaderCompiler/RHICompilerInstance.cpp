@@ -125,7 +125,10 @@ namespace RHI {
         };
 
         // Base arguments
-        addArgToContainer (options.targetCompilerMode);  // Output User Selected Compiler mode
+        // Only add compiler mode if non-empty (D3D12/DXIL mode uses default, no explicit flag)
+        if (!options.targetCompilerMode.empty()) {
+            addArgToContainer (options.targetCompilerMode);  // Output User Selected Compiler mode
+        }
         args.push_back(L"-E");
         addArgToContainer (options.entryPoint);
         args.push_back(L"-T");

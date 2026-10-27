@@ -185,7 +185,6 @@ namespace RHI
             // Use the copy queue to copy from upload to default heap
             auto cmdPool = CreateCommandPool(RHICmdType::Copy);
             auto cmdList = CreateCommandList(cmdPool);
-            GetCommandQueue(RHICmdType::Copy)->BeginFrame();
             cmdList->BeginRecording();
 
             cmdList->CopyBufferRegion(
@@ -199,9 +198,8 @@ namespace RHI
             cmdList->EndRecording();
 
             // Execute and wait for the copy to finish
-            GetCommandQueue(RHICmdType::Copy)->ExecuteCommandLists({cmdList});
-            GetCommandQueue(RHICmdType::Copy)->EndFrame();
-            GetCommandQueue(RHICmdType::Copy)->WaitForGPU();
+            GetBasicCommandQueue(RHICmdType::Copy)->ExecuteCommandLists({cmdList});
+            GetBasicCommandQueue(RHICmdType::Copy)->WaitForGPU();
 
             // Upload buffer will be released automatically when it goes out of scope
             return buffer;

@@ -18,6 +18,18 @@ struct SwapChainDesc
     bool VSync = false;
 };
 
+// Graphics Queue SwapChain Info
+struct GraphicsQueueSwapChainInfo
+{
+    using SwapChainHandle = uint64_t;
+    using SemaphoreHandle = uint64_t;
+
+    uint32_t imageIndex;
+    SwapChainHandle SwapChain;
+    SemaphoreHandle Semaphore;
+    bool VSync = false;
+};
+
 // Resource Transition Barrier Description
 struct ResourceTransitionBarrier
 {

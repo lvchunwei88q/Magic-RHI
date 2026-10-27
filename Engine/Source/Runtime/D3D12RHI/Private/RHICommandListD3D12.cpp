@@ -1,5 +1,18 @@
 #include "RHICommandListD3D12.h"
+#include "CoreMinimal.h"
 #include "RHID3D12.h"
+
+#define MAKE_D3D12_COMMAND_LISTS(_d3dCmdLists,cmdLists)                                 \
+    ([&]() {                                                                            \
+        _d3dCmdLists.reserve((cmdLists).size());                                        \
+        for (const auto& _cmdList : (cmdLists)) {                                       \
+            auto _dx12CmdList = std::static_pointer_cast<CommandListD3D12>(_cmdList);   \
+            if (_dx12CmdList) {                                                         \
+                _d3dCmdLists.push_back(_dx12CmdList->GetCommandList());                 \
+            }                                                                           \
+        }                                                                               \
+        return _d3dCmdLists;                                                            \
+    })()
 
 namespace RHI
 {
@@ -181,26 +194,83 @@ namespace RHI
         m_pCommandPool->SetIsRecording(false);
     }
 
-    void CommandQueueD3D12::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists)
+    // ============================================================ GraphicsCommandQueueVulKan
+
+    void GraphicsCommandQueueD3D12::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists)
     {
         std::vector<ID3D12CommandList*> d3dCmdLists;
-        d3dCmdLists.reserve(cmdLists.size());
-        
-        for (const auto& cmdList : cmdLists)
-        {
-            auto dx12CmdList = std::static_pointer_cast<CommandListD3D12>(cmdList);
-            d3dCmdLists.push_back(dx12CmdList->GetCommandList());
-        }
-        
+        MAKE_D3D12_COMMAND_LISTS(d3dCmdLists,cmdLists);
         m_pCommandQueue->ExecuteCommandLists((UINT)d3dCmdLists.size(), d3dCmdLists.data());
+
+        // Gradually raise our expectations
+        m_CurrentFenceValue++;
+        // Record the global value for the current frame
+        m_FrameFenceValues[m_CurrentFrameIndex] = m_CurrentFenceValue;
+        // Tell the queue to update the value of m_Fence to m_CurrentFenceValue after execution is complete
+        if (FAILED(m_pCommandQueue->Signal(m_Fence.Get(), m_CurrentFenceValue))) {
+            ThrowErrorMessage("Failed to signal fence");
+        }
     } 
 
-    void CommandQueueD3D12::BeginFrame()
+    void GraphicsCommandQueueD3D12::BeginFrame()
     {
-        // NOT implemented
+        // Wait for the last submission of the current frame to finish
+        // to prevent the CPU from overwriting BackBuffer resources that the GPU is using
+        UINT64 expectedValue = m_FrameFenceValues[m_CurrentFrameIndex];
+        if (m_Fence->GetCompletedValue() < expectedValue)
+        {
+            ThrowIfFailed(m_Fence->SetEventOnCompletion(expectedValue, m_fenceEvent));
+            WaitForSingleObject(m_fenceEvent, INFINITE);
+        }
     }
     
-    void CommandQueueD3D12::ResetCommandPoolMemory(const RHICommandPool* cmdPool)
+    void GraphicsCommandQueueD3D12::EndFrame()
+    {
+        // We just use the image index given by the swap chain.
+        m_CurrentFrameIndex = m_SwapChainInfo.imageIndex;
+    }
+
+    void GraphicsCommandQueueD3D12::Present() 
+    {
+        IDXGISwapChain1* nativeSwapChain = reinterpret_cast<IDXGISwapChain1*>(m_SwapChainInfo.SwapChain);
+
+        UINT syncInterval = m_SwapChainInfo.VSync ? 1 : 0; // 0 = No VSync (immediate), 1 = VSync
+        UINT presentFlags = 0; // 0 = No tearing by default
+        HRESULT hr = nativeSwapChain->Present(syncInterval, presentFlags);
+
+        if (FAILED(hr))
+        {
+            // Check if the swap chain needs to be rebuilt
+            if (hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET) 
+            {
+                Core::WarningCapture::Capture("Device removed or reset!");
+            }
+            else 
+            {
+                ThrowErrorMessage("Present failed!");
+            }
+        }
+    }
+
+    void GraphicsCommandQueueD3D12::WaitForGPU()
+    {
+        // Wait for the GPU to completely finish all commands
+        m_CurrentFenceValue++;
+        ThrowIfFailed (m_pCommandQueue->Signal (m_Fence.Get (), m_CurrentFenceValue));
+
+        if (m_Fence->GetCompletedValue () < m_CurrentFenceValue)
+        {
+            ThrowIfFailed (m_Fence->SetEventOnCompletion (m_CurrentFenceValue, m_fenceEvent));
+            WaitForSingleObject (m_fenceEvent, INFINITE);
+        }
+    }
+    
+    void GraphicsCommandQueueD3D12::SetGraphicsQueueSwapChainInfo(GraphicsQueueSwapChainInfo Info) 
+    {
+        m_SwapChainInfo = Info;
+    }
+
+    void GraphicsCommandQueueD3D12::ResetCommandPoolMemory(const RHICommandPool* cmdPool)
     {
         if (!cmdPool)
         {
@@ -208,43 +278,82 @@ namespace RHI
         }
         cmdPool->Reset();
     }
-    
-    void CommandQueueD3D12::EndFrame()
-    {
-        // add index
-        UINT64 fenceValue = m_nextFenceValue++;
-        ThrowIfFailed(m_pCommandQueue->Signal(m_Fence.Get(), fenceValue));
-        
-        // Save fence value
-        m_fenceValues[m_currentFrame] = fenceValue;
-        // Advance to next frame
-        m_currentFrame = (m_currentFrame + 1) % RHI_MULTI_BUFFERING;
-    }
 
-    void CommandQueueD3D12::WaitForGPU()
-    {
-        for (int i = 0; i < RHI_MULTI_BUFFERING; ++i) {
-            UINT64 fenceValue = m_fenceValues[i];
-            if (m_Fence->GetCompletedValue() < fenceValue)
-            {
-                ThrowIfFailed(m_Fence->SetEventOnCompletion(fenceValue, m_fenceEvent));
-                WaitForSingleObject(m_fenceEvent, INFINITE);
-            }
-        }
-    }
-
-    void CommandQueueD3D12::Signal(uint64_t fenceValue)
-    {   
-        ThrowIfFailed(m_pCommandQueue->Signal(m_Fence.Get(), fenceValue));
-    }
-
-    bool CommandQueueD3D12::GetTimestampFrequency(uint64_t* frequency)
+    bool GraphicsCommandQueueD3D12::GetTimestampFrequency(uint64_t* frequency)
     {
         return SUCCEEDED(m_pCommandQueue->GetTimestampFrequency(frequency));
     }
 
-    uint64_t CommandQueueD3D12::GetFrameIndex() const
+    uint64_t GraphicsCommandQueueD3D12::GetFrameIndex() const
     {
-        return m_currentFrame;
+        return m_CurrentFrameIndex;
+    }
+
+    // ============================================================ ComputeCommandQueueD3D12
+
+    void ComputeCommandQueueD3D12::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>> &cmdLists) 
+    {
+        std::vector<ID3D12CommandList*> d3dCmdLists;
+        MAKE_D3D12_COMMAND_LISTS(d3dCmdLists,cmdLists);
+        m_pCommandQueue->ExecuteCommandLists((UINT)d3dCmdLists.size(), d3dCmdLists.data());
+
+        // Gradually raise our expectations
+        m_CurrentFenceValue++;
+        // Tell the queue to update the value of m_Fence to m_CurrentFenceValue after execution is complete
+        if (FAILED(m_pCommandQueue->Signal(m_Fence.Get(), m_CurrentFenceValue))) {
+            ThrowErrorMessage("Failed to signal fence");
+        }
+    }
+
+    void ComputeCommandQueueD3D12::WaitForGPU() {
+      // Check the current value of the fence to see if it's already >= the
+      // value we last submitted
+      if (m_Fence->GetCompletedValue() < m_CurrentFenceValue) {
+        if (FAILED(m_Fence->SetEventOnCompletion(m_CurrentFenceValue,
+                                                 m_fenceEvent))) {
+          ThrowErrorMessage("Failed to set fence event");
+        }
+        // The CPU goes into sleep mode until the alarm goes off (INFINITE means
+        // wait indefinitely)
+        WaitForSingleObject(m_fenceEvent, INFINITE);
+      }
+    }
+
+    bool ComputeCommandQueueD3D12::GetTimestampFrequency(uint64_t *frequency) {
+      return SUCCEEDED(m_pCommandQueue->GetTimestampFrequency(frequency));
+    }
+
+    // ============================================================ CopyCommandQueueD3D12
+
+    void CopyCommandQueueD3D12::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>> &cmdLists) 
+    {
+        std::vector<ID3D12CommandList*> d3dCmdLists;
+        MAKE_D3D12_COMMAND_LISTS(d3dCmdLists,cmdLists);
+        m_pCommandQueue->ExecuteCommandLists((UINT)d3dCmdLists.size(), d3dCmdLists.data());
+
+        // Gradually raise our expectations
+        m_CurrentFenceValue++;
+        // Tell the queue to update the value of m_Fence to m_CurrentFenceValue after execution is complete
+        if (FAILED(m_pCommandQueue->Signal(m_Fence.Get(), m_CurrentFenceValue))) {
+            ThrowErrorMessage("Failed to signal fence");
+        }
+    }
+    
+    void CopyCommandQueueD3D12::WaitForGPU() {
+      // Check the current value of the fence to see if it's already >= the
+      // value we last submitted
+      if (m_Fence->GetCompletedValue() < m_CurrentFenceValue) {
+        if (FAILED(m_Fence->SetEventOnCompletion(m_CurrentFenceValue,
+                                                 m_fenceEvent))) {
+          ThrowErrorMessage("Failed to set fence event");
+        }
+        // The CPU goes into sleep mode until the alarm goes off (INFINITE means
+        // wait indefinitely)
+        WaitForSingleObject(m_fenceEvent, INFINITE);
+      }
+    }
+
+    bool CopyCommandQueueD3D12::GetTimestampFrequency(uint64_t *frequency) {
+      return SUCCEEDED(m_pCommandQueue->GetTimestampFrequency(frequency));
     }
 }

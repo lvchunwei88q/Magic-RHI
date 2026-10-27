@@ -40,7 +40,7 @@
 * -------------------------------------- Can be configured dynamically ---------------------------------------------
 */
 #ifndef RHI_MULTI_BUFFERING
-#define RHI_MULTI_BUFFERING 2
+#define RHI_MULTI_BUFFERING 3
 #endif
 
 #ifndef DRAW_MAX_RENDER_TARGETS

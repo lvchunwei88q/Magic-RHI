@@ -20,10 +20,9 @@
 
 namespace RHI
 {
-    class CommandQueueVulKan;
-    using GraphicsCommandQueueVulKan = CommandQueueVulKan;
-    using ComputeCommandQueueVulKan = CommandQueueVulKan;
-    using CopyCommandQueueVulKan = CommandQueueVulKan;
+    class GraphicsCommandQueueVulKan;
+    class ComputeCommandQueueVulKan;
+    class CopyCommandQueueVulKan;
 
 	struct VulkanLoaclSharedContext
 	{
@@ -77,7 +76,8 @@ namespace RHI
 
         [[nodiscard]] std::shared_ptr<RHICommandPool> CreateCommandPool(RHICmdType type) override;
         [[nodiscard]] std::shared_ptr<RHICommandList> CreateCommandList(std::shared_ptr<RHICommandPool>& pool) override;
-        [[nodiscard]] RHICommandQueue* GetCommandQueue(RHICmdType Type) const override;
+        [[nodiscard]] RHIFrameCommandQueue* GetFrameCommandQueue() const override;
+        [[nodiscard]] RHICommandQueue* GetBasicCommandQueue(RHICmdType Type) const override;
 
         [[nodiscard]] std::shared_ptr<RHIRootSignature> CreateRootSignature(const RootSignatureDesc& desc) override;
         void DeleteRootSignature(std::shared_ptr<RHI::RHIRootSignature>& rootSignature) override;
@@ -146,15 +146,16 @@ namespace RHI
         void Shutdown() override;
         bool IsValid() const override;
 
-        void Present(uint32_t syncInterval, uint32_t presentFlags) override;
         void Resize(uint32_t width, uint32_t height) override;
-        uint32_t GetFrameIndex() const override { return m_CurrentFrame; }
+        uint32_t AvailableSwapChainImageIndex () const override { return m_AvailableSwapChainImageIndex; }
 
         uint32_t GetWidth() const override { return m_desc.Width; }
         uint32_t GetHeight() const override { return m_desc.Height; }
         RHIRenderTargetView* GetRenderTargetView(uint32_t index) const override;
         RHITextureFormat GetRenderTargetFormat() const override;
         RHITexture* GetBackBuffer(uint32_t index) const override;
+        // Get graphicsQueueSwapChainInfo
+        GraphicsQueueSwapChainInfo GetGraphicsQueueSwapChainInfo() const override;
 
         VkSwapchainKHR GetSwapChain() const { return m_SwapChain; }
         VkFormat GetFormat() const { return m_SwapChainFormat; }
@@ -170,7 +171,7 @@ namespace RHI
     private:
         bool VkCreateSwapChain();
         bool VkCreateRenderTargetViews();
-        bool VkCreateSemaphores();
+        bool VkCreateSyncObjects();
         VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
         VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
         VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
@@ -182,15 +183,16 @@ namespace RHI
         VkSwapchainKHR m_SwapChain = VK_NULL_HANDLE;
         VkFormat m_SwapChainFormat = VK_FORMAT_UNDEFINED;
         VkExtent2D m_SwapChainExtent = {};
-        uint32_t m_CurrentFrame = 0;
 
         // Because the Vulkan driver might optimize some settings,
         // the final number of buffers could end up being greater than or equal to what we set, so we use a vector.
         std::vector<std::unique_ptr<RHITexture>> m_pBackBuffers;
         std::vector<std::unique_ptr<RHIRenderTargetView>> m_pRenderTargetViews;
 
-        VkSemaphore m_RenderFinishedSemaphore = VK_NULL_HANDLE;
+        // Set up semaphores These will be used for frame sync in Vulkan because the GPU is always asynchronous
         VkSemaphore m_ImageAvailableSemaphore = VK_NULL_HANDLE;
+        // Current available swap chain image index.
+        uint32_t m_AvailableSwapChainImageIndex = 0;
     };
 
     class VULKANRHI_API ShaderCompilerBackendVulKan : public ShaderCompilerBackend

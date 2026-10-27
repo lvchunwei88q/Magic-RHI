@@ -222,7 +222,6 @@ namespace RHI
             
             auto cmdPool = CreateCommandPool(RHICmdType::Copy);
             auto cmdList = CreateCommandList(cmdPool);
-            m_CopyQueue.get()->BeginFrame();
             cmdList->BeginRecording();
             
             // Default resource initial state is COMMON, need to transition to the COPY_DEST
@@ -259,7 +258,6 @@ namespace RHI
             
             // run command list
             m_CopyQueue.get()->ExecuteCommandLists({cmdList});
-            m_CopyQueue.get()->EndFrame();
             m_CopyQueue.get()->WaitForGPU();
             
             // return buffer

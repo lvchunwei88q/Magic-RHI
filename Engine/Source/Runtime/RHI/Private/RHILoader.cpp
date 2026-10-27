@@ -52,9 +52,7 @@ namespace RHI
         }
 
         // Determine the DLL name based on the RHI type
-        if (EnumHasAnyFlags(type, RHIType::D3D11)) {
-            dllName = RHI_D3D11_DLL_FILE;
-        }else if (EnumHasAnyFlags(type, RHIType::D3D12)) {
+        if (EnumHasAnyFlags(type, RHIType::D3D12)) {
             dllName = RHI_D3D12_DLL_FILE;
         }else if (EnumHasAnyFlags(type, RHIType::VulKan)) {
             dllName = RHI_VULKAN_DLL_FILE;

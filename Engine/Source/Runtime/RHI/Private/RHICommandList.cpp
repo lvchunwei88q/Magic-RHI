@@ -13,4 +13,8 @@ namespace RHI
     RHICommandQueue::RHICommandQueue(RHICmdType InType)
         : QueueType(InType) {}
     RHICommandQueue::~RHICommandQueue() = default;
+
+    RHIFrameCommandQueue::RHIFrameCommandQueue(RHICmdType InType)
+        : RHICommandQueue(InType) {}
+    RHIFrameCommandQueue::~RHIFrameCommandQueue() = default;
 }

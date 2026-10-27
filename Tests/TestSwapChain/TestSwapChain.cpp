@@ -58,8 +58,15 @@ void RunTestDeviceAndSwapChain(RHI::RHIType rhiType,const std::wstring& windowTi
         auto swapChain = loader->CreateSwapChain();
         ASSERT_TRUE(swapChain && swapChain->Initialize(device.get(), swapChainDesc) && swapChain->IsValid());
 
-        auto cmdPool = device->CreateCommandPool(RHI::RHICmdType::Graphics);
-        auto cmdList = device->CreateCommandList(cmdPool);
+        std::vector<std::shared_ptr<RHI::RHICommandPool>> cmdPools (RHI_MULTI_BUFFERING);
+        std::vector<std::shared_ptr<RHI::RHICommandList>> cmdLists (RHI_MULTI_BUFFERING);
+
+        for (size_t i = 0; i < RHI_MULTI_BUFFERING; ++i)
+        {
+            cmdPools[i] = device->CreateCommandPool (RHI::RHICmdType::Graphics);
+            cmdLists[i] = device->CreateCommandList (cmdPools[i]);
+            ASSERT_TRUE (cmdLists[i] && cmdLists[i].get () != nullptr);
+        }
 
         MSG msg = {};
         auto startTime = std::chrono::steady_clock::now();
@@ -80,12 +87,15 @@ void RunTestDeviceAndSwapChain(RHI::RHIType rhiType,const std::wstring& windowTi
                 break; // break the loop after 5 seconds
             }
 
-            device->GetCommandQueue(RHI::RHICmdType::Graphics)->BeginFrame();
-            device->GetCommandQueue(RHI::RHICmdType::Graphics)->ResetCommandPoolMemory(cmdPool.get());
+            device->GetFrameCommandQueue()->BeginFrame();
+            uint64_t ImageIndex = swapChain->AvailableSwapChainImageIndex ();
+            device->GetFrameCommandQueue()->ResetCommandPoolMemory(cmdPools[ImageIndex].get ());
+            RHI::GraphicsQueueSwapChainInfo GQSCInfo = swapChain->GetGraphicsQueueSwapChainInfo();
+            device->GetFrameCommandQueue()->SetGraphicsQueueSwapChainInfo(GQSCInfo);
 
-            cmdList->BeginRecording();
-            uint32_t idx = swapChain->GetFrameIndex();
-            RHI::RHITexture* backBuffer = swapChain->GetBackBuffer(idx);
+            cmdLists[ImageIndex]->BeginRecording ();
+            uint32_t SwapChainImageIndex = swapChain->AvailableSwapChainImageIndex();
+            RHI::RHITexture* backBuffer = swapChain->GetBackBuffer(SwapChainImageIndex);
 
             RHI::BarrierDesc barrier = {};
             barrier.Type = RHI::ResourceBarrierType::Transition;
@@ -93,30 +103,35 @@ void RunTestDeviceAndSwapChain(RHI::RHIType rhiType,const std::wstring& windowTi
             barrier.Transition.pResource = backBuffer;
             barrier.Transition.StateBefore = RHI::RHIResourceState::Present;
             barrier.Transition.StateAfter = RHI::RHIResourceState::RenderTarget;
-            cmdList->ResourceBarrier(1, &barrier);
+            cmdLists[ImageIndex]->ResourceBarrier(1, &barrier);
 
-            RHI::RHIRenderTargetView* pRTV = swapChain->GetRenderTargetView(idx);
-            cmdList->OMSetRenderTargets(1, &pRTV, false, nullptr);
+            RHI::RHIRenderTargetView* pRTV = swapChain->GetRenderTargetView(SwapChainImageIndex);
+            cmdLists[ImageIndex]->OMSetRenderTargets(1, &pRTV, false, nullptr);
             
             float clearColor[4] = { 0.2f, 0.2f, 0.2f, 1.0f }; // 灰色
-            cmdList->ClearRenderTargetView(pRTV, clearColor);
+            cmdLists[ImageIndex]->ClearRenderTargetView(pRTV, clearColor);
 
             barrier.Transition.StateBefore = RHI::RHIResourceState::RenderTarget;
             barrier.Transition.StateAfter = RHI::RHIResourceState::Present;
-            cmdList->ResourceBarrier(1, &barrier);
-            cmdList->EndRecording();
+            cmdLists[ImageIndex]->ResourceBarrier(1, &barrier);
+            cmdLists[ImageIndex]->EndRecording();
 
-            device->GetCommandQueue(RHI::RHICmdType::Graphics)->ExecuteCommandLists({ cmdList });
-            swapChain->Present(0, 0);
+            device->GetFrameCommandQueue()->ExecuteCommandLists({ cmdLists[ImageIndex] });
+            device->GetFrameCommandQueue()->Present();
 
-            device->GetCommandQueue(RHI::RHICmdType::Graphics)->EndFrame();
-            device->GetCommandQueue(RHI::RHICmdType::Graphics)->WaitForGPU();
+            device->GetFrameCommandQueue()->EndFrame();
 
-            if (ExeSetSize) { ExeSetSize = false; swapChain->Resize(x, y); }
+            if (ExeSetSize) 
+            { 
+                ExeSetSize = false;
+                device->GetFrameCommandQueue()->WaitForGPU();
+                swapChain->Resize(x, y);
+            }
         }
 
         // Cleanup
         if (hwnd) {
+            device->GetFrameCommandQueue()->WaitForGPU();
             DestroyWindow(hwnd);
             hwnd = nullptr;
         }
@@ -125,7 +140,7 @@ void RunTestDeviceAndSwapChain(RHI::RHIType rhiType,const std::wstring& windowTi
     Core::SubsystemControl::Uninstall();
 
     // Wait a moment before exiting to make sure Windows has finished its asynchronous cleanup.
-    Sleep(500); 
+    Sleep(10); 
 }
 
 void TestDeviceAndSwapChain()
@@ -133,19 +148,14 @@ void TestDeviceAndSwapChain()
     RHI::RHIType type = RHI::GetBestAvailableRHI();
     int testCount = 0;
 
-    if (EnumHasAnyFlags(type, RHI::RHIType::D3D11)) {
-        std::cout << "Running SwapChain Test with D3D11..." << std::endl;
-        RunTestDeviceAndSwapChain(RHI::RHIType::D3D11, L"D3D11 SwapChain Test");
+    if (EnumHasAnyFlags (type, RHI::RHIType::VulKan)) {
+        std::cout << "Running SwapChain Test with Vulkan..." << std::endl;
+        RunTestDeviceAndSwapChain (RHI::RHIType::VulKan, L"Vulkan SwapChain Test");
         testCount++;
-    } 
+    }
     if(EnumHasAnyFlags(type, RHI::RHIType::D3D12)) {
         std::cout << "Running SwapChain Test with D3D12..." << std::endl;
         RunTestDeviceAndSwapChain(RHI::RHIType::D3D12, L"D3D12 SwapChain Test");
-        testCount++;
-    }
-    if (EnumHasAnyFlags(type, RHI::RHIType::VulKan)) {
-        std::cout << "Running SwapChain Test with Vulkan..." << std::endl;
-        RunTestDeviceAndSwapChain(RHI::RHIType::VulKan, L"Vulkan SwapChain Test");
         testCount++;
     }
     

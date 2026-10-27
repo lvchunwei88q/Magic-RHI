@@ -21,7 +21,6 @@ namespace RHI
     enum class RHIType : uint8_t
     {
         None = 0,
-        D3D11   = 1 <<  0,      // DirectX 11
         D3D12   = 1 <<  1,      // DirectX 12
         VulKan  = 1 <<  2,      // Vulkan
         // More RHI types ...
@@ -39,7 +38,6 @@ namespace RHI
         std::string result = "RHIType: ";
 
         // Check each RHI type and append its string representation if it is set in the type bitmask
-        if (EnumHasAnyFlags(type , RHIType::D3D11))  result += "D3D11 | ";
         if (EnumHasAnyFlags(type , RHIType::D3D12))  result += "D3D12 | ";
         if (EnumHasAnyFlags(type , RHIType::VulKan)) result += "VulKan | ";
 
@@ -58,9 +56,6 @@ namespace RHI
     inline bool IsMultiThreadingSupported(RHIType type) {
         if(EnumHasAnyFlags(type, RHIType::D3D12 | RHIType::VulKan)) {
             return true; // Modern APIs with native support for multi-threaded recording
-        }
-        else if(EnumHasAnyFlags(type, RHIType::D3D11)) {
-            return false; // Traditional API, requires special handling or disabling
         }
         else {
             return false; // Unknown or unsupported RHI type

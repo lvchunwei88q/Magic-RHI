@@ -40,8 +40,6 @@ std::wstring GetRHIWindowName(RHI::RHIType type)
 {
     if (EnumHasAnyFlags(type, RHI::RHIType::None)) {
         return L"RHI None Window";
-    }else if (EnumHasAnyFlags(type, RHI::RHIType::D3D11)) {
-        return L"RHI D3D11 Window";
     }else if (EnumHasAnyFlags(type, RHI::RHIType::D3D12)) {
         return L"RHI D3D12 Window";
     }else if (EnumHasAnyFlags(type, RHI::RHIType::VulKan)) {
@@ -77,8 +75,6 @@ void TestHelloTriangle()
             type |= RHI::RHIType::D3D12;
         } else if (SupportTable == "vk") {
             type |= RHI::RHIType::VulKan;
-        }else if (SupportTable == "dx11") {
-            type |= RHI::RHIType::D3D11;
         }
 
         Core::SubsystemControl::Init();
@@ -151,7 +147,7 @@ void TestHelloTriangle()
         std::cout << "SwapChain created successfully!" << std::endl;
 
         uint64_t frequency = 0;
-        device->GetCommandQueue(RHI::RHICmdType::Graphics)->GetTimestampFrequency(&frequency);
+        device->GetFrameCommandQueue()->GetTimestampFrequency(&frequency);
         std::cout << "Timestamp Frequency: " << frequency << std::endl;
 
         Vertex tvertices[] = {
@@ -279,10 +275,16 @@ void TestHelloTriangle()
         ASSERT_TRUE(graphicsPSO && graphicsPSO->IsValid());
         std::cout << "GraphicsPipelineState created successfully!" << std::endl;
 
-        auto cmdPool = device->CreateCommandPool(RHI::RHICmdType::Graphics);
-        auto cmdList = device->CreateCommandList(cmdPool);
+        std::vector<std::shared_ptr<RHI::RHICommandPool>> cmdPools (RHI_MULTI_BUFFERING);
+        std::vector<std::shared_ptr<RHI::RHICommandList>> cmdLists (RHI_MULTI_BUFFERING);
 
-        ASSERT_TRUE(cmdList && cmdList.get() != nullptr);
+        for (size_t i = 0; i < RHI_MULTI_BUFFERING; ++i)
+        {
+            cmdPools[i] = device->CreateCommandPool (RHI::RHICmdType::Graphics);
+            cmdLists[i] = device->CreateCommandList (cmdPools[i]);
+            ASSERT_TRUE (cmdLists[i] && cmdLists[i].get () != nullptr);
+        }
+
         std::cout << "CommandList created successfully!" << std::endl;
 
         auto descriptorHeap = device->GetDescriptorHeap(RHI::RHIDescriptorHeapType::Standard);
@@ -300,12 +302,15 @@ void TestHelloTriangle()
             TranslateMessage(&msg);
             DispatchMessage(&msg);
             
-            device->GetCommandQueue(RHI::RHICmdType::Graphics)->BeginFrame();
-            device->GetCommandQueue(RHI::RHICmdType::Graphics)->ResetCommandPoolMemory(cmdPool.get());
+            device->GetFrameCommandQueue()->BeginFrame();
+            uint64_t ImageIndex = swapChain->AvailableSwapChainImageIndex ();
+            device->GetFrameCommandQueue()->ResetCommandPoolMemory(cmdPools[ImageIndex].get ());
+            RHI::GraphicsQueueSwapChainInfo GQSCInfo = swapChain->GetGraphicsQueueSwapChainInfo();
+            device->GetFrameCommandQueue()->SetGraphicsQueueSwapChainInfo(GQSCInfo);
 
-            cmdList->BeginRecording();
-            uint32_t currentIndex = swapChain->GetFrameIndex();
-            RHI::RHITexture* BackBufferTexture = swapChain->GetBackBuffer(currentIndex);
+            cmdLists[ImageIndex]->BeginRecording ();
+            uint32_t SwapChainImageIndex = swapChain->AvailableSwapChainImageIndex();
+            RHI::RHITexture* BackBufferTexture = swapChain->GetBackBuffer(SwapChainImageIndex);
 
             RHI::BarrierDesc barrier = {};
             barrier.Type                        = RHI::ResourceBarrierType::Transition;
@@ -316,40 +321,40 @@ void TestHelloTriangle()
             barrier.Transition.StateBefore      = RHI::RHIResourceState::Present;
             barrier.Transition.StateAfter       = RHI::RHIResourceState::RenderTarget;
             
-            cmdList->ResourceBarrier(1, &barrier);
+            cmdLists[ImageIndex]->ResourceBarrier(1, &barrier);
             
-            RHI::RHIRenderTargetView* pRTV = swapChain->GetRenderTargetView(currentIndex);
-            cmdList->OMSetRenderTargets(1, &pRTV, false, nullptr);
+            RHI::RHIRenderTargetView* pRTV = swapChain->GetRenderTargetView(SwapChainImageIndex);
+            cmdLists[ImageIndex]->OMSetRenderTargets(1, &pRTV, false, nullptr);
             
             float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-            cmdList->ClearRenderTargetView(pRTV, clearColor);
+            cmdLists[ImageIndex]->ClearRenderTargetView(pRTV, clearColor);
 
-            cmdList->SetGraphicsRootSignature(rootSignature.get());
-            cmdList->SetPipelineState(graphicsPSO.get(), RHI::PipelineStateType::Graphics);
+            cmdLists[ImageIndex]->SetGraphicsRootSignature(rootSignature.get());
+            cmdLists[ImageIndex]->SetPipelineState(graphicsPSO.get(), RHI::PipelineStateType::Graphics);
             
             RHI::RHIDescriptorHeap* heaps[] = {descriptorHeap, descriptorSamplerHeap};
-            cmdList->SetDescriptorHeaps(2, heaps);
+            cmdLists[ImageIndex]->SetDescriptorHeaps(2, heaps);
 
             float floatValue = 0.5f; uint32_t intValue;
             memcpy(&intValue, &floatValue, sizeof(float));
-            cmdList->SetGraphicsRootDescriptorTable(0, descriptorHeap, 0);
-            cmdList->SetGraphicsRoot32BitConstant(1, intValue, 0);
+            cmdLists[ImageIndex]->SetGraphicsRootDescriptorTable(0, descriptorHeap, 0);
+            cmdLists[ImageIndex]->SetGraphicsRoot32BitConstant(1, intValue, 0);
             
-            cmdList->IASetPrimitiveTopology(RHI::RHIPrimitiveTopology::TriangleList);
+            cmdLists[ImageIndex]->IASetPrimitiveTopology(RHI::RHIPrimitiveTopology::TriangleList);
             
             RHI::RHIVertexBuffer* pRawBuffers[] = {vertexBuffer.get()};
-            cmdList->IASetVertexBuffers(0, 1, pRawBuffers,0);
+            cmdLists[ImageIndex]->IASetVertexBuffers(0, 1, pRawBuffers,0);
 
             uint32_t width = swapChain->GetWidth();
             uint32_t height = swapChain->GetHeight();
 
             RHI::RHIViewport viewport = {0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f};
-            cmdList->RSSetViewports(1, &viewport);
+            cmdLists[ImageIndex]->RSSetViewports(1, &viewport);
 
             RHI::RHIRect scissorRect = {0, 0, (float)width, (float)height};
-            cmdList->RSSetScissorRects(1, &scissorRect);
+            cmdLists[ImageIndex]->RSSetScissorRects(1, &scissorRect);
 
-            cmdList->Draw(3, 0);
+            cmdLists[ImageIndex]->Draw(3, 0);
 
             RHI::BarrierDesc barrierToPresent = {};
             barrierToPresent.Type                        = RHI::ResourceBarrierType::Transition;
@@ -359,21 +364,22 @@ void TestHelloTriangle()
             barrierToPresent.Transition.Subresource      = 0;
             barrierToPresent.Transition.StateBefore      = RHI::RHIResourceState::RenderTarget;
             barrierToPresent.Transition.StateAfter       = RHI::RHIResourceState::Present;
-            cmdList->ResourceBarrier(1, &barrierToPresent);
-            cmdList->EndRecording();
+            cmdLists[ImageIndex]->ResourceBarrier(1, &barrierToPresent);
+            cmdLists[ImageIndex]->EndRecording();
             
-            device->GetCommandQueue(RHI::RHICmdType::Graphics)->ExecuteCommandLists({cmdList});
-            swapChain->Present(1, 0);
+            device->GetFrameCommandQueue()->ExecuteCommandLists({ cmdLists[ImageIndex]});
+            device->GetFrameCommandQueue()->Present();
 
-            device->GetCommandQueue(RHI::RHICmdType::Graphics)->EndFrame();
-            device->GetCommandQueue(RHI::RHICmdType::Graphics)->WaitForGPU();
+            device->GetFrameCommandQueue()->EndFrame();
             
             if (ExeSetSize) {
                 ExeSetSize = false;
+                device->GetFrameCommandQueue()->WaitForGPU();
                 swapChain->Resize(x, y);
             }
         }
-
+        // ========== WaitForGPU ==========
+        device->GetFrameCommandQueue ()->WaitForGPU ();
         // ========== cleanup compiler context ==========
         compilerContextController->ShutdownCompilerThreadContext();
     }

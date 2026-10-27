@@ -1,5 +1,45 @@
 #include "RHICommandListVulKan.h"
+#include "CoreMinimal.h"
 #include "RHIVulKan.h"
+
+#define EXTRACT_VK_COMMAND_BUFFERS(outBuffers, inCmdLists)                                          \
+    do {                                                                                            \
+        outBuffers.clear();                                                                         \
+        outBuffers.reserve(inCmdLists.size());                                                      \
+        for (const auto& _cmdList : inCmdLists)                                                     \
+        {                                                                                           \
+            CommandListVulKan* _vulkanCmdList = SafeCast<CommandListVulKan>(_cmdList.get());        \
+            if (_vulkanCmdList)                                                                     \
+            {                                                                                       \
+                outBuffers.push_back(_vulkanCmdList->GetCommandBuffer());                           \
+            }                                                                                       \
+        }                                                                                           \
+    } while (0)
+
+#define MAKE_COMPUTE_COPY_SUBMIT_INFO(submitInfo, commandBuffers)                           \
+    do {                                                                                    \
+        submitInfo = {};                                                                    \
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;                                   \
+        submitInfo.waitSemaphoreCount = 0;                                                  \
+        submitInfo.pWaitSemaphores = nullptr;                                               \
+        submitInfo.pWaitDstStageMask = nullptr;                                             \
+        submitInfo.commandBufferCount = static_cast<uint32_t>((commandBuffers).size());     \
+        submitInfo.pCommandBuffers = (commandBuffers).data();                               \
+        submitInfo.signalSemaphoreCount = 0;                                                \
+        submitInfo.pSignalSemaphores = nullptr;                                             \
+    } while (0)
+
+#define GET_TIMESTAMP_FREQUENCY(freqPtr, device)                                    \
+    do {                                                                            \
+        if (!(freqPtr)) return false;                                               \
+        VkPhysicalDeviceProperties _props;                                          \
+        vkGetPhysicalDeviceProperties((device), &_props);                           \
+        if (_props.limits.timestampPeriod == 0.0f) return false;                    \
+                                                                                    \
+        /* Frequency = 1,000,000,000 / timestampPeriod */                           \
+        *(freqPtr) = static_cast<uint64_t>(1e9 / _props.limits.timestampPeriod);    \
+        return true;                                                                \
+    } while (0)
 
 namespace RHI
 {
@@ -108,62 +148,100 @@ namespace RHI
         m_pCommandPool->SetIsRecording(false);
     }
 
-    const VkDevice CommandQueueVulKan::GetDevice() const
-    {
-        if (!m_Device)
-        {
-            ThrowErrorMessage("CommandQueueVulKan: Device is null");
-            return VK_NULL_HANDLE;
-        }
-        return *m_Device;
-    }
+    // ============================================================ GraphicsCommandQueueVulKan
 
-    const VkPhysicalDevice CommandQueueVulKan::GetPhysicalDevice() const
-    {
-        if (!m_PhysicalDevice)
-        {
-            ThrowErrorMessage("CommandQueueVulKan: PhysicalDevice is null");
-            return VK_NULL_HANDLE;
-        }
-        return *m_PhysicalDevice;
-    }
-
-    void CommandQueueVulKan::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists)
+    void GraphicsCommandQueueVulKan::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists)
     {
         if (cmdLists.empty())
             return;
 
         std::vector<VkCommandBuffer> commandBuffers;
-        commandBuffers.reserve(cmdLists.size());
-
-        for (const auto& cmdList : cmdLists)
-        {
-            CommandListVulKan* vulkanCmdList = SafeCast<CommandListVulKan>(cmdList.get());
-            if (vulkanCmdList)
-            {
-                commandBuffers.push_back(vulkanCmdList->GetCommandBuffer());
-            }
-        }
+        EXTRACT_VK_COMMAND_BUFFERS(commandBuffers,cmdLists);
 
         // Create submit info
-        VkSubmitInfo submitInfo = {};
+        VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+        // Set wait semaphore
+        VkSemaphore vkImageAvailableSemaphore = reinterpret_cast<VkSemaphore>(m_SwapChainInfo.Semaphore);
+        VkSemaphore waitSemaphores[] = { vkImageAvailableSemaphore };
+        VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+        submitInfo.waitSemaphoreCount = 1;
+        submitInfo.pWaitSemaphores = waitSemaphores;
+        submitInfo.pWaitDstStageMask = waitStages;
+		// Submit command buffer
         submitInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
         submitInfo.pCommandBuffers = commandBuffers.data();
 
-        // Submit command buffers
-        VkResult result = vkQueueSubmit(m_Queue, 1, &submitInfo, VK_NULL_HANDLE);
-        if (result != VK_SUCCESS)
-            ThrowErrorMessage("Failed to submit command buffer");
+		// Set render completion semaphore
+        VkSemaphore signalSemaphores[] = { m_RenderFinishedSemaphores[m_SwapChainInfo.imageIndex]};
+        submitInfo.signalSemaphoreCount = 1;
+        submitInfo.pSignalSemaphores = signalSemaphores;
+
+        // Submit submit info
+        VkResult result = vkQueueSubmit(m_Queue, 1, &submitInfo, m_inFlightFence);
+        if (result != VK_SUCCESS) {
+            // Error handling
+            Core::ErrorCapture::Capture("Failed to signal timeline semaphore");
+        }
         
     }
 
-    void CommandQueueVulKan::BeginFrame()
+    void GraphicsCommandQueueVulKan::BeginFrame()
     {
-        // NOT IMPLEMENTED
+        // Waiting for the previous frame to finish rendering
+        vkWaitForFences (GetDevice(), 1, &m_inFlightFence, VK_TRUE, UINT64_MAX);
     }
 
-    void CommandQueueVulKan::ResetCommandPoolMemory(const RHICommandPool* cmdPool)
+    void GraphicsCommandQueueVulKan::EndFrame()
+    {
+        m_CurrentFrameIndex = (m_CurrentFrameIndex + 1) % RHI_MULTI_BUFFERING;
+        // Reset the render-complete semaphore from the previous frame
+        vkResetFences (GetDevice(), 1, &m_inFlightFence);
+    }
+
+    void GraphicsCommandQueueVulKan::Present()
+    {
+        // Semaphore for getting the current SwapChain image index
+        VkSemaphore RenderFinishedSemaphore[] = { m_RenderFinishedSemaphores[m_SwapChainInfo.imageIndex] };
+        VkSwapchainKHR vkSwapChain = reinterpret_cast<VkSwapchainKHR>(m_SwapChainInfo.SwapChain);
+
+        VkPresentInfoKHR presentInfo = {};
+        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+        // Set wait semaphore
+        presentInfo.waitSemaphoreCount = 1;
+        presentInfo.pWaitSemaphores = RenderFinishedSemaphore;
+        // Set up the swap chain, image index
+        presentInfo.swapchainCount = 1;
+        presentInfo.pSwapchains = &vkSwapChain;
+        presentInfo.pImageIndices = &m_SwapChainInfo.imageIndex;
+
+        VkResult result = vkQueuePresentKHR(
+            m_Queue,
+            &presentInfo
+        );
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+        {
+            Core::WarningCapture::Capture("This swap chain is outdated");
+        }
+        else if (result != VK_SUCCESS)
+        {
+            ThrowErrorMessage("Failed to present swap chain image");
+        }
+    }
+
+    void GraphicsCommandQueueVulKan::WaitForGPU()
+    {
+        vkQueueWaitIdle(GetQueue());
+    }
+
+    void GraphicsCommandQueueVulKan::SetGraphicsQueueSwapChainInfo(GraphicsQueueSwapChainInfo Info) 
+    {
+        m_SwapChainInfo = Info;
+    }
+
+    void GraphicsCommandQueueVulKan::ResetCommandPoolMemory(const RHICommandPool* cmdPool)
     {
         if (!cmdPool)
         {
@@ -172,68 +250,83 @@ namespace RHI
         cmdPool->Reset();
     }
 
-    void CommandQueueVulKan::EndFrame()
+    bool GraphicsCommandQueueVulKan::GetTimestampFrequency(uint64_t* frequency)
     {
-        m_FenceValues[m_CurrentFrame] = m_NextFenceValue++;
-        Signal(m_FenceValues[m_CurrentFrame]);
-        // Just jot down the value of the ending frame
-        m_LastSubmittedFenceValue = m_FenceValues[m_CurrentFrame];
-        m_CurrentFrame = (m_CurrentFrame + 1) % RHI_MULTI_BUFFERING;
+        GET_TIMESTAMP_FREQUENCY(frequency, GetPhysicalDevice());
     }
 
-    void CommandQueueVulKan::WaitForGPU()
+    uint64_t GraphicsCommandQueueVulKan::GetFrameIndex() const
     {
-        uint64_t fenceValue = m_LastSubmittedFenceValue;
-        if (fenceValue == 0) return;
-
-        VkSemaphoreWaitInfo waitInfo{};
-        waitInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
-        waitInfo.semaphoreCount = 1;
-        waitInfo.pSemaphores = &m_TimelineSemaphore;
-        waitInfo.pValues = &fenceValue;
-
-        vkWaitSemaphores(GetDevice(), &waitInfo, UINT64_MAX);
+        return m_CurrentFrameIndex;
     }
 
-    void CommandQueueVulKan::Signal(uint64_t fenceValue)
-    {
-        // Configure Timeline Semaphore submit info
-        VkTimelineSemaphoreSubmitInfo timelineInfo{};
-        timelineInfo.sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO;
-        timelineInfo.signalSemaphoreValueCount = 1;
-        timelineInfo.pSignalSemaphoreValues = &fenceValue;
+    // ============================================================ ComputeCommandQueueVulKan
 
-        // Configure submit info
+    void ComputeCommandQueueVulKan::WaitForGPU()
+    {
+        vkWaitForFences(GetDevice(), 1, &m_ComputeFence, VK_TRUE, UINT64_MAX);
+    }
+
+    void ComputeCommandQueueVulKan::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists)
+    {
+        if (cmdLists.empty())
+            return;
+
+        std::vector<VkCommandBuffer> commandBuffers;
+        EXTRACT_VK_COMMAND_BUFFERS(commandBuffers,cmdLists);
+
+        // Reset semaphore
+        vkResetFences(GetDevice(), 1, &m_ComputeFence);
+
+        // Create submit info
         VkSubmitInfo submitInfo{};
-        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        submitInfo.pNext = &timelineInfo;
-        submitInfo.signalSemaphoreCount = 1;
-        submitInfo.pSignalSemaphores = &m_TimelineSemaphore;
+        MAKE_COMPUTE_COPY_SUBMIT_INFO(submitInfo,commandBuffers);
 
         // Submit submit info
-        VkResult result = vkQueueSubmit(m_Queue, 1, &submitInfo, VK_NULL_HANDLE);
+        VkResult result = vkQueueSubmit(m_Queue, 1, &submitInfo, m_ComputeFence);
         if (result != VK_SUCCESS) {
             // Error handling
             Core::ErrorCapture::Capture("Failed to signal timeline semaphore");
         }
     }
 
-    bool CommandQueueVulKan::GetTimestampFrequency(uint64_t* frequency)
+    bool ComputeCommandQueueVulKan::GetTimestampFrequency(uint64_t* frequency)
     {
-        if (!frequency)
-            return false;
-
-        VkPhysicalDeviceProperties properties;
-        vkGetPhysicalDeviceProperties(GetPhysicalDevice(), &properties);
-        
-        // The unit of timestampPeriod is nanoseconds
-        // Frequency = 1,000,000,000 / timestampPeriod
-        *frequency = static_cast<uint64_t>(1e9 / properties.limits.timestampPeriod);
-        return true;
+        GET_TIMESTAMP_FREQUENCY(frequency, GetPhysicalDevice());
     }
 
-    uint64_t CommandQueueVulKan::GetFrameIndex() const
+    // ============================================================ CopyCommandQueueVulKan
+    
+    void CopyCommandQueueVulKan::WaitForGPU()
     {
-        return m_CurrentFrame;
+        vkWaitForFences(GetDevice(), 1, &m_CopyFence, VK_TRUE, UINT64_MAX);
+    }
+
+    void CopyCommandQueueVulKan::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists)
+    {
+        if (cmdLists.empty())
+            return;
+
+        std::vector<VkCommandBuffer> commandBuffers;
+        EXTRACT_VK_COMMAND_BUFFERS(commandBuffers,cmdLists);
+
+        // Reset semaphore
+        vkResetFences(GetDevice(), 1, &m_CopyFence);
+
+        // Create submit info
+        VkSubmitInfo submitInfo{};
+        MAKE_COMPUTE_COPY_SUBMIT_INFO(submitInfo,commandBuffers);
+
+        // Submit submit info
+        VkResult result = vkQueueSubmit(m_Queue, 1, &submitInfo, m_CopyFence);
+        if (result != VK_SUCCESS) {
+            // Error handling
+            Core::ErrorCapture::Capture("Failed to signal timeline semaphore");
+        }
+    }
+
+    bool CopyCommandQueueVulKan::GetTimestampFrequency(uint64_t* frequency)
+    {
+        GET_TIMESTAMP_FREQUENCY(frequency, GetPhysicalDevice());
     }
 }

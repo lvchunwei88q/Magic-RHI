@@ -1,16 +1,23 @@
 #pragma once
 
 #include "d3dx12.h"
+#include <cstdint>
 #include <d3d12.h>
 
 #include <Common/Check.h>
 #include <Common/RHIConfig.h> // RHI configuration
+
+#include <array>
 
 #include <RHICommandList.h>
 #include "RHIResourceD3D12.h"
 #include <wrl.h>
 
 using Microsoft::WRL::ComPtr;
+
+#define DEFINE_QUEUE_DEVICE_GETTERS(Device,m_Queue)                                 \
+    ID3D12CommandQueue* GetCommandQueue() const { return m_Queue.Get(); }           \
+    ID3D12Device* GetDevice() const { return Device; }
 
 namespace RHI
 {
@@ -108,54 +115,126 @@ namespace RHI
     using ComputeCommandListD3D12 = CommandListD3D12;
     using CopyCommandListD3D12 = CommandListD3D12;
 
-    class CommandQueueD3D12 : public RHICommandQueue
+    class GraphicsCommandQueueD3D12 : public RHIFrameCommandQueue
     {
     public:
-        CommandQueueD3D12(RHICmdType InType, ID3D12CommandQueue* pQueue, ID3D12Device* InDevice)
-            : RHICommandQueue(InType)
+        GraphicsCommandQueueD3D12(RHICmdType InType, ID3D12CommandQueue* pQueue, ID3D12Device* InDevice)
+            : RHIFrameCommandQueue(InType)
             , m_pCommandQueue(pQueue)
             , m_Device(InDevice) {
-                ThrowIfFailed(GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)));
+                ThrowIfFailed (GetDevice ()->CreateFence (
+                    0,D3D12_FENCE_FLAG_NONE,
+                    IID_PPV_ARGS (&m_Fence)
+                ));
                 m_fenceEvent = CreateEvent(nullptr,FALSE,FALSE,nullptr);
                 if (!m_fenceEvent) {
                     ThrowErrorMessage("Failed to create fence event");
                 }
             }
-        ~CommandQueueD3D12() override {
+        ~GraphicsCommandQueueD3D12() override {
+            WaitForGPU();
             CloseHandle(m_fenceEvent);
         };
         // No copying
-        CommandQueueD3D12(const CommandQueueD3D12&) = delete;
-        CommandQueueD3D12& operator=(const CommandQueueD3D12&) = delete;
+        GraphicsCommandQueueD3D12(const GraphicsCommandQueueD3D12&) = delete;
+        GraphicsCommandQueueD3D12& operator=(const GraphicsCommandQueueD3D12&) = delete;
 
         void BeginFrame() override;
-        void ResetCommandPoolMemory(const RHICommandPool* cmdPool) override;
-        void EndFrame() override;
         void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override;
+        void EndFrame() override;
+        void Present() override;
         void WaitForGPU() override;
 
-        // Synchronization operation
-        void Signal(uint64_t fenceValue) override;
+        void SetGraphicsQueueSwapChainInfo(GraphicsQueueSwapChainInfo Info) override;
+        void ResetCommandPoolMemory(const RHICommandPool* cmdPool) override;
         bool GetTimestampFrequency(uint64_t* frequency) override; // Get timestamp frequency 只需要获取一次
         uint64_t GetFrameIndex() const override;
 
-        ID3D12CommandQueue* GetCommandQueue() const { return m_pCommandQueue.Get(); }
-        ID3D12Device* GetDevice() const { return m_Device; }
-
+        DEFINE_QUEUE_DEVICE_GETTERS(m_Device,m_pCommandQueue);
     private:
         ComPtr<ID3D12CommandQueue> m_pCommandQueue;
+        ID3D12Device* m_Device;
         
         // Synchronization objects.
         HANDLE m_fenceEvent;
         ComPtr<ID3D12Fence> m_Fence;
-        UINT64 m_fenceValues[RHI_MULTI_BUFFERING] = {0}; // Multi-buffering fence values
-        UINT64 m_nextFenceValue = 1;
-        UINT m_currentFrame = 0;  
-
-        ID3D12Device* m_Device;
+        UINT64 m_CurrentFenceValue = 0; // fence values
+        std::array<UINT64, RHI_MULTI_BUFFERING> m_FrameFenceValues = {0};
+        UINT64 m_CurrentFrameIndex = 0;
+        
+        // SwapChain Info 
+        GraphicsQueueSwapChainInfo m_SwapChainInfo;
     };
 
-    using GraphicsCommandQueueD3D12 = CommandQueueD3D12;
-    using ComputeCommandQueueD3D12 = CommandQueueD3D12;
-    using CopyCommandQueueD3D12 = CommandQueueD3D12;
+    class ComputeCommandQueueD3D12 : public RHICommandQueue
+    {
+    public:
+        ComputeCommandQueueD3D12(RHICmdType InType, ID3D12CommandQueue* pQueue, ID3D12Device* InDevice)
+            : RHICommandQueue(InType)
+            , m_pCommandQueue(pQueue)
+            , m_Device(InDevice) {
+                ThrowIfFailed(GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)));
+                // Create fenceEvent
+                m_fenceEvent = CreateEvent(nullptr,FALSE,FALSE,nullptr);
+                if (!m_fenceEvent)
+                    ThrowErrorMessage("Failed to create fence event");
+            }
+        ~ComputeCommandQueueD3D12() override {
+            WaitForGPU();
+            CloseHandle(m_fenceEvent);
+        };
+        // No copying
+        ComputeCommandQueueD3D12(const ComputeCommandQueueD3D12&) = delete;
+        ComputeCommandQueueD3D12& operator=(const ComputeCommandQueueD3D12&) = delete;
+
+        void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override;
+        void WaitForGPU() override;
+        bool GetTimestampFrequency(uint64_t* frequency) override; // Get timestamp frequency 只需要获取一次
+
+        DEFINE_QUEUE_DEVICE_GETTERS(m_Device,m_pCommandQueue);
+    private:
+        ComPtr<ID3D12CommandQueue> m_pCommandQueue;
+        ID3D12Device* m_Device;
+        
+        // Synchronization objects.
+        uint64_t m_CurrentFenceValue;
+        HANDLE m_fenceEvent;
+        ComPtr<ID3D12Fence> m_Fence;
+    };
+
+    class CopyCommandQueueD3D12 : public RHICommandQueue
+    {
+    public:
+        CopyCommandQueueD3D12(RHICmdType InType, ID3D12CommandQueue* pQueue, ID3D12Device* InDevice)
+            : RHICommandQueue(InType)
+            , m_pCommandQueue(pQueue)
+            , m_Device(InDevice) {
+                ThrowIfFailed(GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_Fence)));
+                // Create fenceEvent
+                m_fenceEvent = CreateEvent(nullptr,FALSE,FALSE,nullptr);
+                if (!m_fenceEvent)
+                    ThrowErrorMessage("Failed to create fence event");
+            }
+        ~CopyCommandQueueD3D12() override {
+            WaitForGPU();
+            CloseHandle(m_fenceEvent);
+        };
+        // No copying
+        CopyCommandQueueD3D12(const CopyCommandQueueD3D12&) = delete;
+        CopyCommandQueueD3D12& operator=(const CopyCommandQueueD3D12&) = delete;
+
+        void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override;
+        void WaitForGPU() override;
+        bool GetTimestampFrequency(uint64_t* frequency) override; // Get timestamp frequency 只需要获取一次
+
+        DEFINE_QUEUE_DEVICE_GETTERS(m_Device,m_pCommandQueue);
+    private:
+        ComPtr<ID3D12CommandQueue> m_pCommandQueue;
+        ID3D12Device* m_Device;
+        
+        // Synchronization objects.
+        uint64_t m_CurrentFenceValue;
+        HANDLE m_fenceEvent;
+        ComPtr<ID3D12Fence> m_Fence;
+    };
 }

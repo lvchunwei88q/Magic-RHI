@@ -19,8 +19,6 @@ void TestShaderCompilation()
             ASSERT_TRUE(loader->Load(RHI::RHIType::D3D12));
         } else if (EnumHasAnyFlags(type, RHI::RHIType::VulKan)) {
             ASSERT_TRUE(loader->Load(RHI::RHIType::VulKan));
-        } else if (EnumHasAnyFlags(type, RHI::RHIType::D3D11)) {
-            ASSERT_TRUE(loader->Load(RHI::RHIType::D3D11));
         } else {
             std::cerr << "No suitable RHI found for shader compilation test!" << std::endl;
             return;

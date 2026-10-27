@@ -360,17 +360,20 @@ namespace RHI
     /*
     * Get the graphics command queues here is divided into graphics queues, compute queues, and copy queues
     */
-    RHICommandQueue* DeviceD3D12::GetCommandQueue(RHICmdType Type) const
+    RHIFrameCommandQueue* DeviceD3D12::GetFrameCommandQueue() const
+    {
+        return m_GraphicsQueue.get();
+    }
+
+    RHICommandQueue* DeviceD3D12::GetBasicCommandQueue(RHICmdType Type) const
     {
         switch (Type)
         {
-        case RHICmdType::Graphics:
-            return m_GraphicsQueue.get();
         case RHICmdType::Compute:
             return m_ComputeQueue.get();
         case RHICmdType::Copy:
             return m_CopyQueue.get();
-        default:
+               default:
             return nullptr;
         }
     }

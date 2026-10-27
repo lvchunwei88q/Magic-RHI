@@ -3,6 +3,7 @@
  * we need to include the definitions of the forward declarations first.
  */
  #include <Common/Check.h>
+#include <cstdint>
 #include "RHICommandListD3D12.h"
 #include "RHID3D12.h"
 
@@ -51,9 +52,10 @@ namespace RHI
         swapChainDesc.SampleDesc.Quality = 0;
 
         // Only a graphics queue can be bound to the swap chain
+        GraphicsCommandQueueD3D12* GraphicsCommandQueue = SafeCast<GraphicsCommandQueueD3D12> (m_pRHI->GetFrameCommandQueue());
         ComPtr<IDXGISwapChain1> swapChain1;
         ThrowIfFailed(factory->CreateSwapChainForHwnd(
-            SafeCast<CommandQueueD3D12>(m_pRHI->GetCommandQueue(RHICmdType::Graphics))->GetCommandQueue(),
+            GraphicsCommandQueue->GetCommandQueue(),
             windowHandle,
             &swapChainDesc,
             nullptr,
@@ -139,10 +141,10 @@ namespace RHI
             && m_Initialization == InitialState::Initialize;
     }
 
-    void SwapChainD3D12::Present(uint32_t syncInterval, uint32_t presentFlags)
-    {
-        m_pSwapChain1->Present(syncInterval, presentFlags);
-    }
+    // void SwapChainD3D12::Present(uint32_t syncInterval, uint32_t presentFlags)
+    // {
+    //     m_pSwapChain1->Present(syncInterval, presentFlags);
+    // }
 
     void SwapChainD3D12::Resize(uint32_t width, uint32_t height)
     {
@@ -181,5 +183,14 @@ namespace RHI
     RHITexture*  SwapChainD3D12::GetBackBuffer(uint32_t index) const
     {
         return m_pBackBuffers[index].get();
+    }
+
+    GraphicsQueueSwapChainInfo SwapChainD3D12::GetGraphicsQueueSwapChainInfo() const 
+    {
+        GraphicsQueueSwapChainInfo Info;
+        Info.imageIndex = AvailableSwapChainImageIndex();
+        Info.SwapChain = (uint64_t)m_pSwapChain1.Get();
+        Info.VSync = m_desc.VSync;
+        return Info;
     }
 }

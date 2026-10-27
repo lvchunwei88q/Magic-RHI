@@ -106,6 +106,7 @@ namespace RHI
         RHICommandPoolPtr m_pCommandPool;
     };
 
+    // Basic queue
     class RHI_API RHICommandQueue
     {
     public:
@@ -114,18 +115,29 @@ namespace RHI
 
         RHICmdType GetQueueType() const { return QueueType; }
 
-        virtual void BeginFrame() = 0;
-        virtual void EndFrame() = 0;
-        virtual void ResetCommandPoolMemory(const RHICommandPool* cmdPool) = 0;
+        // All queues must be able to execute commands
         virtual void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) = 0;
+        // All queues must be able to block-wait (for exit or resource synchronization)
         virtual void WaitForGPU() = 0;
-
-        // Synchronous operation
-        virtual void Signal(uint64_t fenceValue) = 0;
+        // All queues can query timestamps (for performance analysis)
         virtual bool GetTimestampFrequency(uint64_t* frequency) = 0;
-        virtual uint64_t GetFrameIndex() const = 0;
 
     protected:
         RHICmdType QueueType;
+    };
+
+    // Frame queue
+    class RHI_API RHIFrameCommandQueue : public RHICommandQueue
+    {
+    public:
+        RHIFrameCommandQueue(RHICmdType InType);
+        virtual ~RHIFrameCommandQueue();
+
+        virtual void BeginFrame() = 0;
+        virtual void EndFrame() = 0;
+        virtual void Present() = 0;
+        virtual void SetGraphicsQueueSwapChainInfo(GraphicsQueueSwapChainInfo Info) = 0;
+        virtual void ResetCommandPoolMemory(const RHICommandPool* cmdPool) = 0;
+        virtual uint64_t GetFrameIndex() const = 0;
     };
 } // namespace RHI

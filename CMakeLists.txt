@@ -9,7 +9,6 @@ ThirdPartyModule(SPIRV-Cross)
 
 RuntimeModule(Core)
 RuntimeModule(VulKanRHI)
-RuntimeModule(D3D11RHI)
 RuntimeModule(D3D12RHI)
 RuntimeModule(RHI)
 

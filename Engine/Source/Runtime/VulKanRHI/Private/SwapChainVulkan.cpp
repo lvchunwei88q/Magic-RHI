@@ -2,6 +2,7 @@
 #include <Common/RHIConfig.h>
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include "RHICommandListVulKan.h"
 #include "RHIVulKan.h"
 
@@ -93,9 +94,9 @@ namespace RHI
             return false;
         }
 
-        if (!VkCreateSemaphores())
+        if (!VkCreateSyncObjects())
         {
-            ThrowErrorMessage("Failed to create semaphores");
+            ThrowErrorMessage("Failed to create sync objects");
             return false;
         }
 
@@ -106,12 +107,6 @@ namespace RHI
     void SwapChainVulKan::Shutdown()
     {
         m_Initialization = InitialState::Shutdown;
-
-        if (m_RenderFinishedSemaphore != VK_NULL_HANDLE)
-        {
-            vkDestroySemaphore(GetDevice(), m_RenderFinishedSemaphore, nullptr);
-            m_RenderFinishedSemaphore = VK_NULL_HANDLE;
-        }
 
         if (m_ImageAvailableSemaphore != VK_NULL_HANDLE)
         {
@@ -144,7 +139,7 @@ namespace RHI
             UINT64_MAX,
             m_ImageAvailableSemaphore,
             VK_NULL_HANDLE,
-            &m_CurrentFrame
+            &m_AvailableSwapChainImageIndex
         );
 
         if (result == VK_ERROR_OUT_OF_DATE_KHR)
@@ -156,7 +151,7 @@ namespace RHI
                 UINT64_MAX,
                 m_ImageAvailableSemaphore,
                 VK_NULL_HANDLE,
-                &m_CurrentFrame
+                &m_AvailableSwapChainImageIndex
             );
         }
         else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
@@ -165,39 +160,7 @@ namespace RHI
             return UINT32_MAX;
         }
 
-        return m_CurrentFrame;
-    }
-
-    void SwapChainVulKan::Present(uint32_t syncInterval, uint32_t presentFlags)
-    {
-        VkPresentInfoKHR presentInfo = {};
-        presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-        presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = &m_RenderFinishedSemaphore;
-        presentInfo.swapchainCount = 1;
-        presentInfo.pSwapchains = &m_SwapChain;
-        presentInfo.pImageIndices = &m_CurrentFrame;
-
-        const GraphicsCommandQueueVulKan* graphicsQueue = SafeCast<GraphicsCommandQueueVulKan>(m_pRHI->GetCommandQueue(RHICmdType::Graphics));
-        if (!graphicsQueue)
-        {
-            ThrowErrorMessage("Failed to get graphics command queue");
-            return;
-        }
-
-        VkResult result = vkQueuePresentKHR(
-            graphicsQueue->GetQueue(),
-            &presentInfo
-        );
-
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
-        {
-            Resize(m_desc.Width, m_desc.Height);
-        }
-        else if (result != VK_SUCCESS)
-        {
-            ThrowErrorMessage("Failed to present swap chain image");
-        }
+        return m_AvailableSwapChainImageIndex;
     }
 
     void SwapChainVulKan::Resize(uint32_t width, uint32_t height)
@@ -243,6 +206,16 @@ namespace RHI
         if (index >= m_pBackBuffers.size())
             return nullptr;
         return m_pBackBuffers[index].get();
+    }
+
+    GraphicsQueueSwapChainInfo SwapChainVulKan::GetGraphicsQueueSwapChainInfo() const 
+    {
+        GraphicsQueueSwapChainInfo Info;
+        Info.imageIndex = m_AvailableSwapChainImageIndex;
+        Info.SwapChain = (uint64_t)m_SwapChain;
+        Info.Semaphore = (uint64_t)m_ImageAvailableSemaphore;
+        Info.VSync = m_desc.VSync;
+        return Info;
     }
 
     bool SwapChainVulKan::VkCreateSwapChain()
@@ -395,22 +368,20 @@ namespace RHI
         return true;
     }
 
-    bool SwapChainVulKan::VkCreateSemaphores()
+    bool SwapChainVulKan::VkCreateSyncObjects()
     {
+        // Semaphore creation info
         VkSemaphoreCreateInfo semaphoreInfo = {};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        // Fence creation info
+        VkFenceCreateInfo fenceInfo{};
+        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
         VkResult result = vkCreateSemaphore(GetDevice(), &semaphoreInfo, nullptr, &m_ImageAvailableSemaphore);
         if (result != VK_SUCCESS)
         {
             ThrowErrorMessage("Failed to create image available semaphore");
-            return false;
-        }
-
-        result = vkCreateSemaphore(GetDevice(), &semaphoreInfo, nullptr, &m_RenderFinishedSemaphore);
-        if (result != VK_SUCCESS)
-        {
-            ThrowErrorMessage("Failed to create render finished semaphore");
             return false;
         }
 
