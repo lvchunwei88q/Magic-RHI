@@ -293,7 +293,7 @@ inline bool IsCompressedFormat(RHITextureFormat Format)
 
 enum class RHIResourceState : uint64_t
 {
-	// 基础状态
+	// Basic state
     Common                      	= 0,
     VertexBuffer                	= 0x1,
     IndexBuffer                		= 0x2,
@@ -309,19 +309,19 @@ enum class RHIResourceState : uint64_t
     CopySource                  	= 0x800,
     ResolveDest                 	= 0x1000,
     ResolveSource               	= 0x2000,
-    // 视频相关	
+    // Video-related	
     VideoDecodeRead             	= 0x10000,
     VideoDecodeWrite            	= 0x20000,
     VideoProcessRead            	= 0x40000,
     VideoProcessWrite           	= 0x80000,
     VideoEncodeRead             	= 0x200000,
     VideoEncodeWrite            	= 0x800000,
-    // 光线追踪
+    // Ray tracing
     RaytracingAccelerationStructure = 0x400000,
-    // 着色率
+    // Pixel fill rate
     ShadingRateSource             	= 0x1000000,
-    // 组合状态
-    Present                     	= 0,
+    // Combined state
+    Present                     	= 0x2000000,
     GenericRead                 	= VertexBuffer | IndexBuffer | NonPixelShaderResource | 
                   						PixelShaderResource | IndirectArgument | CopySource | ResolveSource,
     AllShaderResource           	= NonPixelShaderResource | PixelShaderResource,
