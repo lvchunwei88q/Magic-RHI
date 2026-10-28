@@ -30,6 +30,18 @@ void RunTestDeviceAndSwapChain(RHI::RHIType rhiType,const std::wstring& windowTi
 {
     Core::SubsystemControl::Init();
     {
+        { // register core log capture
+            Core::ErrorCapture::RegisterCaptureFunction([](const std::string& Message){
+                std::cout << "Error: " << Message << std::endl;
+            });
+            Core::WarningCapture::RegisterCaptureFunction([](const std::string& Message){
+                std::cout << "Warning: " << Message << std::endl;
+            });
+            Core::InfoCapture::RegisterCaptureFunction([](const std::string& Message){
+                std::cout << "Info: " << Message << std::endl;
+            });
+        }
+
         std::wstring windowName = L"RHIWindowClass_" + windowTitle;
         WNDCLASS wc = {0};
         wc.lpfnWndProc = WindowProc;
