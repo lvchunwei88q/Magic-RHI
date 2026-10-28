@@ -21,7 +21,19 @@ namespace RHI
 }
 
 // Macro definition to unify function call methods
+/**
+ * @brief
+ */
 #define CreateDevice_Function           std::unique_ptr<RHI::Device> CreateDevice()
+/**
+ * @brief
+ */
 #define CreateSwapChain_Function        std::unique_ptr<RHI::SwapChain> CreateSwapChain()
+/**
+ * @brief
+ */
 #define CreateShaderCompilerBackend_Function std::unique_ptr<RHI::ShaderCompilerBackend> CreateShaderCompilerBackend()
+/**
+ * @brief
+ */
 #define GetRHIType_Function             RHI::RHIType GetRHIType()

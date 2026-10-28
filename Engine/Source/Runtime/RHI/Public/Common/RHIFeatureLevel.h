@@ -8,7 +8,9 @@
 namespace RHI
 {
 
-/* Feature Level Type */
+/**
+ * @brief Feature Level Type.
+ */
 enum class FeatureLevel : uint32_t
 {
     // ============================================================
@@ -30,6 +32,11 @@ enum class FeatureLevel : uint32_t
     Vulkan_1_4   = 0x010400, // Vulkan 1.4
 };
 
+/**
+ * @brief
+ * @param level
+ * @return
+ */
 inline const char* GetFeatureLevelName(FeatureLevel level)
 {
     switch (level)
@@ -59,7 +66,9 @@ inline const char* GetFeatureLevelName(FeatureLevel level)
     }
 }
 
-// Shader Model Level
+/**
+ * @brief Shader Model Level.
+ */
 enum class ShaderModelVersion
 {
     SM_5_0 = 50,    // 5.0
@@ -77,6 +86,11 @@ enum class ShaderModelVersion
     Unknown = 0
 };
 
+/**
+ * @brief
+ * @param version
+ * @return
+ */
 inline const char* ShaderModelToString(ShaderModelVersion version)
 {
     switch (version)
@@ -97,6 +111,11 @@ inline const char* ShaderModelToString(ShaderModelVersion version)
     }
 }
 
+/**
+ * @brief
+ * @param version
+ * @return
+ */
 inline size_t ShaderModelToNumber(ShaderModelVersion version)
 {
     switch (version)

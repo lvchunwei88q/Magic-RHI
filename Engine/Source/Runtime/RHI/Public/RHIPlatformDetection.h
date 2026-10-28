@@ -17,7 +17,9 @@
 
 namespace RHI
 {
-    // RHI Type Enum
+    /**
+     * @brief RHI Type Enum.
+     */
     enum class RHIType : uint8_t
     {
         None = 0,
@@ -29,7 +31,11 @@ namespace RHI
     };
     ENUM_CLASS_FLAGS(RHIType);
 
-    // Utility function to convert RHIType to string representation
+    /**
+     * @brief Utility function to convert RHIType to string representation
+     * @param type
+     * @return
+     */
     inline std::string RHITypeToString(RHIType type)
     {
         // If no RHI is available, return "RHIType: None"
@@ -50,9 +56,17 @@ namespace RHI
         return result.c_str();
     }
 
-    // Function to get the best available RHI type based on platform support
+    /**
+     * @brief Function to get the best available RHI type based on platform support
+     * @return
+     */
     RHIType RHI_API GetBestAvailableRHI();
     
+    /**
+     * @brief
+     * @param type
+     * @return
+     */
     inline bool IsMultiThreadingSupported(RHIType type) {
         if(EnumHasAnyFlags(type, RHIType::D3D12 | RHIType::VulKan)) {
             return true; // Modern APIs with native support for multi-threaded recording

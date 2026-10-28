@@ -7,13 +7,17 @@
 
 namespace RHI
 {
-/** Core Device Initialization State - Place user-uninitialized device. */
+/**
+ * @brief Core Device Initialization State - Place user-uninitialized device.
+ */
 enum class InitialState : uint8_t {
 	Initialize = 1,
 	Shutdown = 2,
 };
 
-/** An enumeration of the different RHI reference types. */
+/**
+ * @brief An enumeration of the different RHI reference types.
+ */
 enum RHIResourceType : uint8_t
 {
 	RRT_None,
@@ -63,6 +67,9 @@ enum RHIResourceType : uint8_t
 	RRT_Num
 };
 
+/**
+ * @brief
+ */
 enum class RHIDescriptorHeapType : uint8_t
 {
 	Standard,
@@ -73,6 +80,9 @@ enum class RHIDescriptorHeapType : uint8_t
 	Invalid = MAX_uint8_t
 };
 
+/**
+ * @brief
+ */
 enum class SamplerFilter : uint8_t
 {
 	Point,
@@ -81,6 +91,9 @@ enum class SamplerFilter : uint8_t
 	Anisotropic
 };
 
+/**
+ * @brief
+ */
 enum class SamplerAddressMode : uint8_t
 {
 	Wrap,
@@ -90,6 +103,9 @@ enum class SamplerAddressMode : uint8_t
 	MirrorOnce
 };
 
+/**
+ * @brief
+ */
 enum class SamplerComparisonFunc : uint8_t
 {
 	Never,
@@ -103,37 +119,32 @@ enum class SamplerComparisonFunc : uint8_t
 };
 
 /**
-* 缓冲区堆类型
-* 决定缓冲区的内存位置和 CPU/GPU 访问权限
-*/
+ * @brief 缓冲区堆类型，决定缓冲区的内存位置和 CPU/GPU 访问权限。
+ */
 enum class BufferHeapType : uint8_t
 {
 	/**
-	* Default 堆（GPU 本地显存）
-	* 
-	* CPU 访问：不可访问
-	* GPU 访问：读写
-	*/
+	 * @brief Default 堆（GPU 本地显存）。
+	 * CPU 访问：不可访问；GPU 访问：读写。
+	 */
 	Default,
 	
 	/**
-	* Upload 堆（CPU 上传）
-	* 
-	* CPU 访问：可写入
-	* GPU 访问：可读取
-	*/
+	 * @brief Upload 堆（CPU 上传）。
+	 * CPU 访问：可写入；GPU 访问：可读取。
+	 */
 	Upload,
 	
 	/**
-	* Readback 堆（CPU 回读）
-	* 
-	* CPU 访问：可读写
-	* GPU 访问：只写（或作为拷贝目标）
-	*/
+	 * @brief Readback 堆（CPU 回读）。
+	 * CPU 访问：可读写；GPU 访问：只写（或作为拷贝目标）。
+	 */
 	Readback
 };
 
-/* Command Type */
+/**
+ * @brief Command Type.
+ */
 enum class RHICmdType : uint8_t
 {
 	Graphics,
@@ -141,7 +152,9 @@ enum class RHICmdType : uint8_t
 	Copy
 };
 
-// RHI Texture Format
+/**
+ * @brief RHI Texture Format.
+ */
 enum class RHITextureFormat : uint8_t
 {
 	Unknown = 0,
@@ -238,7 +251,11 @@ enum class RHITextureFormat : uint8_t
 	Max
 };
 
-// 判断格式是否有深度/模板分量
+/**
+ * @brief 判断格式是否有深度/模板分量
+ * @param Format
+ * @return
+ */
 inline bool IsDepthFormat(RHITextureFormat Format)
 {
 	switch (Format)
@@ -253,7 +270,11 @@ inline bool IsDepthFormat(RHITextureFormat Format)
 	}
 }
 
-// 判断格式是否有模板分量
+/**
+ * @brief 判断格式是否有模板分量
+ * @param Format
+ * @return
+ */
 inline bool IsStencilFormat(RHITextureFormat Format)
 {
 	switch (Format)
@@ -266,7 +287,11 @@ inline bool IsStencilFormat(RHITextureFormat Format)
 	}
 }
 
-// 判断格式是否压缩
+/**
+ * @brief 判断格式是否压缩
+ * @param Format
+ * @return
+ */
 inline bool IsCompressedFormat(RHITextureFormat Format)
 {
 	switch (Format)
@@ -291,6 +316,9 @@ inline bool IsCompressedFormat(RHITextureFormat Format)
 	}
 }
 
+/**
+ * @brief
+ */
 enum class RHIResourceState : uint64_t
 {
 	// Basic state
@@ -328,6 +356,9 @@ enum class RHIResourceState : uint64_t
 };
 ENUM_CLASS_FLAGS(RHIResourceState);
 
+/**
+ * @brief
+ */
 enum class BufferBindFlag : uint32_t
 {
 	None           = 0,			 // 无绑定标志
@@ -342,6 +373,9 @@ enum class BufferBindFlag : uint32_t
 };
 ENUM_CLASS_FLAGS(BufferBindFlag);
 
+/**
+ * @brief
+ */
 enum class RHIPrimitiveTopology : uint8_t
 {
 	Undefined,
@@ -357,18 +391,27 @@ enum class RHIPrimitiveTopology : uint8_t
 	ControlPointPatchList
 };
 
+/**
+ * @brief
+ */
 enum class RHIIndexFormat : uint8_t
 {
 	Uint16,
 	Uint32
 };
 	
+/**
+ * @brief
+ */
 enum class InputClassification : uint8_t
 {
 	PerVertexData   = 0,  // 每顶点数据
 	PerInstanceData = 1   // 每实例数据
 };
 
+/**
+ * @brief
+ */
 struct RHIRect
 {
 	float left;
@@ -377,6 +420,9 @@ struct RHIRect
 	float bottom;
 };
 
+/**
+ * @brief
+ */
 struct RHIViewport
 {
 	float topLeftX;
@@ -387,6 +433,9 @@ struct RHIViewport
 	float maxDepth;
 };
 
+/**
+ * @brief
+ */
 enum class RHIClearFlags : uint8_t
 {
     None = 0,
@@ -396,6 +445,9 @@ enum class RHIClearFlags : uint8_t
 };
 ENUM_CLASS_FLAGS(RHIClearFlags);
 
+/**
+ * @brief
+ */
 enum class ShaderType : uint8_t
 {
 	Vertex,
@@ -407,15 +459,10 @@ enum class ShaderType : uint8_t
 	// More ...
 };
 
-/*
-* 根参数类型
-* 一般跟签名就是描述这个Shader的资源布局信息，包括描述符表、常量缓冲区、CBV、SRV、UAV等。
-* 描述符表就是一个类似的一维Range(描述符范围)数组，首先它可以有多个Range 
-*，每个Range声明了对应类型的堆的起始的X到N的所有描述符（也就是说，每个Range由一个起始地址与长度构成），
-* 多个Range也就可以有多个类型，他们构成了描述符表。
-* CBV、SRV、UAV等都是单个描述符，类型数为1，并且也只能有一个资源地址。
-* Constants（比如一个float）是直接把数据写在根签名中的。
-*/
+/**
+ * @brief 根参数类型。
+ * 根签名描述 Shader 的资源布局，包括描述符表、常量缓冲区、CBV、SRV、UAV 等。
+ */
 enum class RootParameterType : uint8_t
 {
 	DescriptorTable,
@@ -425,7 +472,9 @@ enum class RootParameterType : uint8_t
 	UAV
 };
 
-// 描述符表类型 - 注意这里的采样器只能是在描述符表中使用
+/**
+ * @brief 描述符表类型。采样器只能在描述符表中使用。
+ */
 enum class DescriptorRangeType : uint32_t
 {
     SRV     = 0,  // 着色器资源视图（纹理、结构化缓冲区等） - 只读
@@ -434,6 +483,9 @@ enum class DescriptorRangeType : uint32_t
     Sampler = 3,  // 采样器（纹理采样状态）
 };
 
+/**
+ * @brief
+ */
 enum class RootSignatureFlags : uint32_t
 {
 	None = 0, // None - default
@@ -456,6 +508,9 @@ enum class RootSignatureFlags : uint32_t
 };
 ENUM_CLASS_FLAGS(RootSignatureFlags);
 
+/**
+ * @brief
+ */
 enum class ShaderVisibility : uint8_t
 {
     None = 0, 	           // None
@@ -470,7 +525,9 @@ enum class ShaderVisibility : uint8_t
     Compute = 9,           // Compute shader only
 };
 
-// Resource Barrier Type
+/**
+ * @brief Resource Barrier Type.
+ */
 enum class ResourceBarrierType : uint8_t
 {
 	Transition,  // Transition Barrier
@@ -478,14 +535,18 @@ enum class ResourceBarrierType : uint8_t
 	UAV          // UAVBarrier
 };
 
-// Resource Type
+/**
+ * @brief Resource Type.
+ */
 enum class BarrierResourceType : uint8_t
 {
 	Texture, // Texture
 	Buffer  // Buffer
 };
 
-// Resource Barrier Flags
+/**
+ * @brief Resource Barrier Flags.
+ */
 enum class ResourceBarrierFlags : uint8_t
 {
 	None       = 0,

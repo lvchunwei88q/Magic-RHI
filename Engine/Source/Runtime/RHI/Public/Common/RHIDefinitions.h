@@ -11,7 +11,9 @@
 namespace RHI
 {
 
-// Swap Chain Description
+/**
+ * @brief Swap Chain Description.
+ */
 struct SwapChainDesc
 {
     void* WindowHandleRef;
@@ -20,7 +22,9 @@ struct SwapChainDesc
     bool VSync = false;
 };
 
-// Graphics Queue SwapChain Info
+/**
+ * @brief Graphics Queue SwapChain Info.
+ */
 struct GraphicsQueueSwapChainInfo
 {
     using SwapChainHandle = uint64_t;
@@ -36,7 +40,9 @@ struct GraphicsQueueSwapChainInfo
     uint32_t SwapChainBackBufferCount_Vk    = UINT_INITIAL_VALUE;
 };
 
-// Resource Transition Barrier Description
+/**
+ * @brief Resource Transition Barrier Description.
+ */
 struct ResourceTransitionBarrier
 {
 	class RHIResource* 			pResource       = nullptr;     // Resource Pointer
@@ -45,20 +51,26 @@ struct ResourceTransitionBarrier
 	RHIResourceState            StateAfter      = RHIResourceState::Common;    // State After Transition
 };
 
-// Resource Aliasing Barrier Description
+/**
+ * @brief Resource Aliasing Barrier Description.
+ */
 struct ResourceAliasingBarrier
 {
 	class RHIResource* pResourceBefore = nullptr;  // Resource Before Transition
 	class RHIResource* pResourceAfter  = nullptr;   // Resource After Transition
 };
 
-// UAV Barrier Description
+/**
+ * @brief UAV Barrier Description.
+ */
 struct ResourceUAVBarrier
 {
 	class RHIResource* pResource = nullptr;  // UAV Resource（can be nullptr）
 };
 
-// Resource Barrier Description
+/**
+ * @brief Resource Barrier Description.
+ */
 struct BarrierDesc
 {
 	ResourceBarrierType   Type 			    = ResourceBarrierType::Transition;
@@ -72,6 +84,9 @@ struct BarrierDesc
 	};
 };
 
+/**
+ * @brief
+ */
 struct TextureDesc
 {
     RHITextureFormat Format = RHITextureFormat::Unknown;
@@ -85,7 +100,9 @@ struct TextureDesc
     uint32_t Flags          = UINT_INITIAL_VALUE;
 };
 
-// Input Element Description
+/**
+ * @brief Input Element Description.
+ */
 struct InputElementDesc
 {
 	const char* SemanticName                = nullptr;           		    // Semantic Name
@@ -99,10 +116,10 @@ struct InputElementDesc
 	static constexpr uint32_t APPEND_ALIGNED_ELEMENT = 0xFFFFFFFF;
 };
 
-/*
- * @brief SPIR-V Resource Description
- * This struct is used to describe the data layout in a buffer
-*/
+/**
+ * @brief SPIR-V Resource Description.
+ * This struct is used to describe the data layout in a buffer.
+ */
 struct SPIRVResource {
     std::string name;                                       // Resource Name
     uint32_t binding = UINT_INITIAL_VALUE;                  // binding Index (corresponding HLSL register)
@@ -114,10 +131,10 @@ struct SPIRVResource {
     std::vector<std::pair<std::string, uint32_t>> members;  // Member Variables
 };
 
-/*
- * @brief SPIR-V Reflection Information
- * This struct is used to store the reflection information of SPIR-V
-*/
+/**
+ * @brief SPIR-V Reflection Information.
+ * This struct is used to store the reflection information of SPIR-V.
+ */
 struct SPIRVReflection {
     std::string entryPoint;
     std::vector<SPIRVResource> resources;
@@ -125,10 +142,10 @@ struct SPIRVReflection {
     uint32_t totalConstantBufferSize = 0;
 };
 
-/*
- * @brief Shader Macro Description
- * This struct is used to describe the shader macro
-*/
+/**
+ * @brief Shader Macro Description.
+ * This struct is used to describe a shader macro.
+ */
 struct ShaderMacro
 {
     // Macro Name
@@ -137,10 +154,10 @@ struct ShaderMacro
     std::string definition;
 };
 
-/*
- * @brief Shader Compile Options
- * This struct is used to store the compile options of shader
-*/
+/**
+ * @brief Shader Compile Options.
+ * This struct is used to store the compile options of a shader.
+ */
 struct ShaderCompileOptions {
     std::string entryPoint = "main";
     std::string targetProfile = "xxx_6_0";  // vs_6_0, ps_6_0, cs_6_0
@@ -161,6 +178,9 @@ struct ShaderCompileOptions {
     static constexpr const char* DEFAULT_HLSL_VERSION = "2021";
 };
 
+/**
+ * @brief
+ */
 struct ShaderCompileOptionInternal : public ShaderCompileOptions
 {
     // Target Compiler mode (SPIR-V or HLSL)
@@ -168,51 +188,121 @@ struct ShaderCompileOptionInternal : public ShaderCompileOptions
     // Target SPIR-V environment (vulkan1.0 or vulkan1.3)
     std::string SPIR_V_TargetEnv = "vulkan1.0";
 
+    /**
+     * @brief
+     */
     ShaderCompileOptionInternal() = default;
+    /**
+     * @brief
+     * @param options
+     */
     ShaderCompileOptionInternal(const ShaderCompileOptions& options) : ShaderCompileOptions(options) {}
 };
 
 // ========================================================== Post-Process Args
+/**
+ * @brief
+ */
 struct ShaderPostProcessArgs {
     RHIResourceType ShaderType;
 
+    /**
+     * @brief
+     * @return
+     */
     virtual bool IsValid() const = 0;
 
+    /**
+     * @brief
+     */
     ShaderPostProcessArgs() = default;
+    /**
+     * @brief
+     * @param type
+     */
     explicit ShaderPostProcessArgs(RHIResourceType type) : ShaderType(type) {}
+    /**
+     * @brief
+     */
     virtual ~ShaderPostProcessArgs() = default;
 };
 
+/**
+ * @brief
+ */
 struct VertexShaderPostProcessArgs : public ShaderPostProcessArgs
 {
     std::vector<InputElementDesc> inputLayout;
 
+    /**
+     * @brief
+     * @return
+     */
     bool IsValid() const override { return inputLayout.size() > 0; }
+    /**
+     * @brief
+     */
     VertexShaderPostProcessArgs() : ShaderPostProcessArgs(RHIResourceType::RRT_VertexShader) {}
+    /**
+     * @brief
+     * @param inputLayout
+     */
     VertexShaderPostProcessArgs(const std::vector<InputElementDesc>& inputLayout) : inputLayout(inputLayout), ShaderPostProcessArgs(RHIResourceType::RRT_VertexShader) {}
 };
+/**
+ * @brief
+ */
 struct PixelShaderPostProcessArgs : public ShaderPostProcessArgs
 {
     // NOT
+    /**
+     * @brief
+     * @return
+     */
     bool IsValid() const override { return true; }
+    /**
+     * @brief
+     */
     PixelShaderPostProcessArgs() : ShaderPostProcessArgs(RHIResourceType::RRT_PixelShader) {};
 };
+/**
+ * @brief
+ */
 struct ComputeShaderPostProcessArgs : public ShaderPostProcessArgs
 {
     // NOT
+    /**
+     * @brief
+     * @return
+     */
     bool IsValid() const override { return true; }
+    /**
+     * @brief
+     */
     ComputeShaderPostProcessArgs() : ShaderPostProcessArgs(RHIResourceType::RRT_ComputeShader) {};
 };
+/**
+ * @brief
+ */
 struct GeometryShaderPostProcessArgs : public ShaderPostProcessArgs
 {
     // NOT
+    /**
+     * @brief
+     * @return
+     */
     bool IsValid() const override { return true; }
+    /**
+     * @brief
+     */
     GeometryShaderPostProcessArgs() : ShaderPostProcessArgs(RHIResourceType::RRT_GeometryShader) {};
 };
 // ...
 // ==========================================================
 
-// Shader Compile Result
+/**
+ * @brief Shader Compile Result.
+ */
 struct ShaderCompileResult {
     bool success = false;           // compile success
     std::vector<uint8_t> byteCode;    // shader byte code
@@ -221,9 +311,14 @@ struct ShaderCompileResult {
     size_t bytecodeSize = 0;        // bytecode size
 };
 
-// Shader Compile Source Description
+/**
+ * @brief Shader Compile Source Description.
+ */
 struct ShaderCompileSource
 {
+    /**
+     * @brief
+     */
     enum class SourceType {
         SourcePath = 1,
         SourceCode = 2,
@@ -233,13 +328,21 @@ struct ShaderCompileSource
     std::shared_ptr<ShaderPostProcessArgs> postProcessArgs;
 };
 
-// Shader Pipeline Generation Mode
+/**
+ * @brief Shader Pipeline Generation Mode.
+ */
 struct ShaderPipelineGenerationMode {
+    /**
+     * @brief
+     */
     enum class ReflectionGenerationMode : uint8_t {
         Use_InitialCompileCache = 1,
         Use_CompileResultCache = 2,
         Use_SourceCacheCompile = 3,
     };
+    /**
+     * @brief
+     */
     enum class ShaderSaveMode : uint8_t {
         Use_UINT8 = 1,
         Use_UINT32 = 2,
@@ -248,7 +351,9 @@ struct ShaderPipelineGenerationMode {
     ShaderSaveMode saveMode = ShaderSaveMode::Use_UINT8;
 };
 
-// Create Shader Description
+/**
+ * @brief Create Shader Description.
+ */
 struct CreateShaderDesc
 {   
     // Shader Entry Point
@@ -256,12 +361,19 @@ struct CreateShaderDesc
     // Shader Byte Code
     std::variant<std::vector<uint8_t>, std::vector<uint32_t>> byteCode;
 
+    /**
+     * @brief
+     * @return
+     */
     const std::vector<uint8_t>& GetUINT8ByteCode() const {
         return std::get<std::vector<uint8_t>>(byteCode);
     }
+    /**
+     * @brief
+     * @return
+     */
     const std::vector<uint32_t>& GetUINT32ByteCode() const {
         return std::get<std::vector<uint32_t>>(byteCode);
     }
 };
 }
-

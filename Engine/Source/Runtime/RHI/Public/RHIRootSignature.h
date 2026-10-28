@@ -8,7 +8,8 @@ namespace RHI
 {
     class Device; // forward declaration
 
-    /*
+    /**
+     * @brief RootSignature layout, descriptor heap data, and binding relationship overview.
     RootSignature ( Layout Definition)
     ┌─────────────────────────────────────────┐
     │ arg0: CBV (b0)                          │  ← 说："参数0是一个常量缓冲区"
@@ -29,11 +30,15 @@ namespace RHI
 
     并且在PSO创建之前可以设置RootSignature 与 Descriptor，
     在创建PSO之后RootSignature不允许在进行改变，但是Descriptor可以改变。
-    */
+     */
 
+    /**
+     * @brief
+     */
     struct DescriptorRangeDesc
     {
-        /*
+        /**
+         * @brief
         记住RootParameterDesc所有的这一切没有任何的实际的资源，他们所作的仅仅只是设置了资源布局
         ShaderRegister 是唯一一个可以确定描述符表中的元素所指向的资源在Shader中的寄存器位置，
         比如ShaderRegister  = 0 那么对应Shader的资源开始寄存器就是b0，ShaderRegister   = 1 则为b1.
@@ -50,7 +55,7 @@ namespace RHI
 
         但是一般来说我们不推荐你去更改OffsetInDescriptorsFromTableStart，
         但是ShaderRegister 在多个元素时基本上是必需要设置的。
-        **/
+         */
         DescriptorRangeType RangeType = DescriptorRangeType::CBV;
         uint32_t NumDescriptors = 1u;                   // Number of descriptors in the range
         uint32_t ShaderRegister = 0u;                   // Shader register start index
@@ -58,6 +63,9 @@ namespace RHI
         uint32_t OffsetInDescriptorsFromTableStart = ~0u;     // Offset -> Append
     };
 
+    /**
+     * @brief
+     */
     struct RootParameterDesc
     {
         RootParameterType Type;                             // Root parameter type
@@ -89,6 +97,9 @@ namespace RHI
         };
     };
 
+    /**
+     * @brief
+     */
     struct RootSignatureDesc
     {
         // A root signature can have multiple slots, and each RootParameterDesc is like a 'slot' in the root signature.
@@ -99,12 +110,31 @@ namespace RHI
     class RHI_API RHIRootSignature
     {
     public:
+        /**
+         * @brief
+         */
         RHIRootSignature();
+        /**
+         * @brief
+         */
         virtual ~RHIRootSignature();
 
+        /**
+         * @brief
+         * @param device
+         * @param desc
+         * @return
+         */
         virtual bool Initialize(Device* device, const RootSignatureDesc& desc) = 0;
+        /**
+         * @brief
+         */
         virtual void Shutdown() = 0;
 
+        /**
+         * @brief
+         * @return
+         */
         virtual bool IsValid() const = 0;
     };
 }

@@ -21,6 +21,9 @@ namespace RHI
     class RHIPixelShader;
     class RHIGeometryShader;
 
+    /**
+     * @brief
+     */
     struct GraphicsPipelineStateDesc
     {
         RHIRootSignature* pRootSignature = nullptr;
@@ -43,12 +46,18 @@ namespace RHI
         RHITextureFormat DepthStencilFormat = RHITextureFormat::Unknown;
     };
 
+    /**
+     * @brief
+     */
     struct ComputePipelineStateDesc
     {
         RHIRootSignature* pRootSignature = nullptr;
         RHIComputeShader* pComputeShader = nullptr;
     };
 
+    /**
+     * @brief
+     */
     enum class PipelineStateType
     {
         Graphics,
@@ -60,13 +69,42 @@ namespace RHI
     class RHI_API RHIPipelineState
     {
     public:
+        /**
+         * @brief
+         */
         RHIPipelineState();
+        /**
+         * @brief
+         */
         virtual ~RHIPipelineState();
+        /**
+         * @brief
+         * @param device
+         * @param desc
+         * @return
+         */
         virtual bool Initialize(Device* device, const GraphicsPipelineStateDesc& desc) = 0;
+        /**
+         * @brief
+         * @param device
+         * @param desc
+         * @return
+         */
         virtual bool Initialize(Device* device, const ComputePipelineStateDesc& desc) = 0;
+        /**
+         * @brief
+         */
         virtual void Shutdown() = 0;
 
+        /**
+         * @brief
+         * @return
+         */
         virtual bool IsValid() const = 0;
+        /**
+         * @brief
+         * @return
+         */
         virtual PipelineStateType GetType() const = 0;
     };
 }
