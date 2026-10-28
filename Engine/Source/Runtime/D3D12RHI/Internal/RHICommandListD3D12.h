@@ -131,10 +131,7 @@ namespace RHI
                     ThrowErrorMessage("Failed to create fence event");
                 }
             }
-        ~GraphicsCommandQueueD3D12() override {
-            WaitForGPU();
-            CloseHandle(m_fenceEvent);
-        };
+        ~GraphicsCommandQueueD3D12() override;
         // No copying
         GraphicsCommandQueueD3D12(const GraphicsCommandQueueD3D12&) = delete;
         GraphicsCommandQueueD3D12& operator=(const GraphicsCommandQueueD3D12&) = delete;
@@ -179,10 +176,7 @@ namespace RHI
                 if (!m_fenceEvent)
                     ThrowErrorMessage("Failed to create fence event");
             }
-        ~ComputeCommandQueueD3D12() override {
-            WaitForGPU();
-            CloseHandle(m_fenceEvent);
-        };
+        ~ComputeCommandQueueD3D12() override;
         // No copying
         ComputeCommandQueueD3D12(const ComputeCommandQueueD3D12&) = delete;
         ComputeCommandQueueD3D12& operator=(const ComputeCommandQueueD3D12&) = delete;
@@ -197,7 +191,7 @@ namespace RHI
         ID3D12Device* m_Device;
         
         // Synchronization objects.
-        uint64_t m_CurrentFenceValue;
+        uint64_t m_CurrentFenceValue = 0;
         HANDLE m_fenceEvent;
         ComPtr<ID3D12Fence> m_Fence;
     };
@@ -215,10 +209,7 @@ namespace RHI
                 if (!m_fenceEvent)
                     ThrowErrorMessage("Failed to create fence event");
             }
-        ~CopyCommandQueueD3D12() override {
-            WaitForGPU();
-            CloseHandle(m_fenceEvent);
-        };
+        ~CopyCommandQueueD3D12() override;
         // No copying
         CopyCommandQueueD3D12(const CopyCommandQueueD3D12&) = delete;
         CopyCommandQueueD3D12& operator=(const CopyCommandQueueD3D12&) = delete;
@@ -233,7 +224,7 @@ namespace RHI
         ID3D12Device* m_Device;
         
         // Synchronization objects.
-        uint64_t m_CurrentFenceValue;
+        uint64_t m_CurrentFenceValue = 0;
         HANDLE m_fenceEvent;
         ComPtr<ID3D12Fence> m_Fence;
     };

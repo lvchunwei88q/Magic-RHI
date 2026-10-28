@@ -251,7 +251,11 @@ namespace RHI
 
     void GraphicsCommandQueueVulKan::WaitForGPU()
     {
-        vkQueueWaitIdle(GetQueue());
+        VkResult result = vkQueueWaitIdle(GetQueue());
+        if (result != VK_SUCCESS)
+        {
+            Core::ErrorCapture::Capture("[VulkanRHI] Graphics queue wait failed. VkResult: " + std::to_string(result));
+        }
     }
 
     void GraphicsCommandQueueVulKan::SetGraphicsQueueSwapChainInfo(GraphicsQueueSwapChainInfo Info) 
@@ -282,7 +286,11 @@ namespace RHI
 
     void ComputeCommandQueueVulKan::WaitForGPU()
     {
-        vkWaitForFences(GetDevice(), 1, &m_ComputeFence, VK_TRUE, UINT64_MAX);
+        VkResult result = vkWaitForFences(GetDevice(), 1, &m_ComputeFence, VK_TRUE, UINT64_MAX);
+        if (result != VK_SUCCESS)
+        {
+            Core::ErrorCapture::Capture("[VulkanRHI] Compute queue wait failed. VkResult: " + std::to_string(result));
+        }
     }
 
     void ComputeCommandQueueVulKan::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists)
@@ -317,7 +325,11 @@ namespace RHI
     
     void CopyCommandQueueVulKan::WaitForGPU()
     {
-        vkWaitForFences(GetDevice(), 1, &m_CopyFence, VK_TRUE, UINT64_MAX);
+        VkResult result = vkWaitForFences(GetDevice(), 1, &m_CopyFence, VK_TRUE, UINT64_MAX);
+        if (result != VK_SUCCESS)
+        {
+            Core::ErrorCapture::Capture("[VulkanRHI] Copy queue wait failed. VkResult: " + std::to_string(result));
+        }
     }
 
     void CopyCommandQueueVulKan::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists)

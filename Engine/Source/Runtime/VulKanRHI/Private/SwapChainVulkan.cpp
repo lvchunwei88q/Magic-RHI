@@ -124,6 +124,8 @@ namespace RHI
             vkDestroySwapchainKHR(GetDevice(), m_SwapChain, nullptr);
             m_SwapChain = VK_NULL_HANDLE;
         }
+
+        Core::InfoCapture::Capture("[VulkanRHI] Swap chain shutdown complete");
     }
 
     bool SwapChainVulKan::IsValid() const

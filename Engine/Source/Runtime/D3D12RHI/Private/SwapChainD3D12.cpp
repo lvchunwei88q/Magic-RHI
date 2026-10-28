@@ -2,8 +2,9 @@
  * Because we used forward declarations and C++ smart pointers,
  * we need to include the definitions of the forward declarations first.
  */
- #include <Common/Check.h>
+#include <Common/Check.h>
 #include <cstdint>
+#include "CoreMinimal.h"
 #include "RHICommandListD3D12.h"
 #include "RHID3D12.h"
 
@@ -131,8 +132,11 @@ namespace RHI
             m_pRenderTargetViews[n].reset();
             m_pBackBuffers[n].reset();
         }
+
         m_pRtvHeap.Reset();
+        m_pSwapChain3.Reset();
         m_pSwapChain1.Reset();
+        Core::InfoCapture::Capture("[D3D12RHI] Swap chain shutdown complete");
     }
 
     bool SwapChainD3D12::IsValid() const {

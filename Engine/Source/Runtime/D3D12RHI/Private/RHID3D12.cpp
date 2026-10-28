@@ -231,6 +231,8 @@ namespace RHI
         m_CopyQueue.reset();
 
         m_pDevice.Reset();
+        m_pAdapter.Reset();
+        Core::InfoCapture::Capture("[D3D12RHI] Device shutdown complete");
     }
 
     FeatureLevel DeviceD3D12::GetFeatureLevel() const{

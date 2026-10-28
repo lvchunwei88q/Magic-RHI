@@ -196,6 +196,27 @@ namespace RHI
 
     // ============================================================ GraphicsCommandQueueVulKan
 
+    GraphicsCommandQueueD3D12::~GraphicsCommandQueueD3D12()
+    {
+        try
+        {
+            WaitForGPU();
+        }
+        catch (const std::exception& exception)
+        {
+            Core::ErrorCapture::Capture("[D3D12RHI] Graphics queue shutdown wait failed: " + std::string(exception.what()));
+        }
+        catch (...)
+        {
+            Core::ErrorCapture::Capture("[D3D12RHI] Graphics queue shutdown wait failed with an unknown exception");
+        }
+
+        if (m_fenceEvent && !CloseHandle(m_fenceEvent))
+        {
+            Core::ErrorCapture::Capture("[D3D12RHI] Failed to close graphics queue fence event. Win32 error: " + std::to_string(GetLastError()));
+        }
+    }
+
     void GraphicsCommandQueueD3D12::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists)
     {
         std::vector<ID3D12CommandList*> d3dCmdLists;
@@ -291,6 +312,27 @@ namespace RHI
 
     // ============================================================ ComputeCommandQueueD3D12
 
+    ComputeCommandQueueD3D12::~ComputeCommandQueueD3D12()
+    {
+        try
+        {
+            WaitForGPU();
+        }
+        catch (const std::exception& exception)
+        {
+            Core::ErrorCapture::Capture("[D3D12RHI] Compute queue shutdown wait failed: " + std::string(exception.what()));
+        }
+        catch (...)
+        {
+            Core::ErrorCapture::Capture("[D3D12RHI] Compute queue shutdown wait failed with an unknown exception");
+        }
+
+        if (m_fenceEvent && !CloseHandle(m_fenceEvent))
+        {
+            Core::ErrorCapture::Capture("[D3D12RHI] Failed to close compute queue fence event. Win32 error: " + std::to_string(GetLastError()));
+        }
+    }
+
     void ComputeCommandQueueD3D12::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>> &cmdLists) 
     {
         std::vector<ID3D12CommandList*> d3dCmdLists;
@@ -324,6 +366,27 @@ namespace RHI
     }
 
     // ============================================================ CopyCommandQueueD3D12
+
+    CopyCommandQueueD3D12::~CopyCommandQueueD3D12()
+    {
+        try
+        {
+            WaitForGPU();
+        }
+        catch (const std::exception& exception)
+        {
+            Core::ErrorCapture::Capture("[D3D12RHI] Copy queue shutdown wait failed: " + std::string(exception.what()));
+        }
+        catch (...)
+        {
+            Core::ErrorCapture::Capture("[D3D12RHI] Copy queue shutdown wait failed with an unknown exception");
+        }
+
+        if (m_fenceEvent && !CloseHandle(m_fenceEvent))
+        {
+            Core::ErrorCapture::Capture("[D3D12RHI] Failed to close copy queue fence event. Win32 error: " + std::to_string(GetLastError()));
+        }
+    }
 
     void CopyCommandQueueD3D12::ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>> &cmdLists) 
     {

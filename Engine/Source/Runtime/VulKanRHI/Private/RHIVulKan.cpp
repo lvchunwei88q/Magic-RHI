@@ -845,9 +845,16 @@ namespace RHI
             m_Surface = VK_NULL_HANDLE;
         }
 
+        // Check if this device was destroyed successfully
+        bool shutdownSucceeded = true;
         if (m_Device)
         {
-            vkDeviceWaitIdle(m_Device);
+            VkResult result = vkDeviceWaitIdle(m_Device);
+            if (result != VK_SUCCESS)
+            {
+                Core::ErrorCapture::Capture("[VulkanRHI] vkDeviceWaitIdle failed during device shutdown. VkResult: " + std::to_string(result));
+                shutdownSucceeded = false;
+            }
             vkDestroyDevice(m_Device, nullptr);
             m_Device = VK_NULL_HANDLE;
         }
@@ -862,6 +869,15 @@ namespace RHI
         {
             vkDestroyInstance(m_Instance, nullptr);
             m_Instance = VK_NULL_HANDLE;
+        }
+
+        if (shutdownSucceeded)
+        {
+            Core::InfoCapture::Capture("[VulkanRHI] Device shutdown complete");
+        }
+        else
+        {
+            Core::ErrorCapture::Capture("[VulkanRHI] Device shutdown completed with errors");
         }
     }
 
