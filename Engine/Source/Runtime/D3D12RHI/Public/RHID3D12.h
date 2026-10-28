@@ -86,6 +86,7 @@ namespace RHI
 
     private:
         void CreateLogicalDevice(UINT dxgiFactoryFlags);
+        void RegisterDebugInfoCallback();
         void CreateDescriptorHeaps();
         void CreateQueues();
 
@@ -94,6 +95,10 @@ namespace RHI
         D3D_FEATURE_LEVEL m_FeatureLevel;
         
         ComPtr<IDXGIAdapter1> m_pAdapter; // GPU
+
+        // D3D12's debug message queue and message flags
+        ComPtr<ID3D12InfoQueue1> m_pInfoQueue;
+        DWORD m_infoQueueCallbackCookie = 0;
 
         // CommandQueue
         std::unique_ptr<GraphicsCommandQueueD3D12> m_GraphicsQueue;

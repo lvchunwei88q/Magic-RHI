@@ -173,6 +173,34 @@ namespace RHI
                 return FeatureLevel::D3D12_11_0;  // default value
             }
         }
+
+        void WINAPI D3D12MessageCallback(
+            D3D12_MESSAGE_CATEGORY category,
+            D3D12_MESSAGE_SEVERITY severity,
+            D3D12_MESSAGE_ID id,
+            LPCSTR description,
+            void* context)
+        {
+            const std::string message =
+                "[D3D12][ID " + std::to_string(id) + "] " +
+                (description ? description : "(no description)");
+
+            switch (severity)
+            {
+            case D3D12_MESSAGE_SEVERITY_CORRUPTION:
+            case D3D12_MESSAGE_SEVERITY_ERROR:
+                Core::ErrorCapture::Capture(message);
+                break;
+
+            case D3D12_MESSAGE_SEVERITY_WARNING:
+                Core::WarningCapture::Capture(message);
+                break;
+
+            default:
+                Core::InfoCapture::Capture(message);
+                break;
+            }
+        }
     }
 
     DeviceD3D12::DeviceD3D12()
@@ -204,6 +232,7 @@ namespace RHI
     }
 #endif
         CreateLogicalDevice(dxgiFactoryFlags); // create device
+        RegisterDebugInfoCallback(); // register debug info callback
         CreateQueues(); // create queues
         CreateDescriptorHeaps(); // create descriptor heaps
 
@@ -230,6 +259,14 @@ namespace RHI
         m_ComputeQueue.reset();
         m_CopyQueue.reset();
 
+        // Release the D3D12 InfoQueue callback registration if it exists
+        if (m_pInfoQueue && m_infoQueueCallbackCookie != 0)
+        {
+            m_pInfoQueue->UnregisterMessageCallback(m_infoQueueCallbackCookie);
+            m_infoQueueCallbackCookie = 0;
+        }
+
+        m_pInfoQueue.Reset();
         m_pDevice.Reset();
         m_pAdapter.Reset();
         Core::InfoCapture::Capture("[D3D12RHI] Device shutdown complete");
@@ -264,7 +301,34 @@ namespace RHI
             }
         }
         OutputDebugStringA("The device has been created. You can now find errors through the subsequent output debug information.");
+    }
 
+    void DeviceD3D12::RegisterDebugInfoCallback() 
+    {
+        ComPtr<ID3D12InfoQueue1> infoQueue;
+        HRESULT hr = m_pDevice.As(&infoQueue);
+
+        if (SUCCEEDED(hr))
+        {
+            m_pInfoQueue = infoQueue;
+
+            hr = m_pInfoQueue->RegisterMessageCallback(
+                D3D12MessageCallback,
+                D3D12_MESSAGE_CALLBACK_FLAG_NONE,
+                nullptr,
+                &m_infoQueueCallbackCookie);
+
+            if (FAILED(hr))
+            {
+                Core::WarningCapture::Capture(
+                    "Failed to register D3D12 debug message callback: " + HrToString(hr));
+            }
+        }
+        else
+        {
+            Core::WarningCapture::Capture(
+                "ID3D12InfoQueue1 is unavailable: " + HrToString(hr));
+        }
     }
 
     void DeviceD3D12::CreateQueues()
