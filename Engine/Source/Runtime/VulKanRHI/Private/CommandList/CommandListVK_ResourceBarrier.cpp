@@ -105,9 +105,127 @@ namespace RHI
 
     void CommandListVulKan::ResourceBarrier(uint32_t numBarriers, const BarrierDesc* pBarriers)
     {
-        if (numBarriers == 0 || pBarriers == nullptr)
+        if (numBarriers == 0 || pBarriers == nullptr || m_CommandBuffer == VK_NULL_HANDLE)
             return;
-        
-        // TODO: 实现资源屏障
+
+        for (uint32_t i = 0; i < numBarriers; ++i)
+        {
+            const auto& rhiBarrier = pBarriers[i];
+
+            switch (rhiBarrier.Type)
+            {
+            case ResourceBarrierType::Transition:
+            {
+                const auto& trans = rhiBarrier.Transition;
+                if (!trans.pResource) continue;
+
+                // src
+                VkPipelineStageFlags srcStage = ConvertToVkPipelineStageFlags(trans.StateBefore);
+                VkAccessFlags srcAccess = ConvertToVkAccessFlags(trans.StateBefore);
+                // Note: If the image is uninitialized, it might need to be treated specially as UNDEFINED
+                VkImageLayout oldLayout = ConvertToVkImageLayout(trans.StateBefore);
+
+                // dst
+                VkPipelineStageFlags dstStage = ConvertToVkPipelineStageFlags(trans.StateAfter);
+                VkAccessFlags dstAccess = ConvertToVkAccessFlags(trans.StateAfter);
+                VkImageLayout newLayout = ConvertToVkImageLayout(trans.StateAfter);
+
+                if (rhiBarrier.ResourceType == BarrierResourceType::Texture)
+                {
+                    // Get the Vulkan texture or buffer and determine if it's the first use of a swap chain image
+                    TextureVulKan* pTexture = SafeCast<TextureVulKan>(trans.pResource);
+                    bool isFirstUseOfSwapChainImage = pTexture->IsFirstUseOfSwapChainImage();
+
+                    VkImageMemoryBarrier imageBarrier{};
+                    imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+                    imageBarrier.image = pTexture->GetImage();
+                    imageBarrier.oldLayout = oldLayout;
+                    imageBarrier.newLayout = newLayout;
+                    imageBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                    imageBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                    imageBarrier.srcAccessMask = srcAccess;
+                    imageBarrier.dstAccessMask = dstAccess;
+
+                    imageBarrier.subresourceRange.aspectMask = GetAspectMask(trans.StateBefore, trans.StateAfter);
+                    
+                    if (isFirstUseOfSwapChainImage)
+                    {
+                        imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                        imageBarrier.srcAccessMask = 0;
+                        srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+
+                        // After the first use, mark it as no longer the first use
+                        pTexture->SetFirstUseOfSwapChainImage(false);
+                    }
+
+                    if (trans.Subresource == UINT32_MAX) // -1 means all
+                    {
+                        imageBarrier.subresourceRange.baseMipLevel = 0;
+                        imageBarrier.subresourceRange.levelCount = VK_REMAINING_MIP_LEVELS;
+                        imageBarrier.subresourceRange.baseArrayLayer = 0;
+                        imageBarrier.subresourceRange.layerCount = VK_REMAINING_ARRAY_LAYERS;
+                    }
+                    else
+                    {
+                        // Quick breakdown: If the subresource is exact, you might need to calculate Mip and Array based on the texture's format.
+                        imageBarrier.subresourceRange.baseMipLevel = trans.Subresource;
+                        imageBarrier.subresourceRange.levelCount = 1;
+                        imageBarrier.subresourceRange.baseArrayLayer = 0;
+                        imageBarrier.subresourceRange.layerCount = 1;
+                    }
+
+                    vkCmdPipelineBarrier(m_CommandBuffer, srcStage, dstStage, 0,
+                        0, nullptr, 0, nullptr, 1, &imageBarrier);
+                }
+                else if (rhiBarrier.ResourceType == BarrierResourceType::Buffer)
+                {
+                    VkBufferMemoryBarrier bufferBarrier{};
+                    bufferBarrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+                    bufferBarrier.buffer = SafeCast<BufferVulKan>(trans.pResource)->GetBuffer();
+                    bufferBarrier.srcAccessMask = srcAccess;
+                    bufferBarrier.dstAccessMask = dstAccess;
+                    bufferBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                    bufferBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                    bufferBarrier.offset = 0;
+                    bufferBarrier.size = VK_WHOLE_SIZE;
+
+                    vkCmdPipelineBarrier(m_CommandBuffer, srcStage, dstStage, 0,
+                        0, nullptr, 1, &bufferBarrier, 0, nullptr);
+                }
+                break;
+            }
+            case ResourceBarrierType::UAV:
+            {
+                // D3D12 的 UAV 屏障在 Vulkan 中等同于全局 Memory Barrier
+                VkMemoryBarrier memBarrier{};
+                memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+                memBarrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+                memBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+
+                vkCmdPipelineBarrier(m_CommandBuffer,
+                    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+                    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT,
+                    0, 1, &memBarrier, 0, nullptr, 0, nullptr);
+                break;
+            }
+            case ResourceBarrierType::Aliasing:
+            {
+                // Vulkan 没有直接的 Aliasing 屏障，通常用全局内存屏障实现
+                VkMemoryBarrier memBarrier{};
+                memBarrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+                memBarrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+                memBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT;
+
+                vkCmdPipelineBarrier(m_CommandBuffer,
+                    VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                    VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+                    0, 1, &memBarrier, 0, nullptr, 0, nullptr);
+                break;
+            }
+            default:
+                Core::ErrorCapture::Capture("Unknown barrier type");
+                break;
+            }
+        }
     }
 }

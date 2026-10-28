@@ -300,18 +300,23 @@ namespace RHI
 
     TextureVulKan::~TextureVulKan()
     {
-        // Must destroy the image FIRST (breaks its binding to device memory),
-        // then free the underlying VkDeviceMemory. Same VUID-vkFreeMemory-memory-00677.
-        if (m_Image != VK_NULL_HANDLE)
-        {
-            vkDestroyImage(GetDevice(), m_Image, nullptr);
-            m_Image = VK_NULL_HANDLE;
-        }
+        // If the DeconstructingDestructionImages flag is set, we must destroy the VkImage first before freeing the VkDeviceMemory.
+        // This is because Vulkan requires that the image be destroyed before its memory is freed,
+        // otherwise it will trigger a validation error (VUID-vkFreeMemory-memory-00677).
+        if(m_Config.DeconstructingDestructionImages){
+            // Must destroy the image FIRST (breaks its binding to device memory),
+            // then free the underlying VkDeviceMemory. Same VUID-vkFreeMemory-memory-00677.
+            if (m_Image != VK_NULL_HANDLE)
+            {
+                vkDestroyImage(GetDevice(), m_Image, nullptr);
+                m_Image = VK_NULL_HANDLE;
+            }
 
-        if (m_Memory != VK_NULL_HANDLE)
-        {
-            vkFreeMemory(GetDevice(), m_Memory, nullptr);
-            m_Memory = VK_NULL_HANDLE;
+            if (m_Memory != VK_NULL_HANDLE)
+            {
+                vkFreeMemory(GetDevice(), m_Memory, nullptr);
+                m_Memory = VK_NULL_HANDLE;
+            }
         }
     }
 
@@ -326,21 +331,6 @@ namespace RHI
     }
 
     uint32_t TextureVulKan::GetHeight() const
-    {
-        return GetDesc().Height;
-    }
-    
-    uint64_t SwapChainTextureVulKan::GetSize() const
-    {
-        return 0;
-    }
-
-    uint32_t SwapChainTextureVulKan::GetWidth() const
-    {
-        return GetDesc().Width;
-    }
-
-    uint32_t SwapChainTextureVulKan::GetHeight() const
     {
         return GetDesc().Height;
     }

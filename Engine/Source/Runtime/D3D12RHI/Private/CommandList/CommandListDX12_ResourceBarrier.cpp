@@ -20,7 +20,7 @@ namespace RHI
 
         D3D12_RESOURCE_STATES ConvertToD3D12State(RHIResourceState state)
         {
-            // 这两个状态特殊处理
+            // These two states are handled specially
             if (state == RHIResourceState::Common)
                 return D3D12_RESOURCE_STATE_COMMON;
             if (state == RHIResourceState::Present)
@@ -28,7 +28,7 @@ namespace RHI
 
             switch (state)
             {
-                // 基础状态
+                // Basic state
                 case RHIResourceState::VertexBuffer:                return D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER;
                 case RHIResourceState::IndexBuffer:                 return D3D12_RESOURCE_STATE_INDEX_BUFFER;
                 case RHIResourceState::RenderTarget:                return D3D12_RESOURCE_STATE_RENDER_TARGET;
@@ -43,18 +43,18 @@ namespace RHI
                 case RHIResourceState::CopySource:                  return D3D12_RESOURCE_STATE_COPY_SOURCE;
                 case RHIResourceState::ResolveDest:                 return D3D12_RESOURCE_STATE_RESOLVE_DEST;
                 case RHIResourceState::ResolveSource:               return D3D12_RESOURCE_STATE_RESOLVE_SOURCE;
-                // 视频相关
+                // Video-related
                 case RHIResourceState::VideoDecodeRead:             return D3D12_RESOURCE_STATE_VIDEO_DECODE_READ;
                 case RHIResourceState::VideoDecodeWrite:            return D3D12_RESOURCE_STATE_VIDEO_DECODE_WRITE;
                 case RHIResourceState::VideoProcessRead:            return D3D12_RESOURCE_STATE_VIDEO_PROCESS_READ;
                 case RHIResourceState::VideoProcessWrite:           return D3D12_RESOURCE_STATE_VIDEO_PROCESS_WRITE;
                 case RHIResourceState::VideoEncodeRead:             return D3D12_RESOURCE_STATE_VIDEO_ENCODE_READ;
                 case RHIResourceState::VideoEncodeWrite:            return D3D12_RESOURCE_STATE_VIDEO_ENCODE_WRITE;
-                // 光线追踪
+                // Ray tracing
                 case RHIResourceState::RaytracingAccelerationStructure: return D3D12_RESOURCE_STATE_RAYTRACING_ACCELERATION_STRUCTURE;
-                // 着色率
+                // Pixel fill rate
                 case RHIResourceState::ShadingRateSource:           return D3D12_RESOURCE_STATE_SHADING_RATE_SOURCE;
-                // 组合状态
+                // Combined state
                 case RHIResourceState::GenericRead:                 return D3D12_RESOURCE_STATE_GENERIC_READ;
                 case RHIResourceState::AllShaderResource:           return D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE;
                 default:
@@ -87,7 +87,7 @@ namespace RHI
         if (numBarriers == 0 || pBarriers == nullptr)
             return;
         
-        // 转换 RHI 屏障描述到 D3D12 屏障
+        // Convert RHI barrier description to D3D12 barrier
         std::vector<D3D12_RESOURCE_BARRIER> d3d12Barriers;
         d3d12Barriers.reserve(numBarriers);
         
@@ -103,7 +103,7 @@ namespace RHI
                 d3d12Barrier.Type                       = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
                 d3d12Barrier.Flags                      = ConvertResourceBarrierFlags(rhiBarrier.Flags);
                 
-                // 获取 D3D12 资源指针
+                // Get D3D12 resource pointer
                 d3d12Barrier.Transition.pResource       = GetD3D12Resource(rhiBarrier.Transition.pResource, rhiBarrier.ResourceType);
                 d3d12Barrier.Transition.Subresource     = rhiBarrier.Transition.Subresource;
                 d3d12Barrier.Transition.StateBefore     = ConvertToD3D12State(rhiBarrier.Transition.StateBefore);
@@ -138,7 +138,7 @@ namespace RHI
             d3d12Barriers.push_back(d3d12Barrier);
         }
         
-        // 调用 D3D12 命令列表的 ResourceBarrier
+        // Calling the ResourceBarrier of a D3D12 command list
         if (!d3d12Barriers.empty())
         {
             m_pCommandList->ResourceBarrier(

@@ -162,6 +162,7 @@ namespace RHI
             return UINT32_MAX;
         }
 
+        // return the Vulkan texture's image index
         return m_AvailableSwapChainImageIndex;
     }
 
@@ -320,7 +321,13 @@ namespace RHI
             desc.MipLevels = 1;
             desc.ArrayLayers = 1;
             desc.SampleCount = VK_SAMPLE_COUNT_1_BIT;
-            m_pBackBuffers[i] = std::make_unique<SwapChainTextureVulKan>(image,VK_NULL_HANDLE,desc,m_pRHI->GetDevice());
+            TextureVulKan::VkTextureClassConfig config;
+            // Set to false to indicate that the TextureVulKan class should not destroy the VkImage when it is destructed,
+            // as the swap chain manages the image memory.
+            config.DeconstructingDestructionImages = false; 
+            // Set to true to indicate that this texture is the first use of a swap chain image.
+            config.FirstUseOfSwapChainImage = true;
+            m_pBackBuffers[i] = std::make_unique<TextureVulKan>(image,VK_NULL_HANDLE,desc,config,m_pRHI->GetDevice());
         }
 
         return true;
@@ -336,7 +343,7 @@ namespace RHI
         for (size_t i = 0; i < m_pBackBuffers.size(); ++i)
         {
             // Create render target view
-            SwapChainTextureVulKan* texture = SafeCast<SwapChainTextureVulKan>(m_pBackBuffers[i].get());
+            TextureVulKan* texture = SafeCast<TextureVulKan>(m_pBackBuffers[i].get());
             if (texture == nullptr)
             {
                 ThrowErrorMessage("Failed to cast texture");

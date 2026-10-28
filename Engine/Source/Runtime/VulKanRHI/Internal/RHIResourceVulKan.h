@@ -104,11 +104,25 @@ namespace RHI
     class TextureVulKan : public RHITexture
     {
     public:
-        TextureVulKan(VkImage image, VkDeviceMemory memory, const TextureDesc& desc, const VkDevice* device)
+        struct VkTextureClassConfig
+        {
+            /*
+            * Note that these two parameters are largely intended to compromise for the usage needs of the swap chain,
+            * so for normal images it's fine to use the default parameter settings.
+            */
+            // Indicates whether the TextureVulKan class should destroy the VkImage when destructed.
+            // Set to false if the swap chain manages the image memory.
+            bool DeconstructingDestructionImages = true;
+            // Indicates whether this texture is the first use of a swap chain image.
+            bool FirstUseOfSwapChainImage = false;
+        };
+
+        TextureVulKan(VkImage image, VkDeviceMemory memory, const TextureDesc& desc, const VkTextureClassConfig& config, const VkDevice* device)
             : RHITexture(desc)
             , m_Image(image)
             , m_Memory(memory)
-            , m_Device(device) {}
+            , m_Config(config)
+            , m_Device(device){}
         ~TextureVulKan() override;
 
         uint64_t GetSize() const override;
@@ -118,32 +132,9 @@ namespace RHI
         VkImage GetImage() const { return m_Image; }
         VkDeviceMemory GetMemory() const { return m_Memory; }
 
-    private:
-        VkDevice GetDevice() const { return *m_Device; }
-    private:
-        VkDescriptorType m_DescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
-        VkImage m_Image;
-        VkDeviceMemory m_Memory;
-        const VkDevice* m_Device;
-    };
-
-    // Swap chain image texture
-    class SwapChainTextureVulKan : public RHITexture
-    {
-    public:
-        SwapChainTextureVulKan(VkImage image, VkDeviceMemory memory, const TextureDesc& desc, const VkDevice* device)
-            : RHITexture(desc)
-            , m_Image(image)
-            , m_Memory(memory)
-            , m_Device(device) {}
-        ~SwapChainTextureVulKan() override = default;
-
-        uint64_t GetSize() const override;
-        uint32_t GetWidth() const override;
-        uint32_t GetHeight() const override;
-
-        VkImage GetImage() const { return m_Image; }
-        VkDeviceMemory GetMemory() const { return m_Memory; }
+        // Indicates whether this texture is the first use of a swap chain image.
+        void SetFirstUseOfSwapChainImage(bool isFirstUse) { m_Config.FirstUseOfSwapChainImage = isFirstUse; }
+        bool IsFirstUseOfSwapChainImage() const { return m_Config.FirstUseOfSwapChainImage; }
 
     private:
         VkDevice GetDevice() const { return *m_Device; }
@@ -152,6 +143,7 @@ namespace RHI
         VkImage m_Image;
         VkDeviceMemory m_Memory;
         const VkDevice* m_Device;
+        VkTextureClassConfig m_Config;
     };
 
     // ==================================================== View
