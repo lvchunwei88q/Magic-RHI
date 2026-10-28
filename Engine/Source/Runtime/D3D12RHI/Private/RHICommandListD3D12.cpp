@@ -114,7 +114,7 @@ namespace RHI
             case RHICmdType::Copy:
                 return D3D12_COMMAND_LIST_TYPE_COPY;
             default:
-#ifdef RHI_ENABLE_DEBUG_INFO
+#if RHI_ENABLE_DEBUG_INFO
                 // Throw an exception if in debug mode
                 ThrowErrorMessage("Invalid RHICmdType");
 #endif

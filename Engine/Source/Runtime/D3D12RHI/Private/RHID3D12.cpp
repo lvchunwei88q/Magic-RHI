@@ -189,7 +189,7 @@ namespace RHI
         m_Initialization = InitialState::Initialize;
         UINT dxgiFactoryFlags = 0;
 
-#ifdef RHI_ENABLE_DEBUG_INFO
+#if RHI_ENABLE_DEBUG_INFO
     // Enable the debug layer (requires the Graphics Tools "optional feature").
     // NOTE: Enabling the debug layer after device creation will invalidate the active device.
     {
@@ -207,7 +207,7 @@ namespace RHI
         CreateQueues(); // create queues
         CreateDescriptorHeaps(); // create descriptor heaps
 
-#ifdef RHI_ENABLE_DEBUG_INFO
+#if RHI_ENABLE_DEBUG_INFO
         ComPtr<ID3D12InfoQueue> infoQueue;
         if (SUCCEEDED(m_pDevice.As(&infoQueue)))
         {

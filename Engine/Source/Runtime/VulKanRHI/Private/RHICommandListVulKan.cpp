@@ -56,7 +56,7 @@ namespace RHI
             case RHICmdType::Copy:      //Copy queue family index
                 return device->GetCopyQueueFamilyIndex();
             default:
-#ifdef RHI_ENABLE_DEBUG_INFO
+#if RHI_ENABLE_DEBUG_INFO
                 // Throw an exception if in debug mode
                 ThrowErrorMessage("Invalid RHICmdType");
 #endif

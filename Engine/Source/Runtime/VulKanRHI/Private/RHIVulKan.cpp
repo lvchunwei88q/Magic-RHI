@@ -71,7 +71,7 @@ namespace RHI
 
         std::vector<const char*> GetRequiredValidationLayers()
         {
-#ifdef RHI_ENABLE_DEBUG_INFO
+#if RHI_ENABLE_DEBUG_INFO
             // Add validation layers for debug info
             return {
                 "VK_LAYER_KHRONOS_validation"
@@ -444,7 +444,7 @@ namespace RHI
     bool DeviceVulKan::CreateInstance()
     {
         m_EnableValidationLayers = false;
-#ifdef RHI_ENABLE_DEBUG_INFO
+#if RHI_ENABLE_DEBUG_INFO
         m_EnableValidationLayers = true;
 #endif
         // Check validation layers support
