@@ -35,7 +35,7 @@ namespace RHI
             : RHICommandPool(type)
             , m_Device(device)
             , m_CommandPool(commandPool) {}
-        virtual ~CommandPoolVulKan() = default;
+        virtual ~CommandPoolVulKan();
 
         VkCommandPool GetCommandPool() const { return m_CommandPool; }
         // reset command pool memory

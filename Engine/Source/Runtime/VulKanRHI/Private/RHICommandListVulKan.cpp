@@ -108,6 +108,15 @@ namespace RHI
     }
     // ===========================================================================
 
+    CommandPoolVulKan::~CommandPoolVulKan()
+    {
+        if (m_CommandPool != VK_NULL_HANDLE && m_Device && *m_Device != VK_NULL_HANDLE)
+        {
+            vkDestroyCommandPool(*m_Device, m_CommandPool, nullptr);
+            m_CommandPool = VK_NULL_HANDLE;
+        }
+    }
+
     // reset command pool memory
     void CommandPoolVulKan::Reset() const
     {
