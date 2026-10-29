@@ -22,6 +22,7 @@ namespace RHI
         VkPhysicalDeviceFeatures2 features2{};
         VkPhysicalDeviceShaderFloat16Int8Features float16Int8Features{};
         VkPhysicalDeviceTimelineSemaphoreFeatures timelineFeatures{};
+        VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamicRenderingFeatures{};
         // You can add other extensions
     };
 
@@ -200,8 +201,49 @@ namespace RHI
             features.timelineFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
             features.timelineFeatures.timelineSemaphore = VK_TRUE;
             features.float16Int8Features.pNext = &features.timelineFeatures;
+
+            features.dynamicRenderingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
+            features.dynamicRenderingFeatures.dynamicRendering = VK_TRUE;
+            features.timelineFeatures.pNext = &features.dynamicRenderingFeatures;
             
             return features;
+        }
+
+        bool SupportsDynamicRendering(VkPhysicalDevice physicalDevice)
+        {
+            uint32_t extensionCount = 0;
+            if (vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, nullptr) != VK_SUCCESS)
+            {
+                return false;
+            }
+
+            std::vector<VkExtensionProperties> extensions(extensionCount);
+            if (vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &extensionCount, extensions.data()) != VK_SUCCESS)
+            {
+                return false;
+            }
+
+            const bool hasDynamicRenderingExtension = std::any_of(
+                extensions.begin(),
+                extensions.end(),
+                [](const VkExtensionProperties& extension)
+                {
+                    return strcmp(extension.extensionName, VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME) == 0;
+                });
+            if (!hasDynamicRenderingExtension)
+            {
+                return false;
+            }
+
+            VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamicRenderingFeatures{};
+            dynamicRenderingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
+
+            VkPhysicalDeviceFeatures2 features{};
+            features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+            features.pNext = &dynamicRenderingFeatures;
+            vkGetPhysicalDeviceFeatures2(physicalDevice, &features);
+
+            return dynamicRenderingFeatures.dynamicRendering == VK_TRUE;
         }
 
         bool IsPhysicalDeviceSuitable(VkPhysicalDevice physicalDevice, uint32_t& graphicsFamily, uint32_t& computeFamily, uint32_t& transferFamily)
@@ -546,6 +588,12 @@ namespace RHI
         // Check each physical device for suitability
         for (VkPhysicalDevice device : devices)
         {
+            // Check if the device supports dynamic rendering, which is required for this application
+            if (!SupportsDynamicRendering(device))
+            {
+                continue;
+            }
+
             // Get queue families supported
             uint32_t graphicsFamily, computeFamily, transferFamily;
             bool isSoftware = !IsPhysicalDeviceSuitable(device, graphicsFamily, computeFamily, transferFamily);
@@ -581,7 +629,7 @@ namespace RHI
         // IF no suitable GPU found, throw error
         if (candidates.empty())
         {
-            ThrowErrorMessage("No suitable GPU found");
+            ThrowErrorMessage("No suitable GPU with VK_KHR_dynamic_rendering support found");
             return false;
         }
         
@@ -669,7 +717,8 @@ namespace RHI
         std::vector<const char*> deviceExtensions = {
             // Swapchain extension (must) 
             VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-            VK_KHR_SWAPCHAIN_MUTABLE_FORMAT_EXTENSION_NAME
+            VK_KHR_SWAPCHAIN_MUTABLE_FORMAT_EXTENSION_NAME,
+            VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME
         };
 
         VkDeviceCreateInfo createInfo = {};
@@ -935,11 +984,11 @@ namespace RHI
     {
         pfnCmdBeginRenderingKHR = (PFN_vkCmdBeginRenderingKHR)vkGetDeviceProcAddr (m_Device, "vkCmdBeginRenderingKHR");
         if (!pfnCmdBeginRenderingKHR) {
-            throw std::runtime_error ("failed to load dynamic rendering function pointers!");
+            ThrowErrorMessage("failed to load dynamic rendering function pointers!");
         }
         pfnCmdEndRenderingKHR = (PFN_vkCmdEndRenderingKHR)vkGetDeviceProcAddr (m_Device, "vkCmdEndRenderingKHR");
         if (!pfnCmdEndRenderingKHR) {
-            throw std::runtime_error ("failed to load dynamic rendering function pointers!");
+            ThrowErrorMessage("failed to load dynamic rendering function pointers!");
         }
     }
 }
