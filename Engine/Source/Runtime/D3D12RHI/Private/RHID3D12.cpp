@@ -10,6 +10,8 @@
 #include "RHICommandListD3D12.h"
 #include "RHID3D12.h"
 
+#include <chrono>
+
 namespace RHI
 {
     // Local D3D12 Shared Context Definition
@@ -201,6 +203,29 @@ namespace RHI
                 break;
             }
         }
+
+        void PollingThreadFunc(ID3D12InfoQueue* pInfoQueue, std::atomic<bool>& running) {
+            while (running) {
+                UINT64 count = pInfoQueue->GetNumStoredMessages();
+                for (UINT64 i = 0; i < count; ++i) {
+                    SIZE_T len = 0;
+                    if (SUCCEEDED(pInfoQueue->GetMessage(i, nullptr, &len))) {
+                        D3D12_MESSAGE* msg = (D3D12_MESSAGE*)malloc(len);
+                        if (msg) {
+                            if (SUCCEEDED(pInfoQueue->GetMessage(i, msg, &len))) {
+                                D3D12MessageCallback(msg->Category,msg->Severity,msg->ID,msg->pDescription,nullptr);
+                            }
+                            free(msg);
+                        }
+                    }
+                }
+                if (count > 0) {
+                    pInfoQueue->ClearStoredMessages();
+                }
+                // Control frequency
+                std::this_thread::sleep_for(std::chrono::milliseconds(16));
+            }
+        }
     }
 
     DeviceD3D12::DeviceD3D12()
@@ -260,12 +285,18 @@ namespace RHI
         m_CopyQueue.reset();
 
         // Release the D3D12 InfoQueue callback registration if it exists
-        if (m_pInfoQueue && m_infoQueueCallbackCookie != 0)
+        if (m_pInfoQueue1 && m_infoQueueCallbackCookie != 0)
         {
-            m_pInfoQueue->UnregisterMessageCallback(m_infoQueueCallbackCookie);
+            m_pInfoQueue1->UnregisterMessageCallback(m_infoQueueCallbackCookie);
             m_infoQueueCallbackCookie = 0;
         }
+        // Release the D3D12 InfoQueue Thread
+        if (g_pollingThread.joinable()) {
+            g_pollingRunning = false;
+            g_pollingThread.join();
+        }
 
+        m_pInfoQueue1.Reset();
         m_pInfoQueue.Reset();
         m_pDevice.Reset();
         m_pAdapter.Reset();
@@ -305,29 +336,52 @@ namespace RHI
 
     void DeviceD3D12::RegisterDebugInfoCallback() 
     {
-        ComPtr<ID3D12InfoQueue1> infoQueue;
-        HRESULT hr = m_pDevice.As(&infoQueue);
-
-        if (SUCCEEDED(hr))
+        // For unknown devices, we try the new interface callback first, otherwise we fall back to message polling.
         {
-            m_pInfoQueue = infoQueue;
+            ComPtr<ID3D12InfoQueue1> infoQueue1;
+            HRESULT hr = m_pDevice.As(&infoQueue1);
 
-            hr = m_pInfoQueue->RegisterMessageCallback(
-                D3D12MessageCallback,
-                D3D12_MESSAGE_CALLBACK_FLAG_NONE,
-                nullptr,
-                &m_infoQueueCallbackCookie);
-
-            if (FAILED(hr))
+            if (SUCCEEDED(hr))
             {
+                m_pInfoQueue1 = infoQueue1;
+
+                hr = m_pInfoQueue1->RegisterMessageCallback(
+                    D3D12MessageCallback,
+                    D3D12_MESSAGE_CALLBACK_FLAG_NONE,
+                    nullptr,
+                    &m_infoQueueCallbackCookie);
+
+                if (FAILED(hr))
+                {
+                    Core::WarningCapture::Capture(
+                        "Failed to register D3D12 debug message callback: " + HrToString(hr));
+                }
+
+                return;
+            }else{
                 Core::WarningCapture::Capture(
-                    "Failed to register D3D12 debug message callback: " + HrToString(hr));
+                "ID3D12InfoQueue1 is unavailable: " + HrToString(hr));
             }
         }
-        else
+
         {
-            Core::WarningCapture::Capture(
-                "ID3D12InfoQueue1 is unavailable: " + HrToString(hr));
+            Core::InfoCapture::Capture("Enable ID3D12InfoQueue polling, which will be used for devices where ID3D12InfoQueue1 fails to be obtained.");
+
+            // Get ID3D12InfoQueue
+            ComPtr<ID3D12InfoQueue> infoQueue;
+            HRESULT hr = m_pDevice.As(&infoQueue);
+            if (SUCCEEDED(hr))
+            {
+                m_pInfoQueue = infoQueue;
+
+                // run polling thread
+                g_pollingThread = std::thread([this]() {
+                    g_pollingRunning = true;
+                    PollingThreadFunc(m_pInfoQueue.Get(),g_pollingRunning);
+                });
+            }else{
+                Core::ErrorCapture::Capture("Even basic message queues can't be created; this device can only use the debug window to view messages.");
+            }
         }
     }
 

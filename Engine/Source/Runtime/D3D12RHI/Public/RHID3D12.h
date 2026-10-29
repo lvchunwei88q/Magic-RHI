@@ -8,6 +8,8 @@
 // DescriptorHeap
 #include "DescriptorHeapD3D12.h"
 
+#include <thread>
+#include <atomic> 
 #include <vector>
 #include <wrl.h> // ComPtr
 using Microsoft::WRL::ComPtr;
@@ -97,8 +99,12 @@ namespace RHI
         ComPtr<IDXGIAdapter1> m_pAdapter; // GPU
 
         // D3D12's debug message queue and message flags
-        ComPtr<ID3D12InfoQueue1> m_pInfoQueue;
+        ComPtr<ID3D12InfoQueue1> m_pInfoQueue1;
         DWORD m_infoQueueCallbackCookie = 0;
+        // D3D12's debug message queue and message flags -> pollingThread
+        ComPtr<ID3D12InfoQueue> m_pInfoQueue;
+        std::thread g_pollingThread;
+        std::atomic<bool> g_pollingRunning{ false };
 
         // CommandQueue
         std::unique_ptr<GraphicsCommandQueueD3D12> m_GraphicsQueue;
