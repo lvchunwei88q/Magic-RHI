@@ -64,8 +64,11 @@ namespace RHI
         uint64_t AllocationSize{};
     };
 
-    /** The base type of RHI resources. */
-    class RHI_API RHIResource : public std::enable_shared_from_this<RHIResource>
+    /**
+     * @brief The base type of RHI resources.
+     * We'll leave the issue of ownership to the actual implementation to decide; we won't enforce an ownership model here.
+     */
+    class RHI_API RHIResource
     {
     public:
         /**
@@ -97,15 +100,6 @@ namespace RHI
         RHIResourceType GetType() const { return Type; }
         // We probably shouldn’t provide an interface to access resources here because this class itself is a resource.
         //virtual void* GetResource() const { return nullptr; } 
-
-        /**
-         * @brief get shared_ptr
-         * @return
-         */
-        std::shared_ptr<RHIResource> GetSharedPtr()
-        {
-            return shared_from_this();
-        }
 
     protected:
         RHIResourceType Type;
