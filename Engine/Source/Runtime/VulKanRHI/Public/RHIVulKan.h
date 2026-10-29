@@ -26,6 +26,7 @@ namespace RHI
 
 	struct VulkanLoaclSharedContext
 	{
+        // version
         uint32_t SdkVkApiVersion = VK_API_VERSION_1_0;
         uint32_t PhysicalDeviceApiVersion = VK_API_VERSION_1_0;
 
@@ -99,6 +100,8 @@ namespace RHI
         uint32_t GetComputeQueueFamilyIndex() const { return m_ComputeQueueFamilyIndex; }
         uint32_t GetCopyQueueFamilyIndex() const { return m_CopyQueueFamilyIndex; }
 
+        PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR() { return pfnCmdBeginRenderingKHR; };
+        PFN_vkCmdEndRenderingKHR vkCmdEndRenderingKHR() { return pfnCmdEndRenderingKHR; };
     private:
         bool CreateInstance();
         void SetupDebugMessenger();
@@ -106,6 +109,7 @@ namespace RHI
         bool CreateLogicalDevice();
         void CreateQueues();
         bool CreateDescriptorPools();
+        void GetVkExtensionFunctionPointer();
 
         VkInstance m_Instance = VK_NULL_HANDLE;
         VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
@@ -132,6 +136,10 @@ namespace RHI
         std::unique_ptr<DescriptorHeapVulKan> m_pSamplerHeap;
         std::unique_ptr<DescriptorHeapVulKan> m_pRTVHeap;
         std::unique_ptr<DescriptorHeapVulKan> m_pDSVHeap;
+        
+        // Dynamic rendering function pointers are an optional feature in versions below Vk1.2
+        PFN_vkCmdBeginRenderingKHR pfnCmdBeginRenderingKHR = nullptr;
+        PFN_vkCmdEndRenderingKHR pfnCmdEndRenderingKHR = nullptr;
     };
 
     class VULKANRHI_API SwapChainVulKan : public SwapChain

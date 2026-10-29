@@ -132,11 +132,11 @@ namespace RHI
     class GraphicsCommandQueueVulKan : public RHIFrameCommandQueue
     {
     public:
-        GraphicsCommandQueueVulKan(RHICmdType InType, VkQueue queue, uint32_t queueFamilyIndex, const VkDevice* device, const VkPhysicalDevice* physicalDevice)
+        GraphicsCommandQueueVulKan(RHICmdType InType, VkQueue queue, uint32_t queueFamilyIndex, const DeviceVulKan* device, const VkPhysicalDevice* physicalDevice)
             : RHIFrameCommandQueue(InType)
             , m_Queue(queue)
             , m_QueueFamilyIndex(queueFamilyIndex)
-            , m_Device(device)
+            , m_VkDevice(device)
             , m_PhysicalDevice(physicalDevice){
                 // Fence creation info
                 VkFenceCreateInfo fenceInfo{};
@@ -185,13 +185,28 @@ namespace RHI
         uint64_t GetFrameIndex() const override;
 
         // Self Tools Function
-        DEFINE_QUEUE_DEVICE_GETTERS(m_Device,m_PhysicalDevice,m_Queue)
+        const VkDevice GetDevice() const {
+            if (!m_VkDevice) {
+                ThrowErrorMessage("Queue: Device is null");
+                return nullptr;
+            }
+            const VkDevice* device = m_VkDevice->GetDevice();
+            return *device;
+        }
+        const VkPhysicalDevice GetPhysicalDevice() const {
+            if (!m_PhysicalDevice) {
+                ThrowErrorMessage("Queue: PhysicalDevice is null");
+                return nullptr;
+            }
+            return *m_PhysicalDevice;
+        }
+        const VkQueue GetQueue() const { return m_Queue; }
         uint32_t GetQueueFamilyIndex() const { return m_QueueFamilyIndex; }
     private:
         const VkQueue m_Queue;
         const uint32_t m_QueueFamilyIndex;
         // Here we just store device handle references
-        const VkDevice* m_Device;
+        const DeviceVulKan* m_VkDevice;
         const VkPhysicalDevice* m_PhysicalDevice;
 
         // Set up semaphores and fences These will be used for frame sync in Vulkan because the GPU is always asynchronous

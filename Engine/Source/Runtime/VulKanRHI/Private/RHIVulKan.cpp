@@ -438,6 +438,9 @@ namespace RHI
             return false;
         }
 
+        // Get all extension functions
+        GetVkExtensionFunctionPointer();
+
         return true;
     }
 
@@ -460,7 +463,8 @@ namespace RHI
         appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
         appInfo.pEngineName = "MagicRHI";
         appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-        appInfo.apiVersion = VK_API_VERSION_1_3;
+        // To support the majority of devices without crashing, we use Vulkan 1.2.
+        appInfo.apiVersion = VK_API_VERSION_1_2;
 
         VkInstanceCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -701,7 +705,7 @@ namespace RHI
             RHICmdType::Graphics, 
             graphicsQueue,
             m_GraphicsQueueFamilyIndex,
-            GetDevice(),
+            this,
             GetPhysicalDevice()
         );
 
@@ -924,6 +928,18 @@ namespace RHI
             return m_pDSVHeap.get();
         default:
             return nullptr;
+        }
+    }
+
+    void DeviceVulKan::GetVkExtensionFunctionPointer() 
+    {
+        pfnCmdBeginRenderingKHR = (PFN_vkCmdBeginRenderingKHR)vkGetDeviceProcAddr (m_Device, "vkCmdBeginRenderingKHR");
+        if (!pfnCmdBeginRenderingKHR) {
+            throw std::runtime_error ("failed to load dynamic rendering function pointers!");
+        }
+        pfnCmdEndRenderingKHR = (PFN_vkCmdEndRenderingKHR)vkGetDeviceProcAddr (m_Device, "vkCmdEndRenderingKHR");
+        if (!pfnCmdEndRenderingKHR) {
+            throw std::runtime_error ("failed to load dynamic rendering function pointers!");
         }
     }
 }
