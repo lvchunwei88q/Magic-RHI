@@ -1,5 +1,7 @@
 # MagicRHI
 
+[简体中文](README.md) | [English](README.en.md)
+
 MagicRHI 是一个使用 C++ 开发的 RHI（渲染硬件接口）项目，当前包含 D3D12 和 Vulkan 后端。项目处于快速开发期，接口和功能可能持续变化。
 
 ## 环境要求

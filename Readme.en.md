@@ -1,5 +1,7 @@
 # MagicRHI
 
+[简体中文](README.md) | [English](README.en.md)
+
 MagicRHI is a C++ RHI (Rendering Hardware Interface) project. It currently includes D3D12 and Vulkan backends. The project is under rapid development, so its APIs and features may change frequently.
 
 ## Requirements
