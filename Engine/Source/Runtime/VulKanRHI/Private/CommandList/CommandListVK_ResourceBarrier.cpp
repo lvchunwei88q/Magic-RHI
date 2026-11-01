@@ -108,7 +108,9 @@ namespace RHI
         if (numBarriers == 0 || pBarriers == nullptr || m_CommandBuffer == VK_NULL_HANDLE)
             return;
 
-        EndDynamicRendering();
+        // If dynamic rendering is active, we need to end it before issuing resource barriers
+        if (IsDynamicRendering())
+            EndDynamicRendering();
 
         for (uint32_t i = 0; i < numBarriers; ++i)
         {

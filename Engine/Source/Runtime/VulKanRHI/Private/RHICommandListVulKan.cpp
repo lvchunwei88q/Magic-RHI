@@ -142,9 +142,9 @@ namespace RHI
             ThrowErrorMessage("CommandListVulKan: BeginRecording() was called multiple times, be careful not to use multithreading");
         // Set is recording to true
         m_pCommandPool->SetIsRecording(true);
-        m_CurrentRenderTargets.clear();
-        m_CurrentRenderArea = {};
-        m_IsDynamicRendering = false;
+        
+        // Reset all local frame caches
+        ResetFrameCaches();
 
         VkCommandBufferBeginInfo beginInfo = {};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -157,13 +157,23 @@ namespace RHI
 
     void CommandListVulKan::EndRecording()
     {
-        EndDynamicRendering();
+        // End dynamic rendering if it is still active
+        if (IsDynamicRendering())
+            EndDynamicRendering();
 
         VkResult result = vkEndCommandBuffer(m_CommandBuffer);
         if (result != VK_SUCCESS)
             ThrowErrorMessage("Failed to end recording command buffer");
         // Set is recording to false
         m_pCommandPool->SetIsRecording(false);
+    }
+
+    void CommandListVulKan::ResetFrameCaches()
+    {
+        m_CurrentRenderTargets.clear();
+        m_CurrentRenderArea = {};
+        m_pCurrentGraphicsRS = nullptr;
+        m_pCurrentComputeRS = nullptr;
     }
 
     // ============================================================ GraphicsCommandQueueVulKan

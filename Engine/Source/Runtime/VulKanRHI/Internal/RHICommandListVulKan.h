@@ -128,6 +128,9 @@ namespace RHI
         void BeginDynamicRendering(const VkRenderingInfoKHR& renderingInfo);
         void EndDynamicRendering();
 
+        // Reset all local frame caches
+        void ResetFrameCaches();
+
         VkCommandBuffer m_CommandBuffer;
         // Dynamic rendering function pointers (loaded from the Vulkan device)
         PFN_vkCmdBeginRenderingKHR m_pfnCmdBeginRenderingKHR = nullptr;
@@ -137,7 +140,6 @@ namespace RHI
         // Cached currently-bound render targets and depth-stencil view for dynamic rendering
         std::vector<RenderTargetViewVulKan*> m_CurrentRenderTargets;
         VkRect2D m_CurrentRenderArea{};
-
 
         // Cached currently-bound root signatures (for vkCmdBindDescriptorSets / vkCmdPushConstants access)
         RHIRootSignatureVulKan* m_pCurrentGraphicsRS = nullptr;

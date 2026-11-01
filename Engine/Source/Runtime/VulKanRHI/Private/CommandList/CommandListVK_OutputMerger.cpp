@@ -1,3 +1,4 @@
+#include "CoreMinimal.h"
 #include "RHICommandListVulKan.h"
 
 namespace RHI
@@ -9,9 +10,9 @@ namespace RHI
 
         // If dynamic rendering is already active, end it before starting a new one
         if(IsDynamicRendering()){
+            Core::ErrorCapture::Capture("OMSetRenderTargets is being called right now, but dynamic rendering is already active. Please fix any possible issues in the list.");
             EndDynamicRendering();
         }
-        m_CurrentRenderTargets.clear();
 
         std::vector<VkRenderingAttachmentInfoKHR> colorAttachments(numRenderTargets);
         uint32_t renderWidth = 0;
@@ -95,18 +96,18 @@ namespace RHI
     {
         ThrowIf(m_IsDynamicRendering, "Dynamic rendering is already active");
         ThrowIf(m_pfnCmdBeginRenderingKHR == nullptr, "vkCmdBeginRenderingKHR was not loaded");
-
+        // Start dynamic rendering
         m_pfnCmdBeginRenderingKHR(m_CommandBuffer, &renderingInfo);
         m_IsDynamicRendering = true;
     }
 
     void CommandListVulKan::EndDynamicRendering()
     {
+        ThrowIf(!m_IsDynamicRendering, "Dynamic rendering isn't activated, so it can't finish.");
         ThrowIf(m_pfnCmdEndRenderingKHR == nullptr, "vkCmdEndRenderingKHR was not loaded");
+        // Stop dynamic rendering (if in active mode)
         m_pfnCmdEndRenderingKHR(m_CommandBuffer);
         m_IsDynamicRendering = false;
-        m_CurrentRenderTargets.clear();
-        m_CurrentRenderArea = {};
     }
 
     void CommandListVulKan::OMSetBlendState(RHIBlendState* pState, const float* blendFactor, uint32_t sampleMask)
