@@ -104,7 +104,11 @@ namespace RHI
         if (result != VK_SUCCESS)
             ThrowErrorMessage("Failed to allocate command buffer");
         
-        return std::make_shared<CommandListVulKan>(pPool, commandBuffer);
+        return std::make_shared<CommandListVulKan>(
+            pPool,
+            commandBuffer,
+            vkCmdBeginRenderingKHR(),
+            vkCmdEndRenderingKHR());
     }
     // ===========================================================================
 
@@ -138,6 +142,9 @@ namespace RHI
             ThrowErrorMessage("CommandListVulKan: BeginRecording() was called multiple times, be careful not to use multithreading");
         // Set is recording to true
         m_pCommandPool->SetIsRecording(true);
+        m_CurrentRenderTargets.clear();
+        m_CurrentRenderArea = {};
+        m_IsDynamicRendering = false;
 
         VkCommandBufferBeginInfo beginInfo = {};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -150,6 +157,8 @@ namespace RHI
 
     void CommandListVulKan::EndRecording()
     {
+        EndDynamicRendering();
+
         VkResult result = vkEndCommandBuffer(m_CommandBuffer);
         if (result != VK_SUCCESS)
             ThrowErrorMessage("Failed to end recording command buffer");

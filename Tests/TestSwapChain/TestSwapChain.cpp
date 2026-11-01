@@ -106,25 +106,27 @@ void RunTestDeviceAndSwapChain(RHI::RHIType rhiType,const std::wstring& windowTi
             device->GetFrameCommandQueue()->SetGraphicsQueueSwapChainInfo(GQSCInfo);
 
             cmdLists[ImageIndex]->BeginRecording ();
-            RHI::RHITexture* backBuffer = swapChain->GetBackBuffer(ImageIndex);
+                RHI::RHITexture* backBuffer = swapChain->GetBackBuffer(ImageIndex);
 
-            RHI::BarrierDesc barrier = {};
-            barrier.Type = RHI::ResourceBarrierType::Transition;
-            barrier.ResourceType = RHI::BarrierResourceType::Texture;
-            barrier.Transition.pResource = backBuffer;
-            barrier.Transition.StateBefore = RHI::RHIResourceState::Present;
-            barrier.Transition.StateAfter = RHI::RHIResourceState::RenderTarget;
-            cmdLists[ImageIndex]->ResourceBarrier(1, &barrier);
+                RHI::BarrierDesc barrier = {};
+                barrier.Type = RHI::ResourceBarrierType::Transition;
+                barrier.ResourceType = RHI::BarrierResourceType::Texture;
+                barrier.Transition.pResource = backBuffer;
+                barrier.Transition.StateBefore = RHI::RHIResourceState::Present;
+                barrier.Transition.StateAfter = RHI::RHIResourceState::RenderTarget;
+                cmdLists[ImageIndex]->ResourceBarrier(1, &barrier);
 
-            RHI::RHIRenderTargetView* pRTV = swapChain->GetRenderTargetView(ImageIndex);
-            cmdLists[ImageIndex]->OMSetRenderTargets(1, &pRTV, false, nullptr);
-            
-            float clearColor[4] = { 0.2f, 0.2f, 0.2f, 1.0f }; // 灰色
-            cmdLists[ImageIndex]->ClearRenderTargetView(pRTV, clearColor);
+                    RHI::RHIRenderTargetView* pRTV = swapChain->GetRenderTargetView(ImageIndex);
+                    cmdLists[ImageIndex]->OMSetRenderTargets(1, &pRTV, false, nullptr);
+                    
+                    float clearColor[4] = { 0.2f, 0.2f, 0.2f, 1.0f }; // 灰色
+                    cmdLists[ImageIndex]->ClearRenderTargetView(pRTV, clearColor);
 
-            barrier.Transition.StateBefore = RHI::RHIResourceState::RenderTarget;
-            barrier.Transition.StateAfter = RHI::RHIResourceState::Present;
-            cmdLists[ImageIndex]->ResourceBarrier(1, &barrier);
+                    /////////////////////////////////////////////// More rendering commands can be added here ///////////////////////////////////////////////
+
+                barrier.Transition.StateBefore = RHI::RHIResourceState::RenderTarget;
+                barrier.Transition.StateAfter = RHI::RHIResourceState::Present;
+                cmdLists[ImageIndex]->ResourceBarrier(1, &barrier);
             cmdLists[ImageIndex]->EndRecording();
 
             device->GetFrameCommandQueue()->ExecuteCommandLists({ cmdLists[ImageIndex] });

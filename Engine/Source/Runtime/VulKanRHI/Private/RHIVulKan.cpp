@@ -754,7 +754,7 @@ namespace RHI
             RHICmdType::Graphics, 
             graphicsQueue,
             m_GraphicsQueueFamilyIndex,
-            this,
+            GetDevice(),
             GetPhysicalDevice()
         );
 

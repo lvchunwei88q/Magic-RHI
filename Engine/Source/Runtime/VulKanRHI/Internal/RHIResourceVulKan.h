@@ -238,36 +238,48 @@ namespace RHI
     class RenderTargetViewVulKan : public RHIRenderTargetView
     {
     public:
-        RenderTargetViewVulKan(VkImageView imageView, const VkDevice* device)
+        RenderTargetViewVulKan(VkImageView imageView, uint32_t width, uint32_t height, const VkDevice* device)
             : m_ImageView(imageView)
+            , m_Width(width)
+            , m_Height(height)
             , m_Device(device) {}
         ~RenderTargetViewVulKan() override;
 
         VkImageView GetImageView() const { return m_ImageView; }
+        uint32_t GetWidth() const { return m_Width; }
+        uint32_t GetHeight() const { return m_Height; }
         
     private:
         VkDevice GetDevice() const { return *m_Device; }
     private:
         VkDescriptorType m_DescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
         VkImageView m_ImageView;
+        uint32_t m_Width;
+        uint32_t m_Height;
         const VkDevice* m_Device;
     };
 
     class DepthStencilViewVulKan : public RHIDepthStencilView
     {
     public:
-        DepthStencilViewVulKan(VkImageView imageView, const VkDevice* device)
+        DepthStencilViewVulKan(VkImageView imageView, uint32_t width, uint32_t height, const VkDevice* device)
             : m_ImageView(imageView)
+            , m_Width(width)
+            , m_Height(height)
             , m_Device(device) {}
         ~DepthStencilViewVulKan() override;
 
         VkImageView GetImageView() const { return m_ImageView; }
+        uint32_t GetWidth() const { return m_Width; }
+        uint32_t GetHeight() const { return m_Height; }
         
     private:
         VkDevice GetDevice() const { return *m_Device; }
     private:
         VkDescriptorType m_DescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
         VkImageView m_ImageView;
+        uint32_t m_Width;
+        uint32_t m_Height;
         const VkDevice* m_Device;
     };
 

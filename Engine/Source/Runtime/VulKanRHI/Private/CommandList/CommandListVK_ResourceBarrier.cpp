@@ -108,6 +108,8 @@ namespace RHI
         if (numBarriers == 0 || pBarriers == nullptr || m_CommandBuffer == VK_NULL_HANDLE)
             return;
 
+        EndDynamicRendering();
+
         for (uint32_t i = 0; i < numBarriers; ++i)
         {
             const auto& rhiBarrier = pBarriers[i];

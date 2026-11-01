@@ -374,7 +374,11 @@ namespace RHI
         }
 
         for (size_t i = 0; i < m_pRenderTargetViews.size(); ++i)
-            m_pRenderTargetViews[i] = std::make_unique<RenderTargetViewVulKan>(imageViews[i], m_pRHI->GetDevice());
+            m_pRenderTargetViews[i] = std::make_unique<RenderTargetViewVulKan>(
+                imageViews[i],
+                m_pBackBuffers[i]->GetWidth(),
+                m_pBackBuffers[i]->GetHeight(),
+                m_pRHI->GetDevice());
         return true;
     }
 

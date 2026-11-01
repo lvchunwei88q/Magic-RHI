@@ -49,9 +49,15 @@ namespace RHI
     class CommandListVulKan : public RHICommandList
     {
     public:
-        CommandListVulKan(RHICommandPoolPtr pCommandPool, VkCommandBuffer commandBuffer)
+        CommandListVulKan(
+            RHICommandPoolPtr pCommandPool,
+            VkCommandBuffer commandBuffer,
+            PFN_vkCmdBeginRenderingKHR beginRendering,
+            PFN_vkCmdEndRenderingKHR endRendering)
             : RHICommandList(pCommandPool)
-            , m_CommandBuffer(commandBuffer) {}
+            , m_CommandBuffer(commandBuffer)
+            , m_pfnCmdBeginRenderingKHR(beginRendering)
+            , m_pfnCmdEndRenderingKHR(endRendering) {}
         ~CommandListVulKan() override = default;
 
         void BeginRecording() override;
@@ -118,7 +124,20 @@ namespace RHI
         VkCommandBuffer GetCommandBuffer() const { return m_CommandBuffer; }
 
     private:
+        bool IsDynamicRendering() const { return m_IsDynamicRendering; }
+        void BeginDynamicRendering(const VkRenderingInfoKHR& renderingInfo);
+        void EndDynamicRendering();
+
         VkCommandBuffer m_CommandBuffer;
+        // Dynamic rendering function pointers (loaded from the Vulkan device)
+        PFN_vkCmdBeginRenderingKHR m_pfnCmdBeginRenderingKHR = nullptr;
+        PFN_vkCmdEndRenderingKHR m_pfnCmdEndRenderingKHR = nullptr;
+        bool m_IsDynamicRendering = false;
+
+        // Cached currently-bound render targets and depth-stencil view for dynamic rendering
+        std::vector<RenderTargetViewVulKan*> m_CurrentRenderTargets;
+        VkRect2D m_CurrentRenderArea{};
+
 
         // Cached currently-bound root signatures (for vkCmdBindDescriptorSets / vkCmdPushConstants access)
         RHIRootSignatureVulKan* m_pCurrentGraphicsRS = nullptr;
@@ -132,11 +151,11 @@ namespace RHI
     class GraphicsCommandQueueVulKan : public RHIFrameCommandQueue
     {
     public:
-        GraphicsCommandQueueVulKan(RHICmdType InType, VkQueue queue, uint32_t queueFamilyIndex, const DeviceVulKan* device, const VkPhysicalDevice* physicalDevice)
+        GraphicsCommandQueueVulKan(RHICmdType InType, VkQueue queue, uint32_t queueFamilyIndex, const VkDevice* device, const VkPhysicalDevice* physicalDevice)
             : RHIFrameCommandQueue(InType)
             , m_Queue(queue)
             , m_QueueFamilyIndex(queueFamilyIndex)
-            , m_VkDevice(device)
+            , m_Device(device)
             , m_PhysicalDevice(physicalDevice){
                 // Fence creation info
                 VkFenceCreateInfo fenceInfo{};
@@ -185,28 +204,12 @@ namespace RHI
         uint64_t GetFrameIndex() const override;
 
         // Self Tools Function
-        const VkDevice GetDevice() const {
-            if (!m_VkDevice) {
-                ThrowErrorMessage("Queue: Device is null");
-                return nullptr;
-            }
-            const VkDevice* device = m_VkDevice->GetDevice();
-            return *device;
-        }
-        const VkPhysicalDevice GetPhysicalDevice() const {
-            if (!m_PhysicalDevice) {
-                ThrowErrorMessage("Queue: PhysicalDevice is null");
-                return nullptr;
-            }
-            return *m_PhysicalDevice;
-        }
-        const VkQueue GetQueue() const { return m_Queue; }
-        uint32_t GetQueueFamilyIndex() const { return m_QueueFamilyIndex; }
+        DEFINE_QUEUE_DEVICE_GETTERS(m_Device,m_PhysicalDevice,m_Queue)
     private:
         const VkQueue m_Queue;
         const uint32_t m_QueueFamilyIndex;
         // Here we just store device handle references
-        const DeviceVulKan* m_VkDevice;
+        const VkDevice* m_Device;
         const VkPhysicalDevice* m_PhysicalDevice;
 
         // Set up semaphores and fences These will be used for frame sync in Vulkan because the GPU is always asynchronous
