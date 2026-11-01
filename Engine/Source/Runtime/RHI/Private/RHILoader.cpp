@@ -44,19 +44,30 @@ namespace RHI
 
     bool RHILoader::Load(RHIType type)
     {   
-        const char* dllName = "";
-
         if(!IsSingleRHIType(type)){
             ErrorCapture::Capture("Invalid RHI type: " + std::string(RHITypeToString(type)) + ". Only single RHI types are allowed.");
             return false;
         }
 
+        if (m_hModule) {
+            if (m_loadedType == type) {
+                return true;
+            }
+
+            ErrorCapture::Capture("An RHI backend is already loaded. Unload it before loading another backend.");
+            return false;
+        }
+
+        const char* dllName = nullptr;
         // Determine the DLL name based on the RHI type
         if (EnumHasAnyFlags(type, RHIType::D3D12)) {
             dllName = RHI_D3D12_DLL_FILE;
         }else if (EnumHasAnyFlags(type, RHIType::VulKan)) {
             dllName = RHI_VULKAN_DLL_FILE;
-        }// ... add more RHI types here as needed
+        }else {
+            ErrorCapture::Capture("Unsupported RHI type: " + std::string(RHITypeToString(type)));
+            return false;
+        }
         
         // load dll
         InfoCapture::Capture("Loading RHI DLL: " + std::string(dllName));
@@ -104,6 +115,7 @@ namespace RHI
         m_CreateSwapChain = nullptr;
         m_CreateShaderCompilerBackend = nullptr;
         m_GetRHIType = nullptr;
+        m_loadedType = RHIType::Unknown;
     }
 
     std::unique_ptr<Device> RHILoader::CreateDevice()
