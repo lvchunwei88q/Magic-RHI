@@ -100,8 +100,15 @@ namespace RHI
         uint32_t GetComputeQueueFamilyIndex() const { return m_ComputeQueueFamilyIndex; }
         uint32_t GetCopyQueueFamilyIndex() const { return m_CopyQueueFamilyIndex; }
 
-        PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR() { return pfnCmdBeginRenderingKHR; };
-        PFN_vkCmdEndRenderingKHR vkCmdEndRenderingKHR() { return pfnCmdEndRenderingKHR; };
+        [[nodiscard]] PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR() const noexcept
+        {
+            return pfnCmdBeginRenderingKHR;
+        }
+
+        [[nodiscard]] PFN_vkCmdEndRenderingKHR vkCmdEndRenderingKHR() const noexcept
+        {
+            return pfnCmdEndRenderingKHR;
+        }
     private:
         bool CreateInstance();
         void SetupDebugMessenger();
@@ -137,7 +144,7 @@ namespace RHI
         std::unique_ptr<DescriptorHeapVulKan> m_pRTVHeap;
         std::unique_ptr<DescriptorHeapVulKan> m_pDSVHeap;
         
-        // Dynamic rendering function pointers are an optional feature in versions below Vk1.2
+        // Dynamic rendering is required; on the Vulkan 1.2 path it is provided by VK_KHR_dynamic_rendering.
         PFN_vkCmdBeginRenderingKHR pfnCmdBeginRenderingKHR = nullptr;
         PFN_vkCmdEndRenderingKHR pfnCmdEndRenderingKHR = nullptr;
     };
