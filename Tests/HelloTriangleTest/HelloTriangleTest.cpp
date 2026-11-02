@@ -1,7 +1,6 @@
 #include <Subsystem/Subsystem.h>
 #include <iostream>
 #include <windows.h>
-#include <cstring>
 
 #include <CoreMinimal.h>
 #include <RHI.hpp>
@@ -198,32 +197,32 @@ void TestHelloTriangle()
 
         Compiler->BeginCompiler();
         
-        RHI::ShaderCompileSource Source{};
-        Source.sourceType = RHI::ShaderCompileSource::SourceType::SourcePath;
-        Source.sourceDescription = vsshaderPath;
-        Source.postProcessArgs = std::make_shared<RHI::VertexShaderPostProcessArgs>(inputLayout);
-        RHI::ShaderCompileResult vsResult = Compiler->Compile(vsOption,Source);
-        RHI::CreateShaderDesc vsDesc = Compiler->CreateShaderDescription();
-        
-        Source.sourceDescription = psshaderPath;
-        Source.postProcessArgs = nullptr;
-        RHI::ShaderCompileResult psResult = Compiler->Compile(psOption,Source);
-        RHI::CreateShaderDesc psDesc = Compiler->CreateShaderDescription();
-        RHI::SPIRVReflection psreflection = Compiler->Reflection();
+            RHI::ShaderCompileSource Source{};
+            Source.sourceType = RHI::ShaderCompileSource::SourceType::SourcePath;
+            Source.sourceDescription = vsshaderPath;
+            Source.postProcessArgs = std::make_shared<RHI::VertexShaderPostProcessArgs>(inputLayout);
+            RHI::ShaderCompileResult vsResult = Compiler->Compile(vsOption,Source);
+            RHI::CreateShaderDesc vsDesc = Compiler->CreateShaderDescription();
+            
+            Source.sourceDescription = psshaderPath;
+            Source.postProcessArgs = nullptr;
+            RHI::ShaderCompileResult psResult = Compiler->Compile(psOption,Source);
+            RHI::CreateShaderDesc psDesc = Compiler->CreateShaderDescription();
+            RHI::SPIRVReflection psreflection = Compiler->Reflection();
 
-        if (!vsResult.success || !psResult.success) {
-            std::cerr << "\n Compilation failed!" << std::endl;
-            std::cerr << "Error: " << vsResult.errorMessage + " or " + psResult.errorMessage << std::endl;
-            // If the compilation fails, use EXPECT_FALSE to let the test framework record the failure,
-            // then return to prevent a crash.
-            EXPECT_FALSE(!vsResult.success || !psResult.success);
-            return; 
-        }
-        
-        if (!vsResult.warningMessage.empty() || !psResult.warningMessage.empty()) {
-            std::cout << "Warnings: " << (vsResult.warningMessage.empty() ? "" : vsResult.warningMessage) + 
-                        " or " + (psResult.warningMessage.empty() ? "" : psResult.warningMessage) << std::endl;
-        }
+            if (!vsResult.success || !psResult.success) {
+                std::cerr << "\n Compilation failed!" << std::endl;
+                std::cerr << "Error: " << vsResult.errorMessage + " or " + psResult.errorMessage << std::endl;
+                // If the compilation fails, use EXPECT_FALSE to let the test framework record the failure,
+                // then return to prevent a crash.
+                EXPECT_FALSE(!vsResult.success || !psResult.success);
+                return; 
+            }
+            
+            if (!vsResult.warningMessage.empty() || !psResult.warningMessage.empty()) {
+                std::cout << "Warnings: " << (vsResult.warningMessage.empty() ? "" : vsResult.warningMessage) + 
+                            " or " + (psResult.warningMessage.empty() ? "" : psResult.warningMessage) << std::endl;
+            }
 
         Compiler->EndCompiler();
 
@@ -234,27 +233,6 @@ void TestHelloTriangle()
         std::cout << "VertexShader, PixelShader compiled successfully!" << std::endl;
 
         RHI::RootSignatureDesc rootDesc;
-        RHI::DescriptorRangeDesc ranges[1];
-        ranges[0].RangeType      = RHI::DescriptorRangeType::CBV;
-        ranges[0].NumDescriptors = 2;
-        ranges[0].ShaderRegister = 0;
-        ranges[0].RegisterSpace  = 0;
-
-        RHI::RootParameterDesc tableParam = {};
-        tableParam.Type                            = RHI::RootParameterType::DescriptorTable;
-        tableParam.Visibility                      = RHI::ShaderVisibility::All;
-        tableParam.DescriptorTable.NumDescriptorRanges = 1;
-        tableParam.DescriptorTable.pDescriptorRanges   = ranges;
-
-        RHI::RootParameterDesc constParam = {};
-        constParam.Type                       = RHI::RootParameterType::Constants;
-        constParam.Visibility                 = RHI::ShaderVisibility::Pixel;
-        constParam.Constants.ShaderRegister   = 2; 
-        constParam.Constants.RegisterSpace    = 0;
-        constParam.Constants.Num32BitValues   = 1; 
-
-        rootDesc.Parameters.push_back(tableParam);
-        rootDesc.Parameters.push_back(constParam);
         rootDesc.Flags = RHI::RootSignatureFlags::AllowInputAssemblerInputLayout;
 
         auto rootSignature = device->CreateRootSignature(rootDesc);
@@ -286,12 +264,6 @@ void TestHelloTriangle()
         }
 
         std::cout << "CommandList created successfully!" << std::endl;
-
-        auto descriptorHeap = device->GetDescriptorHeap(RHI::RHIDescriptorHeapType::Standard);
-        auto descriptorSamplerHeap = device->GetDescriptorHeap(RHI::RHIDescriptorHeapType::Sampler);
-
-        ASSERT_TRUE(descriptorHeap != nullptr && descriptorSamplerHeap != nullptr);
-        std::cout << "DescriptorHeaps Get successfully!" << std::endl;
 
         MSG msg = {};
         while (GetMessage(&msg, nullptr, 0, 0))
@@ -330,14 +302,6 @@ void TestHelloTriangle()
 
             cmdLists[ImageIndex]->SetGraphicsRootSignature(rootSignature.get());
             cmdLists[ImageIndex]->SetPipelineState(graphicsPSO.get(), RHI::PipelineStateType::Graphics);
-            
-            RHI::RHIDescriptorHeap* heaps[] = {descriptorHeap, descriptorSamplerHeap};
-            cmdLists[ImageIndex]->SetDescriptorHeaps(2, heaps);
-
-            float floatValue = 0.5f; uint32_t intValue;
-            memcpy(&intValue, &floatValue, sizeof(float));
-            cmdLists[ImageIndex]->SetGraphicsRootDescriptorTable(0, descriptorHeap, 0);
-            cmdLists[ImageIndex]->SetGraphicsRoot32BitConstant(1, intValue, 0);
             
             cmdLists[ImageIndex]->IASetPrimitiveTopology(RHI::RHIPrimitiveTopology::TriangleList);
             

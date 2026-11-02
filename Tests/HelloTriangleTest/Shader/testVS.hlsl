@@ -1,7 +1,7 @@
 struct VSInput
 {
-    float4 position : POSITION; // 对应 InputLayout[0]
-    float4 color : COLOR; // 对应 InputLayout[1]
+    float4 position : POSITION; // Corresponds to InputLayout[0]
+    float4 color : COLOR; // Corresponds to InputLayout[1]
 };
 
 struct VSOutput

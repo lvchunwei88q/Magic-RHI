@@ -1,11 +1,11 @@
-// PS 输入来自 VS 输出
+// PS input comes from VS output
 struct PSInput
 {
-    float4 pos : SV_POSITION;      // 屏幕空间位置
-    float4 Color : TEXCOORD1;          // 颜色
+    float4 pos : SV_POSITION;      // Screen space position
+    float4 Color : TEXCOORD1;      // Color
 };
 
 float4 main(PSInput input) : SV_Target
 {
-    return float4(input.Color.rgb,1.0f); // 输出颜色，保持 alpha 为 1.0
+    return float4(input.Color.rgb,1.0f); // Output color, keep alpha as 1.0
 }
