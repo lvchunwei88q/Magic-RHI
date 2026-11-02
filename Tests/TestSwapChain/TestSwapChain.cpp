@@ -156,16 +156,23 @@ void RunTestDeviceAndSwapChain(RHI::RHIType rhiType,const std::wstring& windowTi
     Sleep(10); 
 }
 
-void TestDeviceAndSwapChain()
+int testCount = 0;
+RHI::RHIType type = RHI::GetBestAvailableRHI();
+void TestDeviceAndSwapChainVulkan()
 {
-    RHI::RHIType type = RHI::GetBestAvailableRHI();
-    int testCount = 0;
-
     if (EnumHasAnyFlags (type, RHI::RHIType::VulKan)) {
         std::cout << "Running SwapChain Test with Vulkan..." << std::endl;
         RunTestDeviceAndSwapChain (RHI::RHIType::VulKan, L"Vulkan SwapChain Test");
         testCount++;
     }
+
+    if (testCount == 0) {
+        std::cerr << "No suitable RHI found!" << std::endl;
+    }
+}
+
+void TestDeviceAndSwapChainD3D12()
+{
     if(EnumHasAnyFlags(type, RHI::RHIType::D3D12)) {
         std::cout << "Running SwapChain Test with D3D12..." << std::endl;
         RunTestDeviceAndSwapChain(RHI::RHIType::D3D12, L"D3D12 SwapChain Test");
@@ -177,4 +184,4 @@ void TestDeviceAndSwapChain()
     }
 }
 
-TEST_MAIN(TestDeviceAndSwapChain)
+TEST_MAIN(TestDeviceAndSwapChainVulkan,TestDeviceAndSwapChainD3D12)
