@@ -107,6 +107,7 @@ struct TextureDesc
  */
 constexpr uint64_t GetTextureSizeInBytes(const TextureDesc& Desc)
 {
+    // Get the bytes per pixel and bytes per block for the texture format
     const uint64_t bytesPerPixel = GetTextureFormatBytesPerPixel(Desc.Format);
     const uint64_t bytesPerBlock = GetTextureFormatBytesPerBlock(Desc.Format);
     if (Desc.Width == 0 || Desc.Height == 0 || (bytesPerPixel == 0 && bytesPerBlock == 0))
@@ -125,6 +126,7 @@ constexpr uint64_t GetTextureSizeInBytes(const TextureDesc& Desc)
     };
     uint64_t totalSize = 0;
 
+    // Calculate the size of each mip level and accumulate
     for (uint32_t mip = 0; mip < mipLevels; ++mip)
     {
         const uint32_t width = mipDimension(Desc.Width, mip);
