@@ -103,7 +103,7 @@ namespace RHI
             , RHITexture(desc) {}
         ~TextureD3D12() override = default;
 
-        uint64_t GetSize() const override { return 0; }
+        uint64_t GetSize() const override;
 
         ID3D12Resource* GetResource() const { return m_pResource.Get(); }
 

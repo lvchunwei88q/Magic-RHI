@@ -322,7 +322,7 @@ namespace RHI
 
     uint64_t TextureVulKan::GetSize() const
     {
-        return 0;
+        return GetTextureSizeInBytes(GetDesc());
     }
 
     uint64_t ConstantBufferViewVulKan::GetGPUVirtualAddress() const

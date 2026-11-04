@@ -285,4 +285,9 @@ namespace RHI
         // Release the buffer resource
         buffer.reset();
     }
+
+    uint64_t TextureD3D12::GetSize() const
+    {
+        return GetTextureSizeInBytes(GetDesc());
+    }
 }

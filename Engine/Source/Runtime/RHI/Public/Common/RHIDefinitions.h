@@ -1,6 +1,7 @@
 #pragma once
 #include "RHITypes.h"
 #include <memory>
+#include <limits>
 #include <string>
 #include <unordered_map>
 #include <variant>
@@ -99,6 +100,58 @@ struct TextureDesc
     uint32_t SampleQuality  = UINT_INITIAL_VALUE;
     uint32_t Flags          = UINT_INITIAL_VALUE;
 };
+
+/**
+ * @brief Calculate the tightly packed storage size of a texture and all its mip levels.
+ * Zero-valued optional dimensions/counts are treated as one.
+ */
+constexpr uint64_t GetTextureSizeInBytes(const TextureDesc& Desc)
+{
+    const uint64_t bytesPerPixel = GetTextureFormatBytesPerPixel(Desc.Format);
+    const uint64_t bytesPerBlock = GetTextureFormatBytesPerBlock(Desc.Format);
+    if (Desc.Width == 0 || Desc.Height == 0 || (bytesPerPixel == 0 && bytesPerBlock == 0))
+        return 0;
+
+    const uint32_t mipLevels = Desc.MipLevels == 0 ? 1 : Desc.MipLevels;
+    const uint32_t depth = Desc.Depth == 0 ? 1 : Desc.Depth;
+    const uint32_t arrayLayers = Desc.ArrayLayers == 0 ? 1 : Desc.ArrayLayers;
+    const uint32_t sampleCount = Desc.SampleCount == 0 ? 1 : Desc.SampleCount;
+    const auto mipDimension = [](uint32_t dimension, uint32_t mip) constexpr
+    {
+        if (mip >= 32)
+            return 1u;
+        const uint32_t mipDimension = dimension >> mip;
+        return mipDimension == 0 ? 1u : mipDimension;
+    };
+    uint64_t totalSize = 0;
+
+    for (uint32_t mip = 0; mip < mipLevels; ++mip)
+    {
+        const uint32_t width = mipDimension(Desc.Width, mip);
+        const uint32_t height = mipDimension(Desc.Height, mip);
+        const uint32_t mipDepth = mipDimension(depth, mip);
+        const uint64_t blocksWide = bytesPerBlock == 0 ? width : width / 4 + (width % 4 != 0);
+        const uint64_t blocksHigh = bytesPerBlock == 0 ? height : height / 4 + (height % 4 != 0);
+
+        uint64_t mipSize = bytesPerBlock == 0 ? bytesPerPixel : bytesPerBlock;
+        const uint64_t factors[] = { blocksWide, blocksHigh, mipDepth, arrayLayers, sampleCount };
+        for (uint64_t factor : factors)
+        {
+            if (factor != 0 && mipSize > (std::numeric_limits<uint64_t>::max)() / factor)
+                return 0;
+            mipSize *= factor;
+        }
+
+        if (totalSize > (std::numeric_limits<uint64_t>::max)() - mipSize)
+            return 0;
+        totalSize += mipSize;
+
+        if (mip + 1 < mipLevels && width == 1 && height == 1 && mipDepth == 1)
+            return 0;
+    }
+
+    return totalSize;
+}
 
 /**
  * @brief Input Element Description.
