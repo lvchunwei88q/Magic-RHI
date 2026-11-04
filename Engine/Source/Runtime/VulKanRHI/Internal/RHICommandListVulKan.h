@@ -7,6 +7,7 @@
 #include <RHICommandList.h>
 #include "RHIResourceVulKan.h"
 #include "RHIRootSignatureVulKan.h"
+#include "RHIPipelineStateVulkan.h"
 #include "RHIVulKan.h"
 
 #define DEFINE_QUEUE_DEVICE_GETTERS(Device,m_PhysicalDevice,m_Queue)    \
@@ -144,6 +145,10 @@ namespace RHI
         // Cached currently-bound root signatures (for vkCmdBindDescriptorSets / vkCmdPushConstants access)
         RHIRootSignatureVulKan* m_pCurrentGraphicsRS = nullptr;
         RHIRootSignatureVulKan* m_pCurrentComputeRS = nullptr;
+
+        // Current bound PSO: Check topology/validation before Draw, also makes deduping easier later in SetPipelineState
+        RHIPipelineStateVulkan* m_pCurrentGraphicsPSO = nullptr;
+        RHIPipelineStateVulkan* m_pCurrentComputePSO = nullptr;
     };
 
     using GraphicsCommandListVulKan = CommandListVulKan;

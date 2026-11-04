@@ -18,6 +18,8 @@ namespace RHI
         bool IsValid() const override;
         PipelineStateType GetType() const override;
 
+        // Get the underlying Vulkan pipeline handle
+        VkPipeline GetPipeline() const { return m_Pipeline; }
     private:
         PipelineStateType Type = PipelineStateType::Unknown;
         VkPipeline m_Pipeline = VK_NULL_HANDLE;
