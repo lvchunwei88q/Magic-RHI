@@ -1,7 +1,7 @@
 # Magic-RHI 接口调整方案
 
 > 面向对象：`Engine/Source/Runtime/RHI`（公共接口）+ `D3D12RHI` / `VulKanRHI`（两个实现）
-> 依据：`docs/MagicRHI-问题清单.md` 48 条静态走查结论。**仓库从未成功构建**，本方案全部为设计推演，未编译、未运行。
+> 依据：`docs/MagicRHI-问题清单.md` 48 条静态走查结论。`Binary\Debug` 下存在 2026-11-01 的 `Magic-RHI.dll` / `Magic-Core.dll` / `Magic-D3D12RHI.dll` / `Magic-VulKanRHI.dll` 与 2026-11-02 的三个测试 exe（构建产物在，可运行复现）；但本方案**未编译、未运行**，所有结论仍是代码路径推演。
 > 结论先行：接口词汇（RootSignature / OMSetRenderTargets / Barrier）**不推翻**，只做 5 处增量 + 3 条契约澄清；Vulkan 侧最大的一件事（"一张表一个 descriptor set"）属于实现重构，**不进公共接口**。
 
 ---
@@ -481,7 +481,7 @@ Vulkan 侧 `vkCmdBindVertexBuffers` 原生支持 `pOffsets`，D3D12 需要把它
 
 | 里程碑 | 内容 | 为什么在这个位置 | 完成判据 |
 |---|---|---|---|
-| M1 | `docs` 定稿 + 第 3 节 F（子资源常量、`InitialState`）+ 第 2 节 A 的接口声明 | 纯加字段、不动调用方，先让编译面收敛 | 全仓能编过（当前连 DLL 都没有，见清单第 5 节） |
+| M1 | `docs` 定稿 + 第 3 节 F（子资源常量、`InitialState`）+ 第 2 节 A 的接口声明 | 纯加字段、不动调用方，先让编译面收敛 | 全仓能编过（`Binary\Debug` 里的 DLL 是 11-01 的旧产物，改完必须重新构建再看结果） |
 | M2 | 第 5 节 D（Vulkan 补 `vkCreateGraphicsPipelines`）+ 第 4 节 C 的里程碑 1 | 没有 graphics PSO，后面全是空中楼阁（P0-1） | `HelloTriangleTest` 能进帧循环不崩 |
 | M3 | 第 4 节 C 的里程碑 2（翻转 `OMSetRenderTargets`）+ 清深度 + pass 内状态 | 决定 P0-2/P0-3/P0-4/P1-5/P1-16/P2-6 一起清 | Vulkan 出第一个三角形 |
 | M4 | 第 6 节 B（表级 set）+ 根描述符 + 第 2 节 A 的 Vulkan 纹理视图 | 依赖 M3 的 pass 内绑定顺序 | 一个带 1 CB + 1 纹理的 shader 能跑 |

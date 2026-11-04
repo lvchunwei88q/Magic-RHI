@@ -4,6 +4,7 @@
 #include <RHIInterface.h>
 #include <d3d12.h>
 #include <dxgi1_6.h>
+#include "RHIFormatD3D12.h"
 
 // DescriptorHeap
 #include "DescriptorHeapD3D12.h"

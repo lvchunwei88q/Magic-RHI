@@ -252,6 +252,138 @@ enum class RHITextureFormat : uint8_t
 };
 
 /**
+ * @brief Get the storage size of one pixel for an uncompressed texture format.
+ * @return Bytes per pixel, or 0 for unknown and block-compressed formats.
+ */
+constexpr uint8_t GetTextureFormatBytesPerPixel(RHITextureFormat Format)
+{
+	switch (Format)
+	{
+	case RHITextureFormat::R8_UNORM:
+	case RHITextureFormat::R8_SNORM:
+	case RHITextureFormat::R8_UINT:
+	case RHITextureFormat::R8_SINT:
+	case RHITextureFormat::R8_SRGB:
+		return 1;
+
+	case RHITextureFormat::R16_UNORM:
+	case RHITextureFormat::R16_SNORM:
+	case RHITextureFormat::R16_UINT:
+	case RHITextureFormat::R16_SINT:
+	case RHITextureFormat::R16_FLOAT:
+	case RHITextureFormat::R8G8_UNORM:
+	case RHITextureFormat::R8G8_SNORM:
+	case RHITextureFormat::R8G8_UINT:
+	case RHITextureFormat::R8G8_SINT:
+	case RHITextureFormat::R8G8_SRGB:
+	case RHITextureFormat::B5G6R5_UNORM:
+	case RHITextureFormat::B5G5R5A1_UNORM:
+	case RHITextureFormat::B4G4R4A4_UNORM:
+	case RHITextureFormat::D16_UNORM:
+		return 2;
+
+	case RHITextureFormat::R16G16_UNORM:
+	case RHITextureFormat::R16G16_SNORM:
+	case RHITextureFormat::R16G16_UINT:
+	case RHITextureFormat::R16G16_SINT:
+	case RHITextureFormat::R16G16_FLOAT:
+	case RHITextureFormat::R8G8B8A8_UNORM:
+	case RHITextureFormat::R8G8B8A8_SNORM:
+	case RHITextureFormat::R8G8B8A8_UINT:
+	case RHITextureFormat::R8G8B8A8_SINT:
+	case RHITextureFormat::R8G8B8A8_SRGB:
+	case RHITextureFormat::R10G10B10A2_UNORM:
+	case RHITextureFormat::R10G10B10A2_UINT:
+	case RHITextureFormat::R11G11B10_FLOAT:
+	case RHITextureFormat::B8G8R8A8_UNORM:
+	case RHITextureFormat::B8G8R8A8_SRGB:
+	case RHITextureFormat::B8G8R8X8_UNORM:
+	case RHITextureFormat::B8G8R8X8_SRGB:
+	case RHITextureFormat::D24_UNORM_S8_UINT:
+	case RHITextureFormat::D32_FLOAT:
+	case RHITextureFormat::R8G8B8A8_TYPELESS:
+	case RHITextureFormat::R32_TYPELESS:
+		return 4;
+
+	case RHITextureFormat::R32G32_UINT:
+	case RHITextureFormat::R32G32_SINT:
+	case RHITextureFormat::R32G32_FLOAT:
+	case RHITextureFormat::R16G16B16A16_UNORM:
+	case RHITextureFormat::R16G16B16A16_SNORM:
+	case RHITextureFormat::R16G16B16A16_UINT:
+	case RHITextureFormat::R16G16B16A16_SINT:
+	case RHITextureFormat::R16G16B16A16_FLOAT:
+	case RHITextureFormat::D32_FLOAT_S8X24_UINT:
+	case RHITextureFormat::R16G16B16A16_TYPELESS:
+		return 8;
+
+	case RHITextureFormat::R32G32B32_UINT:
+	case RHITextureFormat::R32G32B32_SINT:
+	case RHITextureFormat::R32G32B32_FLOAT:
+		return 12;
+
+	case RHITextureFormat::R32G32B32A32_UINT:
+	case RHITextureFormat::R32G32B32A32_SINT:
+	case RHITextureFormat::R32G32B32A32_FLOAT:
+	case RHITextureFormat::R32G32B32A32_TYPELESS:
+		return 16;
+
+	default:
+		return 0;
+	}
+}
+
+/**
+ * @brief Get the storage size of one 4x4 block for a BC texture format.
+ * @return Bytes per block, or 0 for non-BC and unknown formats.
+ */
+constexpr uint8_t GetTextureFormatBytesPerBlock(RHITextureFormat Format)
+{
+	switch (Format)
+	{
+	case RHITextureFormat::BC1_UNORM:
+	case RHITextureFormat::BC1_UNORM_SRGB:
+	case RHITextureFormat::BC4_UNORM:
+	case RHITextureFormat::BC4_SNORM:
+		return 8;
+
+	case RHITextureFormat::BC2_UNORM:
+	case RHITextureFormat::BC2_UNORM_SRGB:
+	case RHITextureFormat::BC3_UNORM:
+	case RHITextureFormat::BC3_UNORM_SRGB:
+	case RHITextureFormat::BC5_UNORM:
+	case RHITextureFormat::BC5_SNORM:
+	case RHITextureFormat::BC6H_UF16:
+	case RHITextureFormat::BC6H_SF16:
+	case RHITextureFormat::BC7_UNORM:
+	case RHITextureFormat::BC7_UNORM_SRGB:
+		return 16;
+
+	default:
+		return 0;
+	}
+}
+
+enum class RHITextureFormatStorageType : uint8_t
+{
+	Unsupported,
+	PerPixel,
+	PerBlock
+};
+
+/**
+ * @brief Determine whether a format uses per-pixel or block-compressed storage.
+ */
+constexpr RHITextureFormatStorageType GetTextureFormatStorageType(RHITextureFormat Format)
+{
+	if (GetTextureFormatBytesPerBlock(Format) != 0)
+		return RHITextureFormatStorageType::PerBlock;
+	if (GetTextureFormatBytesPerPixel(Format) != 0)
+		return RHITextureFormatStorageType::PerPixel;
+	return RHITextureFormatStorageType::Unsupported;
+}
+
+/**
  * @brief 判断格式是否有深度/模板分量
  * @param Format
  * @return

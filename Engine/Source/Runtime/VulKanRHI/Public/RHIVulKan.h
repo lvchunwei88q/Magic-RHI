@@ -10,6 +10,7 @@
 #include <windows.h>
 #include <vulkan.h>
 #include "vulkan_win32.h"
+#include "RHIFormatVulkan.h"
 
 // DescriptorHeap
 #include "DescriptorHeapVulKan.h"
