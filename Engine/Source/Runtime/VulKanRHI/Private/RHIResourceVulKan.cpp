@@ -325,16 +325,6 @@ namespace RHI
         return 0;
     }
 
-    uint32_t TextureVulKan::GetWidth() const
-    {
-        return GetDesc().Width;
-    }
-
-    uint32_t TextureVulKan::GetHeight() const
-    {
-        return GetDesc().Height;
-    }
-
     uint64_t ConstantBufferViewVulKan::GetGPUVirtualAddress() const
     {
         return m_Offset;

@@ -126,8 +126,6 @@ namespace RHI
         ~TextureVulKan() override;
 
         uint64_t GetSize() const override;
-        uint32_t GetWidth() const override;
-        uint32_t GetHeight() const override;
 
         VkImage GetImage() const { return m_Image; }
         VkDeviceMemory GetMemory() const { return m_Memory; }
