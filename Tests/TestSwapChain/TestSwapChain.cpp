@@ -102,8 +102,8 @@ void RunTestDeviceAndSwapChain(RHI::RHIType rhiType,const std::wstring& windowTi
             device->GetFrameCommandQueue()->BeginFrame();
             uint32_t ImageIndex = swapChain->AcquireNextImage();
             device->GetFrameCommandQueue()->ResetCommandPoolMemory(cmdPools[ImageIndex].get ());
-            RHI::GraphicsQueueSwapChainInfo GQSCInfo = swapChain->GetGraphicsQueueSwapChainInfo();
-            device->GetFrameCommandQueue()->SetGraphicsQueueSwapChainInfo(GQSCInfo);
+            RHI::GraphicsQueueRequirements GQSCInfo = swapChain->GetGraphicsQueueRequirements();
+            device->GetFrameCommandQueue()->SetGraphicsQueueRequirements(GQSCInfo);
 
             cmdLists[ImageIndex]->BeginRecording ();
                 RHI::RHITexture* backBuffer = swapChain->GetBackBuffer(ImageIndex);

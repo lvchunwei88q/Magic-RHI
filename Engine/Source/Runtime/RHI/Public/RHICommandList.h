@@ -400,7 +400,7 @@ namespace RHI
          * @brief
          * @param Info
          */
-        virtual void SetGraphicsQueueSwapChainInfo(GraphicsQueueSwapChainInfo Info) = 0;
+        virtual void SetGraphicsQueueRequirements(GraphicsQueueRequirements Info) = 0;
         /**
          * @brief
          * @param cmdPool

@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <string>
 #include "Common/RHI_API.h"
-#include "Tools/EnumClassFlags.h"
+#include "Common/RHITypes.h"
 
 // Platform Check
 #if defined(_WIN32) || defined(_WIN64)
@@ -17,20 +17,6 @@
 
 namespace RHI
 {
-    /**
-     * @brief RHI Type Enum.
-     */
-    enum class RHIType : uint8_t
-    {
-        None = 0,
-        D3D12   = 1 <<  1,      // DirectX 12
-        VulKan  = 1 <<  2,      // Vulkan
-        // More RHI types ...
-
-        Unknown = 0xFF,      // Unknown
-    };
-    ENUM_CLASS_FLAGS(RHIType);
-
     /**
      * @brief Utility function to convert RHIType to string representation
      * @param type

@@ -248,14 +248,14 @@ namespace RHI
     void GraphicsCommandQueueD3D12::EndFrame()
     {
         // We just use the image index given by the swap chain.
-        m_CurrentFrameIndex = m_SwapChainInfo.imageIndex;
+        m_CurrentFrameIndex = m_Requirements.imageIndex;
     }
 
     void GraphicsCommandQueueD3D12::Present() 
     {
-        IDXGISwapChain1* nativeSwapChain = reinterpret_cast<IDXGISwapChain1*>(m_SwapChainInfo.SwapChain);
+        IDXGISwapChain1* nativeSwapChain = m_Requirements.SwapChain;
 
-        UINT syncInterval = m_SwapChainInfo.VSync ? 1 : 0; // 0 = No VSync (immediate), 1 = VSync
+        UINT syncInterval = m_Requirements.VSync ? 1 : 0; // 0 = No VSync (immediate), 1 = VSync
         UINT presentFlags = 0; // 0 = No tearing by default
         HRESULT hr = nativeSwapChain->Present(syncInterval, presentFlags);
 
@@ -286,9 +286,21 @@ namespace RHI
         }
     }
     
-    void GraphicsCommandQueueD3D12::SetGraphicsQueueSwapChainInfo(GraphicsQueueSwapChainInfo Info) 
+    void GraphicsCommandQueueD3D12::SetGraphicsQueueRequirements(GraphicsQueueRequirements Info) 
     {
-        m_SwapChainInfo = Info;
+        if(Info.GetType() != RHIType::D3D12) {
+            ThrowErrorMessage("GraphicsQueueRequirements is not of type GraphicsQueueRequirementsD3D12");
+            return;
+        }
+
+        GraphicsQueueRequirementsD3D12* pInfo = SafeCast<GraphicsQueueRequirementsD3D12>(&Info);
+        if (!pInfo) {
+            ThrowErrorMessage("GraphicsQueueRequirementsD3D12 is nullptr");
+            return;
+        }
+
+        // copy the requirements to the member variable
+        m_Requirements = *pInfo;
     }
 
     void GraphicsCommandQueueD3D12::ResetCommandPoolMemory(const RHICommandPool* cmdPool)

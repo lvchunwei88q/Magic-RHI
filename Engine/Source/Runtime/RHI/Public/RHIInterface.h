@@ -326,7 +326,7 @@ namespace RHI
          * @brief
          * @return
          */
-        virtual GraphicsQueueSwapChainInfo GetGraphicsQueueSwapChainInfo() const = 0;
+        virtual GraphicsQueueRequirements GetGraphicsQueueRequirements() const = 0;
 
     protected:
         InitialState m_Initialization;

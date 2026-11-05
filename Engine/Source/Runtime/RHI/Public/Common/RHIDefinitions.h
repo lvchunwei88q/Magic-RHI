@@ -24,21 +24,17 @@ struct SwapChainDesc
 };
 
 /**
- * @brief Graphics Queue SwapChain Info.
+ * @brief Graphics Queue Requirements.
  */
-struct GraphicsQueueSwapChainInfo
+struct GraphicsQueueRequirements
 {
-    using SwapChainHandle = uint64_t;
-    using SemaphoreHandle = uint64_t;
+    // RHI Type
+    RHIType Type = RHIType::None;
+    // Since each backend requires different parameters, we leave it to each backend to implement.
+    virtual RHIType GetType() const { return Type; }
 
-    uint32_t imageIndex                     = UINT_INITIAL_VALUE;
-    SwapChainHandle SwapChain               = UINT_INITIAL_VALUE;
-    bool VSync = false;
-
-    // Vulkan Semaphore Handle
-    SemaphoreHandle Semaphore_Vk            = UINT_INITIAL_VALUE;
-    // Vulkan Swap Chain Back Buffer Count
-    uint32_t SwapChainBackBufferCount_Vk    = UINT_INITIAL_VALUE;
+    GraphicsQueueRequirements(RHIType type) : Type(type){}
+    GraphicsQueueRequirements() : Type(RHIType::None){}
 };
 
 /**

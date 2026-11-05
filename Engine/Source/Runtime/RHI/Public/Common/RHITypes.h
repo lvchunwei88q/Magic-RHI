@@ -8,6 +8,20 @@
 namespace RHI
 {
 /**
+* @brief RHI Type Enum.
+*/
+enum class RHIType : uint8_t
+{
+	None = 0,
+	D3D12   = 1 <<  1,      // DirectX 12
+	VulKan  = 1 <<  2,      // Vulkan
+	// More RHI types ...
+
+	Unknown = 0xFF,      // Unknown
+};
+ENUM_CLASS_FLAGS(RHIType);
+
+/**
  * @brief Core Device Initialization State - Place user-uninitialized device.
  */
 enum class InitialState : uint8_t {

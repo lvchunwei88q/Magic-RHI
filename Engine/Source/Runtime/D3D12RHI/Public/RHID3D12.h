@@ -141,8 +141,8 @@ namespace RHI
         RHITextureFormat GetRenderTargetFormat() const override;
         // Get back buffer
         RHITexture* GetBackBuffer(uint32_t index) const override;
-        // Get graphicsQueueSwapChainInfo
-        GraphicsQueueSwapChainInfo GetGraphicsQueueSwapChainInfo() const override;
+        // Get graphicsQueueRequirements
+        GraphicsQueueRequirements GetGraphicsQueueRequirements() const override;
 
         IDXGISwapChain3* GetSwapChain3() const { return m_pSwapChain3.Get(); }
         IDXGISwapChain1* GetSwapChain() const { return m_pSwapChain1.Get(); }

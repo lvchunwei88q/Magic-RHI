@@ -211,15 +211,15 @@ namespace RHI
         return m_pBackBuffers[index].get();
     }
 
-    GraphicsQueueSwapChainInfo SwapChainVulKan::GetGraphicsQueueSwapChainInfo() const 
+    GraphicsQueueRequirements SwapChainVulKan::GetGraphicsQueueRequirements() const 
     {
-        GraphicsQueueSwapChainInfo Info;
-        Info.imageIndex = m_AvailableSwapChainImageIndex;
-        Info.SwapChain = (uint64_t)m_SwapChain;
-        Info.Semaphore_Vk = (uint64_t)m_ImageAvailableSemaphore;
-        Info.SwapChainBackBufferCount_Vk = (uint32_t)m_pBackBuffers.size();
-        Info.VSync = m_desc.VSync;
-        return Info;
+        GraphicsQueueRequirementsVulKan Requirements;
+        Requirements.imageIndex = m_AvailableSwapChainImageIndex;
+        Requirements.SwapChain = m_SwapChain;
+        Requirements.Semaphore = m_ImageAvailableSemaphore;
+        Requirements.SwapChainBackBufferCount = (uint32_t)m_pBackBuffers.size();
+        Requirements.VSync = m_desc.VSync;
+        return Requirements;
     }
 
     bool SwapChainVulKan::VkCreateSwapChain()

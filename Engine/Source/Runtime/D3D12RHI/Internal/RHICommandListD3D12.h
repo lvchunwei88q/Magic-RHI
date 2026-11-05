@@ -1,6 +1,6 @@
 #pragma once
 
-#include "d3dx12.h"
+#include <dxgi1_6.h>
 #include <cstdint>
 #include <d3d12.h>
 
@@ -115,6 +115,15 @@ namespace RHI
     using ComputeCommandListD3D12 = CommandListD3D12;
     using CopyCommandListD3D12 = CommandListD3D12;
 
+    struct GraphicsQueueRequirementsD3D12 : public GraphicsQueueRequirements
+    {
+        IDXGISwapChain1* SwapChain = nullptr;
+        UINT64 imageIndex = 0;
+        bool VSync = true;
+
+        GraphicsQueueRequirementsD3D12() : GraphicsQueueRequirements(RHIType::D3D12) {}
+    };
+
     class GraphicsCommandQueueD3D12 : public RHIFrameCommandQueue
     {
     public:
@@ -142,7 +151,7 @@ namespace RHI
         void Present() override;
         void WaitForGPU() override;
 
-        void SetGraphicsQueueSwapChainInfo(GraphicsQueueSwapChainInfo Info) override;
+        void SetGraphicsQueueRequirements(GraphicsQueueRequirements Info) override;
         void ResetCommandPoolMemory(const RHICommandPool* cmdPool) override;
         bool GetTimestampFrequency(uint64_t* frequency) override; // Get timestamp frequency 只需要获取一次
         uint64_t GetFrameIndex() const override;
@@ -159,8 +168,8 @@ namespace RHI
         std::array<UINT64, RHI_MULTI_BUFFERING> m_FrameFenceValues = {0};
         UINT64 m_CurrentFrameIndex = 0;
         
-        // SwapChain Info 
-        GraphicsQueueSwapChainInfo m_SwapChainInfo;
+        // GraphicsQueue Requirements
+        GraphicsQueueRequirementsD3D12 m_Requirements;
     };
 
     class ComputeCommandQueueD3D12 : public RHICommandQueue

@@ -155,6 +155,17 @@ namespace RHI
     using ComputeCommandListVulKan = CommandListVulKan;
     using CopyCommandListVulKan = CommandListVulKan;
 
+    struct GraphicsQueueRequirementsVulKan : public GraphicsQueueRequirements
+    {
+        VkSwapchainKHR SwapChain = VK_NULL_HANDLE;
+        VkSemaphore Semaphore = VK_NULL_HANDLE;
+        uint32_t imageIndex = 0;
+        uint32_t SwapChainBackBufferCount = 0;
+        bool VSync = true;
+
+        GraphicsQueueRequirementsVulKan() : GraphicsQueueRequirements(RHIType::VulKan) {}
+    };
+
     class GraphicsCommandQueueVulKan : public RHIFrameCommandQueue
     {
     public:
@@ -205,7 +216,7 @@ namespace RHI
         void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override;
         void WaitForGPU() override;
 
-        void SetGraphicsQueueSwapChainInfo(GraphicsQueueSwapChainInfo Info) override;
+        void SetGraphicsQueueRequirements(GraphicsQueueRequirements Info) override;
         void ResetCommandPoolMemory(const RHICommandPool* cmdPool) override;
         bool GetTimestampFrequency(uint64_t* frequency) override;
         uint64_t GetFrameIndex() const override;
@@ -226,8 +237,8 @@ namespace RHI
         // so the GPU can start rendering the next frame right away without waiting for the CPU to finish.
         uint32_t m_CurrentFrameIndex = 0;
 
-        // SwapChain Info 
-        GraphicsQueueSwapChainInfo m_SwapChainInfo;
+        // GraphicsQueue Requirements 
+        GraphicsQueueRequirementsVulKan m_Requirements;
     };
 
     class ComputeCommandQueueVulKan : public RHICommandQueue

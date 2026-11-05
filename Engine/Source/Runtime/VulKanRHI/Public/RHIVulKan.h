@@ -170,8 +170,8 @@ namespace RHI
         RHIRenderTargetView* GetRenderTargetView(uint32_t index) const override;
         RHITextureFormat GetRenderTargetFormat() const override;
         RHITexture* GetBackBuffer(uint32_t index) const override;
-        // Get graphicsQueueSwapChainInfo
-        GraphicsQueueSwapChainInfo GetGraphicsQueueSwapChainInfo() const override;
+        // Get GraphicsQueueRequirements
+        GraphicsQueueRequirements GetGraphicsQueueRequirements() const override;
 
         VkSwapchainKHR GetSwapChain() const { return m_SwapChain; }
         VkFormat GetFormat() const { return m_SwapChainFormat; }

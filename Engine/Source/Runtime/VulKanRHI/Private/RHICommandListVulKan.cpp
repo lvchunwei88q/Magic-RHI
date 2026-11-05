@@ -187,7 +187,7 @@ namespace RHI
         vkResetFences(GetDevice(), 1, &m_inFlightFence);
         
         // Adjust the number of render-complete semaphores
-        uint32_t SwapChainBackBufferCount = m_SwapChainInfo.SwapChainBackBufferCount_Vk;
+        uint32_t SwapChainBackBufferCount = m_Requirements.SwapChainBackBufferCount;
         if (m_RenderFinishedSemaphores.size() != SwapChainBackBufferCount)
         {
             m_RenderFinishedSemaphores.resize(SwapChainBackBufferCount);
@@ -211,7 +211,7 @@ namespace RHI
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
         // Set wait semaphore
-        VkSemaphore vkImageAvailableSemaphore = reinterpret_cast<VkSemaphore>(m_SwapChainInfo.Semaphore_Vk);
+        VkSemaphore vkImageAvailableSemaphore = (m_Requirements.Semaphore);
         VkSemaphore waitSemaphores[] = { vkImageAvailableSemaphore };
         VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
         submitInfo.waitSemaphoreCount = 1;
@@ -222,7 +222,7 @@ namespace RHI
         submitInfo.pCommandBuffers = commandBuffers.data();
 
 		// Set render completion semaphore
-        VkSemaphore signalSemaphores[] = { m_RenderFinishedSemaphores[m_SwapChainInfo.imageIndex] };
+        VkSemaphore signalSemaphores[] = { m_RenderFinishedSemaphores[m_Requirements.imageIndex] };
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
@@ -249,8 +249,8 @@ namespace RHI
     void GraphicsCommandQueueVulKan::Present()
     {
         // Semaphore for getting the current SwapChain image index
-        VkSemaphore RenderFinishedSemaphore[] = { m_RenderFinishedSemaphores[m_SwapChainInfo.imageIndex] };
-        VkSwapchainKHR vkSwapChain = reinterpret_cast<VkSwapchainKHR>(m_SwapChainInfo.SwapChain);
+        VkSemaphore RenderFinishedSemaphore[] = { m_RenderFinishedSemaphores[m_Requirements.imageIndex] };
+        VkSwapchainKHR vkSwapChain = (m_Requirements.SwapChain);
 
         VkPresentInfoKHR presentInfo = {};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -260,7 +260,7 @@ namespace RHI
         // Set up the swap chain, image index
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = &vkSwapChain;
-        presentInfo.pImageIndices = &m_SwapChainInfo.imageIndex;
+        presentInfo.pImageIndices = &m_Requirements.imageIndex;
 
         VkResult result = vkQueuePresentKHR(
             m_Queue,
@@ -286,9 +286,21 @@ namespace RHI
         }
     }
 
-    void GraphicsCommandQueueVulKan::SetGraphicsQueueSwapChainInfo(GraphicsQueueSwapChainInfo Info) 
+    void GraphicsCommandQueueVulKan::SetGraphicsQueueRequirements(GraphicsQueueRequirements Info) 
     {
-        m_SwapChainInfo = Info;
+        if(Info.GetType() != RHIType::VulKan) {
+            ThrowErrorMessage("GraphicsQueueRequirements is not of type GraphicsQueueRequirementsVulKan");
+            return;
+        }
+
+        GraphicsQueueRequirementsVulKan * pInfo = SafeCast<GraphicsQueueRequirementsVulKan>(&Info);
+        if (pInfo == nullptr) {
+            ThrowErrorMessage("GraphicsQueueRequirementsVulKan is nullptr");
+            return;
+        }
+
+        // copy the requirements to the member variable
+        m_Requirements = *pInfo;
     }
 
     void GraphicsCommandQueueVulKan::ResetCommandPoolMemory(const RHICommandPool* cmdPool)
