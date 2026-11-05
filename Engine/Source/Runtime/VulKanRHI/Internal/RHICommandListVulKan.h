@@ -157,13 +157,16 @@ namespace RHI
 
     struct GraphicsQueueRequirementsVulKan : public GraphicsQueueRequirements
     {
+        // Set the RHI type to Vulkan
+        RHIType GetType() const override { return RHIType::VulKan; }
+
         VkSwapchainKHR SwapChain = VK_NULL_HANDLE;
         VkSemaphore Semaphore = VK_NULL_HANDLE;
         uint32_t imageIndex = 0;
         uint32_t SwapChainBackBufferCount = 0;
         bool VSync = true;
 
-        GraphicsQueueRequirementsVulKan() : GraphicsQueueRequirements(RHIType::VulKan) {}
+        GraphicsQueueRequirementsVulKan() : GraphicsQueueRequirements() {}
     };
 
     class GraphicsCommandQueueVulKan : public RHIFrameCommandQueue
@@ -216,7 +219,7 @@ namespace RHI
         void ExecuteCommandLists(const std::vector<std::shared_ptr<RHICommandList>>& cmdLists) override;
         void WaitForGPU() override;
 
-        void SetGraphicsQueueRequirements(GraphicsQueueRequirements Info) override;
+        void SetGraphicsQueueRequirements(GraphicsQueueRequirements* Info) override;
         void ResetCommandPoolMemory(const RHICommandPool* cmdPool) override;
         bool GetTimestampFrequency(uint64_t* frequency) override;
         uint64_t GetFrameIndex() const override;

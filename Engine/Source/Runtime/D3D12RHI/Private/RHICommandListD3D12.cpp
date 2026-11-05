@@ -286,14 +286,14 @@ namespace RHI
         }
     }
     
-    void GraphicsCommandQueueD3D12::SetGraphicsQueueRequirements(GraphicsQueueRequirements Info) 
+    void GraphicsCommandQueueD3D12::SetGraphicsQueueRequirements(GraphicsQueueRequirements* Info) 
     {
-        if(Info.GetType() != RHIType::D3D12) {
+        if(Info->GetType() != RHIType::D3D12) {
             ThrowErrorMessage("GraphicsQueueRequirements is not of type GraphicsQueueRequirementsD3D12");
             return;
         }
 
-        GraphicsQueueRequirementsD3D12* pInfo = SafeCast<GraphicsQueueRequirementsD3D12>(&Info);
+        GraphicsQueueRequirementsD3D12* pInfo = SafeCast<GraphicsQueueRequirementsD3D12>(Info);
         if (!pInfo) {
             ThrowErrorMessage("GraphicsQueueRequirementsD3D12 is nullptr");
             return;

@@ -286,14 +286,14 @@ namespace RHI
         }
     }
 
-    void GraphicsCommandQueueVulKan::SetGraphicsQueueRequirements(GraphicsQueueRequirements Info) 
+    void GraphicsCommandQueueVulKan::SetGraphicsQueueRequirements(GraphicsQueueRequirements* Info) 
     {
-        if(Info.GetType() != RHIType::VulKan) {
+        if(Info->GetType() != RHIType::VulKan) {
             ThrowErrorMessage("GraphicsQueueRequirements is not of type GraphicsQueueRequirementsVulKan");
             return;
         }
 
-        GraphicsQueueRequirementsVulKan * pInfo = SafeCast<GraphicsQueueRequirementsVulKan>(&Info);
+        GraphicsQueueRequirementsVulKan * pInfo = SafeCast<GraphicsQueueRequirementsVulKan>(Info);
         if (pInfo == nullptr) {
             ThrowErrorMessage("GraphicsQueueRequirementsVulKan is nullptr");
             return;

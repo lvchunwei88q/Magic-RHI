@@ -28,13 +28,10 @@ struct SwapChainDesc
  */
 struct GraphicsQueueRequirements
 {
-    // RHI Type
-    RHIType Type = RHIType::None;
     // Since each backend requires different parameters, we leave it to each backend to implement.
-    virtual RHIType GetType() const { return Type; }
+    virtual RHIType GetType() const = 0;
 
-    GraphicsQueueRequirements(RHIType type) : Type(type){}
-    GraphicsQueueRequirements() : Type(RHIType::None){}
+    GraphicsQueueRequirements(){}
 };
 
 /**

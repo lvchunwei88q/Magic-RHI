@@ -117,11 +117,14 @@ namespace RHI
 
     struct GraphicsQueueRequirementsD3D12 : public GraphicsQueueRequirements
     {
+        // Set the RHI type to D3D12
+        RHIType GetType() const override { return RHIType::D3D12; }
+
         IDXGISwapChain1* SwapChain = nullptr;
         UINT64 imageIndex = 0;
         bool VSync = true;
 
-        GraphicsQueueRequirementsD3D12() : GraphicsQueueRequirements(RHIType::D3D12) {}
+        GraphicsQueueRequirementsD3D12() : GraphicsQueueRequirements() {}
     };
 
     class GraphicsCommandQueueD3D12 : public RHIFrameCommandQueue
@@ -151,7 +154,7 @@ namespace RHI
         void Present() override;
         void WaitForGPU() override;
 
-        void SetGraphicsQueueRequirements(GraphicsQueueRequirements Info) override;
+        void SetGraphicsQueueRequirements(GraphicsQueueRequirements* Info) override;
         void ResetCommandPoolMemory(const RHICommandPool* cmdPool) override;
         bool GetTimestampFrequency(uint64_t* frequency) override; // Get timestamp frequency 只需要获取一次
         uint64_t GetFrameIndex() const override;

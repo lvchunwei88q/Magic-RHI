@@ -326,7 +326,7 @@ namespace RHI
          * @brief
          * @return
          */
-        virtual GraphicsQueueRequirements GetGraphicsQueueRequirements() const = 0;
+        virtual std::unique_ptr<GraphicsQueueRequirements> GetGraphicsQueueRequirements() const = 0;
 
     protected:
         InitialState m_Initialization;

@@ -189,12 +189,12 @@ namespace RHI
         return m_pBackBuffers[index].get();
     }
 
-    GraphicsQueueRequirements SwapChainD3D12::GetGraphicsQueueRequirements() const 
+    std::unique_ptr<GraphicsQueueRequirements> SwapChainD3D12::GetGraphicsQueueRequirements() const 
     {
-        GraphicsQueueRequirementsD3D12 Requirements;
-        Requirements.imageIndex = m_pSwapChain3->GetCurrentBackBufferIndex();
-        Requirements.SwapChain = m_pSwapChain1.Get();
-        Requirements.VSync = m_desc.VSync;
+        auto Requirements = std::make_unique<GraphicsQueueRequirementsD3D12>();
+        Requirements->imageIndex = m_pSwapChain3->GetCurrentBackBufferIndex();
+        Requirements->SwapChain = m_pSwapChain1.Get();
+        Requirements->VSync = m_desc.VSync;
         return Requirements;
     }
 }

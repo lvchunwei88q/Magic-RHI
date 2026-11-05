@@ -277,8 +277,8 @@ void TestHelloTriangle()
             device->GetFrameCommandQueue()->BeginFrame();
             uint32_t ImageIndex = swapChain->AcquireNextImage ();
             device->GetFrameCommandQueue()->ResetCommandPoolMemory(cmdPools[ImageIndex].get ());
-            RHI::GraphicsQueueRequirements GQSCInfo = swapChain->GetGraphicsQueueRequirements();
-            device->GetFrameCommandQueue()->SetGraphicsQueueRequirements(GQSCInfo);
+            auto GQSCInfo = swapChain->GetGraphicsQueueRequirements();
+            device->GetFrameCommandQueue()->SetGraphicsQueueRequirements(GQSCInfo.get());
 
             cmdLists[ImageIndex]->BeginRecording ();
             RHI::RHITexture* BackBufferTexture = swapChain->GetBackBuffer(ImageIndex);

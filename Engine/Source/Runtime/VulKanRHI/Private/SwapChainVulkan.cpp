@@ -211,14 +211,14 @@ namespace RHI
         return m_pBackBuffers[index].get();
     }
 
-    GraphicsQueueRequirements SwapChainVulKan::GetGraphicsQueueRequirements() const 
+    std::unique_ptr<GraphicsQueueRequirements> SwapChainVulKan::GetGraphicsQueueRequirements() const 
     {
-        GraphicsQueueRequirementsVulKan Requirements;
-        Requirements.imageIndex = m_AvailableSwapChainImageIndex;
-        Requirements.SwapChain = m_SwapChain;
-        Requirements.Semaphore = m_ImageAvailableSemaphore;
-        Requirements.SwapChainBackBufferCount = (uint32_t)m_pBackBuffers.size();
-        Requirements.VSync = m_desc.VSync;
+        auto Requirements = std::make_unique<GraphicsQueueRequirementsVulKan>();
+        Requirements->imageIndex = m_AvailableSwapChainImageIndex;
+        Requirements->SwapChain = m_SwapChain;
+        Requirements->Semaphore = m_ImageAvailableSemaphore;
+        Requirements->SwapChainBackBufferCount = (uint32_t)m_pBackBuffers.size();
+        Requirements->VSync = m_desc.VSync;
         return Requirements;
     }
 
