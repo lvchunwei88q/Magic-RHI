@@ -1,22 +1,22 @@
 # Magic-RHI 接口调整方案
 
 > 面向对象：`Engine/Source/Runtime/RHI`（公共接口）+ `D3D12RHI` / `VulKanRHI`（两个实现）
-> 依据：`docs/MagicRHI-问题清单.md` 48 条静态走查结论。复核基准：HEAD `18d30c2`（2026-11-05）。`Binary\Debug` 下现有 `Magic-RHI.dll` / `Magic-Core.dll` / `Magic-D3D12RHI.dll` / `Magic-VulKanRHI.dll` 与三个测试 exe，时间戳为 2026-11-05 09:39；本次复核**未重新编译、未运行**，所有落地状态与结论仍是代码路径推演。
+> 依据：`docs/MagicRHI-问题清单.md` 48 条静态走查结论。复核基准：HEAD `88c62df`（提交于 2026-11-05 19:35，工作区干净），复核日 **2026-11-06**。`Binary\Debug` 下现有 `Magic-RHI.dll` / `Magic-Core.dll` / `Magic-D3D12RHI.dll` / `Magic-VulKanRHI.dll` 与三个测试 exe，时间戳均为 2026-11-05 **19:27:36~38**——晚于全部源文件最后修改时间（19:27:20）、早于 HEAD 提交 8 分钟，故这批产物与本次复核的源码是同一状态（Debug 全量链接成功）；本次复核**未重新运行**任何产物，所有落地状态与结论仍是代码路径推演。
 > 结论先行：接口词汇（RootSignature / OMSetRenderTargets / Barrier）**不推翻**，只做 5 处增量 + 3 条契约澄清；Vulkan 侧最大的一件事（"一张表一个 descriptor set"）属于实现重构，**不进公共接口**。
-> 本次复核更新：c99617c 已在 Vulkan 命令侧实现 `vkCmdBindPipeline` 与 `vkCmdSetViewport/Scissor`，但 **PSO 创建侧未跟上**（图形分支仍 `return false`，未声明任何 `VK_DYNAMIC_STATE_*`）；详见第 0 节状态列与第 5 节。
+> 本次复核更新（2026-11-06）：基线由 `18d30c2` 推进到 `88c62df`。其间只有 0c0436c / 88c62df 两个提交改动运行时代码——`GraphicsQueueSwapChainInfo` 及其 `_Vk` 字段已被 `GraphicsQueueRequirements`（多态基类）+ 两端 `Internal` 里的派生结构取代（详见 1.2，这直接推翻了本文原先引用它的那条论证）。**A~F 六项改动仍全部未落地**，全文行号已按新基线重校。c99617c 的 Vulkan 命令侧 `vkCmdBindPipeline` 与 `vkCmdSetViewport/Scissor` 仍在，但 **PSO 创建侧未跟上**（图形分支仍 `return false`，未声明任何 `VK_DYNAMIC_STATE_*`）；详见第 0 节状态列与第 5 节。
 
 ---
 
 ## 0. 一张表看清改什么
 
-| # | 改动 | 性质 | 位置 | 掉的清单条目 | 落地状态（2026-11-05） |
+| # | 改动 | 性质 | 位置 | 掉的清单条目 | 落地状态（2026-11-06） |
 |---|---|---|---|---|---|
 | A | 视图创建带 `TextureViewDesc` | 加参数（有默认值） | `RHIInterface.h` / `RHIDefinitions.h` | P1-11、P1-13、P1-3（采样器那半） | **未落地**。公共头：`RHIInterface.h:132,144,150` 仍是旧签名（无 `TextureViewDesc` 尾参），`RHIDefinitions.h` 无 `RHITextureViewType`/`TextureViewDesc`。后端：`DescriptorViewVulKan.cpp:90-98,100-108,110-118,120-128` 与 `DescriptorViewD3D12.cpp:91-99,111-119,121-129` 仍只 `Allocate()`，未建 `VkImageView`/`VkSampler`/RTV/DSV |
 | B | 描述符表按根签名布局分配 set | 纯 Vulkan 实现 | `DescriptorHeapVulKan.*`、`CommandListVK_RootSignature.cpp` | P1-1、P1-2、P2-9 | **未落地**。`DescriptorHeapVulKan.cpp:170-213` 仍 1-binding、`binding=0`、`descriptorCount=1`；`CommandListVK_RootSignature.cpp:93-95,197-199` 写死 `{Standard,0}` 并丢弃 `offsetInDescriptorsFromTableStart`；`Free`（`DescriptorHeapVulKan.cpp:85-117`）仍无 `vkFreeDescriptorSets` |
 | C | 显式 `BeginRenderPass / EndRenderPass` | 新增纯虚函数 | `RHICommandList.h` | P0-2、P1-5、P1-16、P2-6 | **未落地**。`RHICommandList.h` 无 `BeginRenderPass/EndRenderPass` 声明；两端命令列表头（`RHICommandListVulKan.h:77-79`、`RHICommandListD3D12.h:62-64`）均无对应方法；Vulkan 仍由 `OMSetRenderTargets` 隐式开 dynamic rendering（`CommandListVK_OutputMerger.cpp:92`）。P0-2 的命令侧 `vkCmdBindPipeline` 已接（见 D 行），但 pass 生命周期接口本身未建 |
 | D | 动态状态契约（viewport / scissor / topology / blend / depth） | 注释 + Vulkan PSO | `RHICommandList.h`、`RHIPipelineStateVulkan.cpp` | P0-3、P0-4、P1-4、P1-8 | **部分落地（仅 Vulkan 命令侧 viewport/scissor + PSO bind 命令）**。已通：`CommandListVK_PipelineState.cpp:31,36` 已 `vkCmdBindPipeline` 并记录 `m_pCurrentGraphicsPSO:32` / `m_pCurrentComputePSO:37`；`CommandListVK_Rasterizer.cpp:20,36` 已 `vkCmdSetViewport/Scissor`（Y 翻转见 :12-16）。未通：IA 三函数空（`CommandListVK_InputAssembly.cpp:10-12,14-16,18-20`）；blend/depth 两端空（VK `CommandListVK_OutputMerger.cpp:113-116,118-121`；D3D12 `CommandListDX12_OutputMerger.cpp:32-35,37-40`）；**PSO 创建侧未通**（`RHIPipelineStateVulkan.cpp:156-158` 图形分支仍 `return false`；整个 VulKanRHI 后端 grep 无 `vkCreateGraphicsPipelines` / `VK_DYNAMIC_STATE` / `VkDynamicState` / `pDynamicState` / `VkPipelineViewportStateCreateInfo`）；公共头无静态/动态状态分区注释 |
 | E | `Map/Unmap` 带范围 + `Invalidate/Flush` | 改签名（默认参数） | `RHIResource.h` | P2-13、P2-14 | **未落地**。`RHIResource.h:354,358` 仍是无参 `Map()/Unmap()`，无 `InvalidateMappedRange/FlushMappedRange` 虚函数；D3D12 仍传 `(0,0)` 范围（`RHIResourceD3D12.h:67,85`）；Vulkan readback 选 `HOST_VISIBLE|HOST_CACHED`（`RHIResourceVulKan.cpp:20`），`Map:269`/`Unmap:287` 无 invalidate/flush |
-| F | `RHI_ALL_SUBRESOURCES` 常量 | 常量 + 注释 | `RHIDefinitions.h` | P1-18 的一部分 | **未落地**。`RHIDefinitions.h` 无 `RHI_ALL_SUBRESOURCES`；`ResourceTransitionBarrier:50` 默认值仍 `UINT_INITIAL_VALUE(0)`，注释仍写 `-1 for all`；`TextureDesc:91-102` 无 `InitialState`；Vulkan 仍按 `UINT32_MAX` 判全部（`CommandListVK_ResourceBarrier.cpp:165`），swapchain 首用特判仍在（`:141,155-163`） |
+| F | `RHI_ALL_SUBRESOURCES` 常量 | 常量 + 注释 | `RHIDefinitions.h` | P1-18 的一部分 | **未落地**。`RHIDefinitions.h` 无 `RHI_ALL_SUBRESOURCES`；`ResourceTransitionBarrier:43` 默认值仍 `UINT_INITIAL_VALUE(0)`，注释仍写 `-1 for all`；`TextureDesc:84-95` 无 `InitialState`；Vulkan 仍按 `UINT32_MAX` 判全部（`CommandListVK_ResourceBarrier.cpp:165`），swapchain 首用特判仍在（`:141,155-163`） |
 | — | 顶点偏移 + stride 契约 | 注释（不改签名） | `RHICommandList.h` | P1-15 | **未落地**。`CommandListDX12_InputAssembly.cpp:88-104` 仍忽略 `pOffsets`（`BufferLocation:97` 用基址，`SizeInBytes:99` 用整缓冲） |
 | — | 不改 | 明确不做 | — | 见第 11 节 | 维持不做（复核未发现与现状矛盾） |
 
@@ -41,27 +41,42 @@
 
 所以**不要再引入一套平行的 `RHIResourceAccess` 枚举**——那等于把同一件事写两遍，两边还会漂。真正缺的是三件更小的事：首次布局从哪来（见第 3 节 F）、aspect 怎么定（`:95-103` 现在"只要沾深度就返回 DEPTH|STENCIL"）、子资源默认值语义矛盾（见 F）。
 
-### 1.2 后端口径进公共头，已经有先例
+### 1.2 后端口径不进公共头：88c62df 之后有了正式出口（原"先例"论证已失效）
 
-`RHIDefinitions.h:29-42` 的 `GraphicsQueueSwapChainInfo` 里明明白白放着两个 Vulkan 专用字段：
+上一版本文曾以旧基线下 `RHIDefinitions.h:29-42` 的 `GraphicsQueueSwapChainInfo` 作为"允许 `_Vk` 字段进公共头"的先例。**这条依据已经不成立**——0c0436c / 88c62df 把这个结构拆掉了，改成了"公共头留中性基类、后端专有字段下沉到各自 Internal"：
+
+这个结构在公共头只剩一个跨 API 中性的多态基类（`RHIDefinitions.h:29-35`）：
 
 ```cpp
-struct GraphicsQueueSwapChainInfo
+struct GraphicsQueueRequirements
 {
-    using SwapChainHandle = uint64_t;   // 统一成 uint64_t，不出现 VkSwapchainKHR
-    ...
-    SemaphoreHandle Semaphore_Vk         = UINT_INITIAL_VALUE;  // :39
-    uint32_t        SwapChainBackBufferCount_Vk = UINT_INITIAL_VALUE; // :41
+    // Since each backend requires different parameters, we leave it to each backend to implement.
+    virtual RHIType GetType() const = 0;
+
+    GraphicsQueueRequirements(){}
 };
 ```
 
-这说明本项目的既有取向是：**跨 API 的句柄一律降级成整数（`uint64_t`），后端专有的"增量信息"允许带 `_Vk` 后缀作为可选字段**。本方案沿用这条：第 2 节的 `TextureViewDesc` 是跨 API 共有的描述（不进 `Vk` 字样），第 3 节的 `InitialState` 用的是已有的 `RHIResourceState`。**同时这也划出红线：`_Vk` 字段只能承载"另一个后端用不上、但也不会被误解"的增量，不能借这个口子把 `VkDescriptorSetLayout` / `VkImageLayout` 成体系地搬进来。**
+后端专有字段分别落在两端 `Internal` 头的派生结构里：
+
+- `GraphicsQueueRequirementsVulKan`（`VulKanRHI/Internal/RHICommandListVulKan.h:158-170`）：`VkSwapchainKHR` / `VkSemaphore` / `imageIndex` / `SwapChainBackBufferCount` / `VSync`；
+- `GraphicsQueueRequirementsD3D12`（`D3D12RHI/Internal/RHICommandListD3D12.h:118-128`）：`IDXGISwapChain1*` / `imageIndex` / `VSync`。
+
+交接方式也从"按值传一个统一结构"改成"传基类指针 + 运行时类型校验"：`SetGraphicsQueueRequirements(GraphicsQueueRequirements*)`（`RHICommandList.h:403`）里先比 `GetType()`，再 `SafeCast` 到具体派生结构（`RHICommandListD3D12.cpp:289-304`、`RHICommandListVulKan.cpp:289-304`）；反方向由 `std::unique_ptr<GraphicsQueueRequirements> GetGraphicsQueueRequirements() const`（`RHIInterface.h:329`）返回。
+
+这条新取向比旧先例更强，红线也更清楚：
+
+1. 公共头现在**一个 `_Vk` 字段都没有**，`RHI/Public` 下也检索不到 `Vk` / `D3D12_` 类型的句柄或布局（本次全文检索 0 命中）；
+2. 后端专有信息的合法去处是"后端 `Internal` 头的派生结构"，而不是公共头里的可选字段；
+3. 所以第 2 节的 `TextureViewDesc` 继续保持跨 API 中性（不出现 `Vk` 字样），第 3 节的 `InitialState` 复用已有的 `RHIResourceState`——**不要**借新基类往回加 `_Vk` 式字段，那等于把刚拆掉的东西原地装回去。
+
+> 这个新模式本身还有一处待补：基类没有虚析构，而 `GetGraphicsQueueRequirements()` 用 `std::unique_ptr<GraphicsQueueRequirements>` 返回派生对象（`RHIInterface.h:329`、`SwapChainVulkan.cpp:214-223`、`SwapChainD3D12.cpp:192-199`），经基类指针析构属 UB。已记为问题清单 **N6**；沿用这个模式前先补 `virtual ~GraphicsQueueRequirements() = default;`。
 
 ---
 
 ## 2. 改动 A：视图创建必须带视图描述
 
-> **落地状态（2026-11-05）：未落地。** 公共头签名未变（`RHIInterface.h:132,144,150`），两端后端纹理/采样器/RTV/DSV 入口仍只分配槽位（证据见 2.1）。
+> **落地状态（2026-11-06）：未落地。** 公共头签名未变（`RHIInterface.h:132,144,150`），两端后端纹理/采样器/RTV/DSV 入口仍只分配槽位（证据见 2.1）。
 
 ### 2.1 现状（三条证据）
 
@@ -133,7 +148,7 @@ virtual RHIDescriptorHandle CreateDSVHeapDescriptorView(
 
 1. `SafeCast<TextureVulKan>(Texture)` 拿 `GetImage()`、`GetFormat()`；
 2. 由 `ViewType` 推 `VkImageViewType`，`Format = View.Format == Unknown ? GetFormat() : View.Format`；
-3. `aspect`：`IsDepthFormat(format)` 决定 `DEPTH`，`IsStencilFormat(format)` 决定补 `STENCIL`（两个函数已在 `RHITypes.h:391-420`，别再自己写 switch）；
+3. `aspect`：`IsDepthFormat(format)` 决定 `DEPTH`，`IsStencilFormat(format)` 决定补 `STENCIL`（两个函数已在 `RHITypes.h:405-434`，别再自己写 switch）；
 4. `vkCreateImageView` → `DescriptorHeapVulKan::SetSRVDescriptor(...)`（该函数已存在，`DescriptorHeapVulKan.h:60`）；
 5. RTV / DSV 走 `SetRTVDescriptor` / `SetDSVDescriptor`（`DescriptorHeapVulKan.h:62-63`）。
 
@@ -160,12 +175,12 @@ virtual RHIDescriptorHandle CreateDSVHeapDescriptorView(
 
 ## 3. 改动 F：子资源常量与首次布局
 
-> **落地状态（2026-11-05）：未落地。** 常量 `RHI_ALL_SUBRESOURCES` 与 `TextureDesc::InitialState` 均未加入公共头；barrier 默认值/注释/实现三处口径矛盾依旧（证据见 3.1）。
+> **落地状态（2026-11-06）：未落地。** 常量 `RHI_ALL_SUBRESOURCES` 与 `TextureDesc::InitialState` 均未加入公共头；barrier 默认值/注释/实现三处口径矛盾依旧（证据见 3.1）。
 
 ### 3.1 现状
 
 ```cpp
-RHIDefinitions.h:47-53
+RHIDefinitions.h:40-46
 struct ResourceTransitionBarrier
 {
     class RHIResource* pResource   = nullptr;
@@ -193,7 +208,7 @@ struct ResourceTransitionBarrier
     ...
 };
 
-// TextureDesc 末尾加一行（RHIResourceState 早已存在，见 RHITypes.h:454 起）
+// TextureDesc 末尾加一行（RHIResourceState 早已存在，见 RHITypes.h:468 起）
 struct TextureDesc
 {
     ...
@@ -223,7 +238,7 @@ struct TextureDesc
 
 ## 4. 改动 C：显式的 render pass 阶段（这条最关键）
 
-> **落地状态（2026-11-05）：未落地。** 公共头无 `BeginRenderPass/EndRenderPass`，两端命令列表均无对应方法；Vulkan 仍由 `OMSetRenderTargets` 隐式开 dynamic rendering。已发生的变化：`SetPipelineState` 命令侧已接 `vkCmdBindPipeline`（c99617c），不再是 TODO，但图形 PSO 本身创建失败（见第 5 节 D），且"pass 内"状态接口仍未定义。
+> **落地状态（2026-11-06）：未落地。** 公共头无 `BeginRenderPass/EndRenderPass`，两端命令列表均无对应方法；Vulkan 仍由 `OMSetRenderTargets` 隐式开 dynamic rendering。已发生的变化：`SetPipelineState` 命令侧已接 `vkCmdBindPipeline`（c99617c），不再是 TODO，但图形 PSO 本身创建失败（见第 5 节 D），且"pass 内"状态接口仍未定义。
 
 ### 4.1 现状
 
@@ -327,7 +342,7 @@ cmdLists[ImageIndex]->EndRenderPass();
 
 ## 5. 改动 D：动态状态契约（不改签名，但要写死）
 
-> **落地状态（2026-11-05）：部分落地。** 仅 Vulkan 命令侧的 viewport / scissor 与 PSO bind 命令已通；IA 拓扑/顶点/索引、两端 blend / depth 仍空；**PSO 创建侧未通，且未声明任何 `VK_DYNAMIC_STATE_*`**；公共头也还没有静态/动态状态分区注释。命令侧先于 PSO 侧落地，当前组合不能被表述为"整条动态状态链路已落地"。
+> **落地状态（2026-11-06）：部分落地。** 仅 Vulkan 命令侧的 viewport / scissor 与 PSO bind 命令已通；IA 拓扑/顶点/索引、两端 blend / depth 仍空；**PSO 创建侧未通，且未声明任何 `VK_DYNAMIC_STATE_*`**；公共头也还没有静态/动态状态分区注释。命令侧先于 PSO 侧落地，当前组合不能被表述为"整条动态状态链路已落地"。
 
 ### 5.1 为什么必须约定
 
@@ -344,7 +359,7 @@ cmdLists[ImageIndex]->EndRenderPass();
 
 `RHIPipelineStateVulkan.cpp:156-158` 现在是 `Type = Graphics; return false;`——连 `vkCreateGraphicsPipelines` 都没调（对照 `:216-239` 的 compute 分支是真建的，`vkCreateComputePipelines:224-234`）。
 
-**VK_DYNAMIC_STATE 核实结论（2026-11-05）**：在整个 `VulKanRHI` 目录 grep `vkCreateGraphicsPipelines` / `VK_DYNAMIC_STATE` / `VkDynamicState` / `pDynamicState` / `dynamicState` / `VkPipelineViewportStateCreateInfo` / `viewportCount` / `scissorCount`，**0 命中**（`VkViewport` 仅出现在命令侧 `CommandListVK_Rasterizer.cpp:9` 的视口数组里，与 PSO 创建无关）。
+**VK_DYNAMIC_STATE 核实结论（2026-11-06 复检）**：在整个 `VulKanRHI` 目录 grep `vkCreateGraphicsPipelines` / `VK_DYNAMIC_STATE` / `VkDynamicState` / `pDynamicState` / `dynamicState` / `VkPipelineViewportStateCreateInfo` / `viewportCount` / `scissorCount`，**0 命中**（`VkViewport` 仅出现在命令侧 `CommandListVK_Rasterizer.cpp:9` 的视口数组里，与 PSO 创建无关）。
 
 现状属于哪一种错，需要和后面两种典型错误区分开：
 
@@ -367,7 +382,7 @@ cmdLists[ImageIndex]->EndRenderPass();
 
 ## 6. 改动 B：描述符表按根签名布局分配 set（纯实现，不进接口）
 
-> **落地状态（2026-11-05）：未落地。** 表级 set 能力未加；`AllocateDescriptorSet` 仍是 1-binding / binding 0；绑定点写死 `{Standard,0}`、丢弃 offset；root CBV/SRV/UAV 六个函数仍 TODO（`CommandListVK_RootSignature.cpp:107-114,116-123,125-132,211-218,220-227,229-236`）。push constant 路径已落地（`vkCmdPushConstants:165,269`），不在本节范围内。
+> **落地状态（2026-11-06）：未落地。** 表级 set 能力未加；`AllocateDescriptorSet` 仍是 1-binding / binding 0；绑定点写死 `{Standard,0}`、丢弃 offset；root CBV/SRV/UAV 六个函数仍 TODO（`CommandListVK_RootSignature.cpp:107-114,116-123,125-132,211-218,220-227,229-236`）。push constant 路径已落地（`vkCmdPushConstants:165,269`），不在本节范围内。
 
 ### 6.1 现状
 
@@ -445,7 +460,7 @@ vkCmdBindDescriptorSets(m_CommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
 
 ## 7. 改动 E：`Map/Unmap` 带范围与一致性
 
-> **落地状态（2026-11-05）：未落地。** 公共签名未变，无 `Invalidate/Flush` 接口；两端后端现状见 7.1。
+> **落地状态（2026-11-06）：未落地。** 公共签名未变，无 `Invalidate/Flush` 接口；两端后端现状见 7.1。
 
 ### 7.1 现状
 
@@ -485,7 +500,7 @@ virtual void FlushMappedRange(uint64_t Offset, uint64_t Size) {}
 
 ## 8. 顶点偏移契约（不改签名，一条注释 + 一处实现）
 
-> **落地状态（2026-11-05）：未落地。** 公共头无偏移语义注释；D3D12 顶点缓冲仍忽略 `pOffsets`（证据见下）。索引缓冲偏移已叠加（`CommandListDX12_InputAssembly.cpp:112,114`），不在本条范围内。
+> **落地状态（2026-11-06）：未落地。** 公共头无偏移语义注释；D3D12 顶点缓冲仍忽略 `pOffsets`（证据见下）。索引缓冲偏移已叠加（`CommandListDX12_InputAssembly.cpp:112,114`），不在本条范围内。
 
 `RHICommandList.h:92` 的 `IASetVertexBuffers(..., const uint64_t* pOffsets)` 在 D3D12 侧被完全忽略：
 
@@ -503,11 +518,11 @@ Vulkan 侧 `vkCmdBindVertexBuffers` 原生支持 `pOffsets`，D3D12 需要把它
 
 ## 9. 实施顺序（按"能不能出画面"排）
 
-> 完成度与下一步按 HEAD `18d30c2`（2026-11-05）代码现状重排；编号 M1~M6 沿用原方案，未重排。
+> 完成度与下一步按 HEAD `88c62df`（2026-11-05 19:35）代码现状重排；编号 M1~M6 沿用原方案，未重排。0c0436c / 88c62df 的 `GraphicsQueueRequirements` 重构不属于 A~F 任何一项，未改变本表完成度。
 
-| 里程碑 | 内容 | 为什么在这个位置 | 完成判据 | 当前完成度（2026-11-05） | 下一步该做什么 |
+| 里程碑 | 内容 | 为什么在这个位置 | 完成判据 | 当前完成度（2026-11-06） | 下一步该做什么 |
 |---|---|---|---|---|---|
-| M1 | `docs` 定稿 + 第 3 节 F（子资源常量、`InitialState`）+ 第 2 节 A 的接口声明 | 纯加字段、不动调用方，先让编译面收敛 | 全仓能编过（`Binary\Debug` 现有产物时间戳为 2026-11-05 09:39，改完必须重新构建再看结果） | **1/3**：方案文档本次复核更新；F 常量/`InitialState` 未加（`RHIDefinitions.h`）；A 的 `TextureViewDesc` 接口声明未加（`RHIInterface.h`） | 先补公共头增量：`RHI_ALL_SUBRESOURCES` + barrier 默认值/`TextureDesc::InitialState`；`TextureViewDesc` 与四个视图创建签名尾参；C 的两个纯虚与静态/动态状态契约注释 |
+| M1 | `docs` 定稿 + 第 3 节 F（子资源常量、`InitialState`）+ 第 2 节 A 的接口声明 | 纯加字段、不动调用方，先让编译面收敛 | 全仓能编过（`Binary\Debug` 现有产物时间戳为 2026-11-05 19:27:36~38，与 HEAD `88c62df` 源码同源，说明本次复核的基线是编得过的；改完必须重新构建再看结果） | **1/3**：方案文档本次复核更新；F 常量/`InitialState` 未加（`RHIDefinitions.h`）；A 的 `TextureViewDesc` 接口声明未加（`RHIInterface.h`） | 先补公共头增量：`RHI_ALL_SUBRESOURCES` + barrier 默认值/`TextureDesc::InitialState`；`TextureViewDesc` 与四个视图创建签名尾参；C 的两个纯虚与静态/动态状态契约注释 |
 | M2 | 第 5 节 D（Vulkan 补 `vkCreateGraphicsPipelines`）+ 第 4 节 C 的里程碑 1 | 没有 graphics PSO，后面全是空中楼阁（P0-1） | `HelloTriangleTest` 能进帧循环不崩 | **0/2**（里程碑口径）：图形 PSO 仍 `return false`（`RHIPipelineStateVulkan.cpp:156-158`），未调 `vkCreateGraphicsPipelines`；显式 `BeginRenderPass` 接口未加。命令侧先行落地：`vkCmdBindPipeline`（`CommandListVK_PipelineState.cpp:31,36`）、`vkCmdSetViewport/Scissor`（`CommandListVK_Rasterizer.cpp:20,36`）已通，但不等同于 PSO 创建侧完成 | 补图形 PSO 创建：rendering formats 取自 `RHIPipelineState.h:45-46`；声明 `VK_DYNAMIC_STATE_VIEWPORT/SCISSOR/PRIMITIVE_TOPOLOGY` + `VkPipelineViewportStateCreateInfo`；再落地 Vulkan 显式 `BeginRenderPass`（里程碑 1，测试一行不改） |
 | M3 | 第 4 节 C 的里程碑 2（翻转 `OMSetRenderTargets`）+ 清深度 + pass 内状态 | 决定 P0-2/P0-3/P0-4/P1-5/P1-16/P2-6 一起清 | Vulkan 出第一个三角形 | **0/3**：`OMSetRenderTargets` 仍隐式开 pass；`EndDynamicRendering` 不清缓存（`CommandListVK_OutputMerger.cpp:104-111`）；两端 `ClearDepthStencilView` 空（VK `:36-38`、DX12 `CommandListDX12_Clear.cpp:14-17`）；IA 三函数空（`CommandListVK_InputAssembly.cpp:10-12,14-16,18-20`） | IA 顶点/索引/拓扑绑定先行（出三角形的硬前提）；`EndDynamicRendering` 清 `m_CurrentRenderTargets/m_CurrentRenderArea`；两端实现清深度；再翻转 `OMSetRenderTargets` 为只登记附件 |
 | M4 | 第 6 节 B（表级 set）+ 根描述符 + 第 2 节 A 的 Vulkan 纹理视图 | 依赖 M3 的 pass 内绑定顺序 | 一个带 1 CB + 1 纹理的 shader 能跑 | **0/3**：表级 set 未加（`DescriptorHeapVulKan.cpp:170-213` 仍 1-binding/binding 0）；root CBV/SRV/UAV 六函数 TODO；两端纹理/采样器视图未建 | 表级 set 缓存与分配；根描述符 1-binding set 绑定；A 的 Vulkan/D3D12 纹理视图与采样器落地 |
@@ -553,8 +568,8 @@ Vulkan 侧 `vkCmdBindVertexBuffers` 原生支持 `pOffsets`，D3D12 需要把它
 
 ## 12. 验收清单
 
-- [ ] `Engine/Source/Runtime` 全量可编（`CMakeLists.txt` 里每个 target 都产出对应 DLL）。卡点：本次复核未重新构建、未运行；产物实际在 `Binary\Debug`，含 `Magic-RHI.dll` / `Magic-Core.dll` / `Magic-D3D12RHI.dll` / `Magic-VulKanRHI.dll` 与 `HelloTriangleTest.exe` / `TestSwapChain.exe` / `TestShaderCompile.exe`，均为 2026-11-05 09:39；另有 `VkLayer_khronos_validation.dll`（2026-10-29，可用校验层）但本轮未启用。这些只能证明产物曾产出，编译干净度与运行结果未在本轮复验
-- [x] `RHIDescriptorHandle` 仍是 `{Type, Index}`（`RHIResource.h:111-163`），公共头里搜不到 `Vk` / `vk` / `D3D12_` 句柄或布局类型；既有例外仍是 `GraphicsQueueSwapChainInfo` 的 `Semaphore_Vk:39` / `SwapChainBackBufferCount_Vk:41`（`RHIDefinitions.h`），本次**不新增**例外。注：`RHIType`/`FeatureLevel` 枚举名里出现的 `D3D12_` 是平台标识，不属句柄/布局泄漏
+- [ ] `Engine/Source/Runtime` 全量可编（`CMakeLists.txt` 里每个 target 都产出对应 DLL）。现状：产物在 `Binary\Debug`，含 `Magic-RHI.dll`（5,107,200 B）/ `Magic-Core.dll`（1,090,048 B）/ `Magic-D3D12RHI.dll`（1,218,048 B）/ `Magic-VulKanRHI.dll`（1,396,736 B）与 `HelloTriangleTest.exe` / `TestSwapChain.exe` / `TestShaderCompile.exe`，时间戳均为 2026-11-05 19:27:36~38；而全部源文件最后修改时间为 19:27:20、HEAD 提交于 19:35，故这批产物对应的正是与本文同一份源码，Debug 全量链接成功。另有 `VkLayer_khronos_validation.dll`（2026-10-29，可用校验层）但本轮未启用。**未复验的只剩运行时行为**：出图、校验层合法性、内存一致性仍只到代码推演为止
+- [x] `RHIDescriptorHandle` 仍是 `{Type, Index}`（`RHIResource.h:111-163`），公共头里搜不到 `Vk` / `vk` / `D3D12_` 句柄或布局类型。**此前记录的两个例外已随 0c0436c 消失**：`_Vk` 字段全部下沉到 `VulKanRHI/Internal` 的 `GraphicsQueueRequirementsVulKan`（`RHICommandListVulKan.h:158-170`），公共头 `GraphicsQueueRequirements`（`RHIDefinitions.h:29-35`）只剩 `GetType()`，本次**不新增**例外。注：`RHIType` 枚举名里的 `D3D12` 是平台标识，不属句柄/布局泄漏；该枚举已从 `RHIPlatformDetection.h` 迁到 `Common/RHITypes.h:13`（0c0436c），改公共头时别在两个头各留一份
 - [ ] `SetGraphicsRootDescriptorTable` 只发一次 `vkCmdBindDescriptorSets`，`descriptorSetCount == 1`。卡在 `CommandListVK_RootSignature.cpp:93-95,197-199`：binding 写死 `{Standard,0}`，`offsetInDescriptorsFromTableStart` 被丢弃，表级 set 未建（P1-2）
 - [ ] 一张 3 元素 SRV 表能绑定并通过着色器读到第 2、3 个元素。卡在 B 未落地：`DescriptorHeapVulKan.cpp:170-213` 每资源一 set、binding 0、count 1（P1-2、P1-11）
 - [ ] 纹理 SRV 的 `VkImageView != VK_NULL_HANDLE`，`D32_FLOAT` 时 aspect 无 `STENCIL`。卡在 `DescriptorViewVulKan.cpp:90-98` 未建 `VkImageView`；aspect 仍由 `CommandListVK_ResourceBarrier.cpp:95-103` 的 `GetAspectMask` 判定，沾深度即 `DEPTH|STENCIL`（P1-18）
@@ -562,13 +577,13 @@ Vulkan 侧 `vkCmdBindVertexBuffers` 原生支持 `pOffsets`，D3D12 需要把它
 - [ ] `SetPipelineState` 格式不匹配时报错，不静默画黑。卡在 `RHIPipelineStateVulkan.cpp:156-158` 图形 PSO 未创建；`CommandListVK_PipelineState.cpp:22-27` 只做 `IsValid()` 校验，未与 `RenderTargetFormats`（`RHIPipelineState.h:45-46`）比对
 - [ ] `Map(0,16)/Unmap(0,16)` 在 D3D12 走真实 `D3D12_RANGE`。卡在 `RHIResource.h:354,358` 无 offset/size 参数；`RHIResourceD3D12.h:67,85` 仍传 `(0,0)`（P2-13）
 - [ ] `ClearDepthStencilView` 两端都不再是空函数体。卡在 `CommandListVK_Clear.cpp:36-38`（P1-5）、`CommandListDX12_Clear.cpp:14-17`（P1-16）
-- [ ] `docs/MagicRHI-问题清单.md` 中被本方案销掉的条目逐条标注为已处理或另行排期：P0-2 / P0-3 / P0-4、P1-1 / P1-2 / P1-3（采样器那半）/ P1-4 / P1-5 / P1-8 / P1-11 / P1-13 / P1-15 / P1-16、P2-6 / P2-9 / P2-13 / P2-14、P1-18（aspect 与首用两处）。卡在清单由另一 agent 同步修改，本轮未改清单；另：P0-2、P0-4 的命令侧代码已先行落地（见第 0 节 D 行），清单标注时需区分命令侧与 PSO/创建侧
+- [ ] `docs/MagicRHI-问题清单.md` 中被本方案销掉的条目逐条标注为已处理或另行排期：P0-2 / P0-3 / P0-4、P1-1 / P1-2 / P1-3（采样器那半）/ P1-4 / P1-5 / P1-8 / P1-11 / P1-13 / P1-15 / P1-16、P2-6 / P2-9 / P2-13 / P2-14、P1-18（aspect 与首用两处）。清单已于 2026-11-06 同步更新：48 条编号与状态均未变（仍为已修复 2 / 部分修复 1 / 未修复 45），另追加 N6~N8 三条由 `GraphicsQueueRequirements` 重构引入的新发现；标注时仍需区分命令侧与 PSO/创建侧
 
 ---
 
 ## 13. 风险
 
-> 复核基准 HEAD `18d30c2`（2026-11-05）：以下 1~4 均**未消除**，对应改动（C/B/A/接口新增）尚未落地；本轮新增 5、6 两条，来自"命令侧先行、PSO 侧未通"的当前组合。
+> 复核基准 HEAD `88c62df`（2026-11-06）：以下 1~4 均**未消除**，对应改动（C/B/A/接口新增）尚未落地；5、6 两条来自"命令侧先行、PSO 侧未通"的当前组合；本轮新增第 7 条。
 
 1. **`BeginRenderPass` 翻转默认会打破"OMSetRenderTargets 万能"的直觉**（未消除，C 未落地）。现状仍是 `OMSetRenderTargets` 隐式开 dynamic rendering（`CommandListVK_OutputMerger.cpp:92`）。缓解：Vulkan 侧检测到"未 Begin 就 Draw"时 `WarningCapture` 一次并退化旧路径，不要一上来就 throw。
 2. **表级 set 缓存与命令池复位**（未消除，B 未落地）。`ResetCommandPoolMemory`（`RHICommandList.h:408`）复位的是命令缓冲，不含 descriptor set；缓存必须挂在 `DescriptorHeapVulKan` 而不是 `CommandListVulKan`，否则复用时 set 已失效。
@@ -576,3 +591,4 @@ Vulkan 侧 `vkCmdBindVertexBuffers` 原生支持 `pOffsets`，D3D12 需要把它
 4. **两个纯虚函数同时加**（未消除，C 未落地）。任何漏改的后端都会在 `RHI` 编译期炸——这属于想要的效果，但要一次性改完再提交。
 5. **命令侧先行、PSO 侧未通，容易被误判为整条链路已落地**（本轮新增）。`vkCmdBindPipeline`（`CommandListVK_PipelineState.cpp:31,36`）与 `vkCmdSetViewport/Scissor`（`CommandListVK_Rasterizer.cpp:20,36`）代码已在，但图形 PSO 恒无效（`RHIPipelineStateVulkan.cpp:156-158`），`SetPipelineState` 在 `:23-27` 的 `IsValid()` 校验处早退；审查时不能把"命令已发出"等同于"动态状态生效"。
 6. **图形 PSO 补上后动态态 / viewport state 缺失的校验层风险**（本轮新增，由风险 5 转移细化而来）。当前 `RHIPipelineStateVulkan.cpp` 全文件无 `VkDynamicState` / `pDynamicState` / `VkPipelineViewportStateCreateInfo` / `viewportCount` / `scissorCount` / `vkCreateGraphicsPipelines`（grep 0 命中），两个 struct 整体未构造。后续创建图形 PSO 时两类错误要分开防：漏声明 `VIEWPORT/SCISSOR/PRIMITIVE_TOPOLOGY` → 命令侧 `vkCmdSetViewport/Scissor` 触发校验层 VUID 且不生效；缺 `VkPipelineViewportStateCreateInfo` 或 `viewportCount/scissorCount=0` → PSO 创建阶段即校验失败。
+7. **公共头已清零，但新交接结构缺虚析构**（本轮新增，来自 0c0436c / 88c62df）。`GraphicsQueueRequirements`（`RHIDefinitions.h:29-35`）有纯虚函数却没有 `virtual ~`，而 `GetGraphicsQueueRequirements()` 以 `std::unique_ptr<GraphicsQueueRequirements>` 返回派生对象（`RHIInterface.h:329`），经基类指针析构属 UB（问题清单 N6）。下一轮若继续沿用"中性基类 + 后端 Internal 派生"这个模式（例如把 PSO 描述、render pass 描述也这么传），先补虚析构，否则同一处 UB 会被原样复制到新接口上。

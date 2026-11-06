@@ -1,10 +1,11 @@
 # MagicRHI 问题清单（D3D12 / Vulkan 双后端）
 
-> 首次审查：2026-11-04；**本次复核：2026-11-05，仓库 HEAD `18d30c2`**（`18d30c267f3876c6c47c9cce5c40ff87ec5cb021`）。
+> 首次审查：2026-11-04；**本次复核：2026-11-06，仓库 HEAD `88c62df`**（`88c62dfc8530242aabf388b65aacc566bcf50518`，提交于 2026-11-05 19:35，工作区干净）。
 > 复核方式：**静态代码走查**，逐条回当前 HEAD 源码重新定位行号；**本次复核未运行任何可执行文件，也未启用校验层**（校验层 DLL 在 `Binary\Debug` 可用，见下文「构建现状」，但本次复核未加载）。凡涉及 barrier 合法性、内存一致性、GPU 侧可见性的结论，均标注「代码已补，运行时未验证」。
-> 版本说明：本文已合并外部旧缺陷文档《代码缺陷.md》的 28 条（判定见附录 A），本次复核保留原 48 个编号（P0×4 / P1×20 / P2×19 / P3×5），**未重排、未合并、未删除、未插入新编号**；本次复核新发现的问题单列在文末「新增（未编号，复核于 2026-11-05）」。
-> 构建现状：存在两套产物。`out\bin\` 是 2026-05-27 ~ 2026-06-01 的旧 D3D11/D3D12 构建（`Magic-DirectX11RHI.dll`、`Magic-DirectX12RHI.dll`、`Magic-RHI.dll`、`Magic-Core.dll`、`Magic-IO.dll`、`MagicRHI.exe`），不含 Vulkan 后端。当前实际产物在 `Binary\Debug\`，整包构建于 **2026-11-05 09:39**，含 `Magic-VulKanRHI.dll`（1,393,664 B）、`Magic-RHI.dll`（5,108,736 B）、`Magic-Core.dll`（1,090,560 B）、`Magic-D3D12RHI.dll`（1,214,976 B），以及 `HelloTriangleTest.exe`（235,008 B）、`TestSwapChain.exe`（130,560 B）、`TestShaderCompile.exe`（249,856 B）；同目录另有校验层与转译器 `VkLayer_khronos_validation.dll`、`VkLayer_api_dump.dll`、`VkLayer_crash_diagnostic.dll`（2026-10-29）、`dxcompiler.dll`。该包时间戳（09:39）比 HEAD `18d30c2`（2026-11-05 10:24:45）早约 45 分钟；HEAD 那条提交只改构建脚本里的 VS Dev CMD 路径、不动运行时代码，故这批产物基本对应当前代码状态。**本次复核未运行这些产物、未加载校验层**；下文所有结论仍以代码层证据为准，出图/合法性判断属运行时未验证。
-> 引用格式：`文件:行`，路径相对于仓库根 `F:\ModernDevelopment\DirectXRHI`。
+> 版本说明：本文已合并外部旧缺陷文档《代码缺陷.md》的 28 条（判定见附录 A），本次复核保留原 48 个编号（P0×4 / P1×20 / P2×19 / P3×5），**未重排、未合并、未删除、未插入新编号**；本次复核新发现的问题单列在文末「新增（未编号，复核于 2026-11-05，2026-11-06 追加 N6~N8）」。
+> 基线变化：上一版基准为 `18d30c2`（2026-11-05）。此后只有 0c0436c / 88c62df 两个提交改动运行时代码——`GraphicsQueueSwapChainInfo`（含 `Semaphore_Vk` / `SwapChainBackBufferCount_Vk`）被 `GraphicsQueueRequirements`（多态基类）+ 两端 `Internal` 派生结构取代，`RHIType` 从 `RHIPlatformDetection.h` 迁到 `Common/RHITypes.h`。**48 条的编号、状态、分级全部未变**（已修复仍是 P0-2、P0-4），全文行号已按新基线重校，未受这两个提交影响的文件行号保持不变；重构本身带来 3 条新发现（N6~N8）。**复核粒度说明**：这两个提交触及的文件（`RHIDefinitions.h` / `RHITypes.h` / `RHICommandList.h` / `RHIInterface.h` / `RHIPlatformDetection.h` / 两端 `RHICommandList*` / 两端 `SwapChain*` / 两个测试）逐行读过；其余条目所在文件自 `18d30c2` 起未变，本次只做「文件未变 + 行号回读」的机械复核，未重复逐行阅读。
+> 构建现状：现在只有一套产物（上一版提到的 `out\bin\` 旧 D3D11/D3D12 构建在当前工作副本里已不存在，`out\` 只剩 CMake 构建树 `build\` / `Ninja_Debug\` / `VS_Debug\` / `Generate\` / `.cache\`）。`Binary\Debug\` 于 **2026-11-05 19:27:36~38** 产出 `Magic-VulKanRHI.dll`（1,396,736 B）、`Magic-RHI.dll`（5,107,200 B）、`Magic-Core.dll`（1,090,048 B）、`Magic-D3D12RHI.dll`（1,218,048 B），以及 `HelloTriangleTest.exe`（235,520 B）、`TestSwapChain.exe`（130,560 B）、`TestShaderCompile.exe`（249,856 B）；同目录另有校验层与转译器 `VkLayer_khronos_validation.dll`、`VkLayer_api_dump.dll`、`VkLayer_crash_diagnostic.dll`（2026-10-29）、`dxcompiler.dll`。这批产物晚于全部源文件最后修改时间（19:27:20）、早于 HEAD 提交（19:35:13），且工作区干净，**对应当前 HEAD 源码，可证 Debug 全量链接成功**。**本次复核未运行这些产物、未加载校验层**；下文所有结论仍以代码层证据为准，出图/合法性判断属运行时未验证。
+> 引用格式：`文件:行`，路径相对于仓库根 `D:\C++Project\Magic-RHI`。
 
 ---
 
@@ -19,13 +20,15 @@
 
 即使这两处补齐，链路后面仍有一批未通的环节：纹理/采样器描述符只占槽不建 view、root-level CBV/SRV/UAV 未实现、descriptor set 绑错堆与偏移、Buffer SRV 的 descriptor type 与 usage 不匹配等（详见第 1、2 节）。底层生命周期/并发/性能问题（描述符池回收、关闭顺序、JobSystem 队列遗弃、Buffer 边界等）在「能出图」之后仍会继续咬人。
 
+**2026-11-06 追加**：0c0436c / 88c62df 把交换链交接信息从公共头的 `GraphicsQueueSwapChainInfo` 换成多态 `GraphicsQueueRequirements` + 后端派生结构（两端每帧都 `make_unique` 一份再交给命令队列）。这次改动只动交接管道、不碰出图链路，**上面两个断点一个没动**；但它自己留下三处待补：基类缺虚析构、经 `unique_ptr<基类>` 析构是 UB（N6）；`SetGraphicsQueueRequirements` 未判空即解引用（N7）；每帧一次堆分配（N8）。
+
 ---
 
 ## 1. 总览
 
-共 **48 条**。状态口径：**已修复**（静态可证，附代码位置）/ **部分修复**（写清缺哪一半）/ **未修复** / **描述有误**。
+共 **48 条**（另有文末 8 条未编号新增 N1~N8，未计入；计入则为 56 条）。状态口径：**已修复**（静态可证，附代码位置）/ **部分修复**（写清缺哪一半）/ **未修复** / **描述有误**。
 
-**修复进度统计（复核于 2026-11-05，HEAD 18d30c2）**：已修复 **2**（P0-2、P0-4）；部分修复 **1**（P2-7）；未修复 **45**；描述有误 **0**。
+**修复进度统计（复核于 2026-11-06，HEAD 88c62df）**：已修复 **2**（P0-2、P0-4）；部分修复 **1**（P2-7）；未修复 **45**；描述有误 **0**。
 分级剩余：**P0 未修复 2**（P0-1、P0-3）/ 已修复 2；**P1 未修复 20**；**P2 未修复 18** / 部分修复 1；**P3 未修复 5**。
 
 | 编号 | 级别 | 状态 | 位置 | 问题 | 后果 |
@@ -54,7 +57,7 @@
 | P1-18 | 正确性 | 未修复 | `VulKanRHI/Private/CommandList/CommandListVK_ResourceBarrier.cpp:95-103` | `GetAspectMask` 只要涉及深度就固定返回 `DEPTH_BIT|STENCIL_BIT` | D16/D32 等无模板格式的 barrier 非法 |
 | P1-19 | 正确性 | 未修复 | `RHI/Private/RHIShaderCompiler/RHISPIRVGenerationReflection.cpp:156-172` | push constant 被当作普通 descriptor 读 `DescriptorSet`/`Binding` decoration | 缺省拿到 0/0，混进 `resourcesBySet[0]` 与真实资源冲突 |
 | P1-20 | 崩溃风险 | 未修复 | `RHI/Private/RHIShaderCompiler/RHICompilePipeline.cpp:50-56,66-72` | `controller` 判空只在 `#if RHI_ENABLE_DEBUG_INFO` 内，Release 下继续解引用 | Release 构建空指针崩溃 |
-| P2-1 | 性能/语义 | 未修复 | `VulKanRHI/Internal/RHICommandListVulKan.h:224`、`RHICommandListVulKan.cpp:187,230,241` | 只有 1 个 `m_inFlightFence`，3 个后备缓冲被串行化 | 实际只有 1 帧在飞，CPU/GPU 无法重叠 |
+| P2-1 | 性能/语义 | 未修复 | `VulKanRHI/Internal/RHICommandListVulKan.h:238`、`RHICommandListVulKan.cpp:187,230,241` | 只有 1 个 `m_inFlightFence`，3 个后备缓冲被串行化 | 实际只有 1 帧在飞，CPU/GPU 无法重叠 |
 | P2-2 | 资源管理 | 未修复 | `VulKanRHI/Private/RHICommandListVulKan.cpp:191-204,225` | 信号量按 `imageIndex` 建，fence 只有 1 个；resize 时旧信号量不销毁 | 同步模型自相矛盾；窗口来回改尺寸会漏信号量 |
 | P2-3 | 语义隐患 | 未修复 | `D3D12RHI/Private/RHICommandListD3D12.cpp:229,240,251` | 提交时写 `m_FrameFenceValues[m_CurrentFrameIndex]`，但槽号要到 `EndFrame` 才更新 | 记进数组的其实是上一帧槽位，能跑但语义错 |
 | P2-4 | 性能 | 未修复 | `D3D12RHI/Private/RHIResourceD3D12.cpp:261`、`VulKanRHI/Private/RHIResourceVulKan.cpp:202` | `CreateBuffer` 内部为了上传初始数据直接 `WaitForGPU` | 加载期完全同步，无异步上传 |
@@ -87,7 +90,7 @@
 
 **位置**：`Engine/Source/Runtime/VulKanRHI/Private/RHIPipelineStateVulkan.cpp:156-158`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 `RHIPipelineStateVulkan.cpp:158`（`return false;`）；计算管线对照 `:224`（`vkCreateComputePipelines`）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 `RHIPipelineStateVulkan.cpp:158`（`return false;`）；计算管线对照 `:224`（`vkCreateComputePipelines`）**
 
 **现象**：`Initialize(Device*, const GraphicsPipelineStateDesc&)` 从 `:20` 开始，逐段校验 device / rootSignature / VS / PS / GS / HS / DS 并填好 `VkPipelineShaderStageCreateInfo`（`shaderStages` 构造于 `:62-154`），最后在 `:156-157` 只设置 `Type` 与 `m_Device`，`:158` 直接：
 
@@ -123,7 +126,7 @@
 
 **位置**：`Engine/Source/Runtime/VulKanRHI/Private/CommandList/CommandListVK_PipelineState.cpp:29-38`
 
-**当前状态：已修复 | 复核 2026-11-05 | 证据 `CommandListVK_PipelineState.cpp:31`（图形 `vkCmdBindPipeline`）、`:32`（`m_pCurrentGraphicsPSO`）、`:36`（计算 `vkCmdBindPipeline`）、`:37`（`m_pCurrentComputePSO`）**
+**当前状态：已修复 | 复核 2026-11-06 | 证据 `CommandListVK_PipelineState.cpp:31`（图形 `vkCmdBindPipeline`）、`:32`（`m_pCurrentGraphicsPSO`）、`:36`（计算 `vkCmdBindPipeline`）、`:37`（`m_pCurrentComputePSO`）**
 
 `SetPipelineState` 已按 `stateType` 分流：图形走 `VK_PIPELINE_BIND_POINT_GRAPHICS`，计算走 `VK_PIPELINE_BIND_POINT_COMPUTE`，并把 PSO 缓存到 `m_pCurrentGraphicsPSO` / `m_pCurrentComputePSO`（成员声明 `Internal/RHICommandListVulKan.h:150-151`）。修复与旧建议一致；旧建议里「配合 dynamic state 立刻补一次 viewport/scissor」未做——视口/裁剪由上层 `RSSet*` 命令承担（P0-4 已实现）。
 
@@ -133,7 +136,7 @@
 
 **位置**：`Engine/Source/Runtime/VulKanRHI/Private/CommandList/CommandListVK_InputAssembly.cpp:10-20`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 `:10-12`（`IASetPrimitiveTopology` 空体）、`:14-16`（`IASetVertexBuffers` 空体）、`:18-20`（`IASetIndexBuffer` 空体）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 `:10-12`（`IASetPrimitiveTopology` 空体）、`:14-16`（`IASetVertexBuffers` 空体）、`:18-20`（`IASetIndexBuffer` 空体）**
 
 三个函数仍是空函数体，没有任何 `vkCmdBindVertexBuffers` / `vkCmdBindIndexBuffer` / 拓扑设置。
 
@@ -156,7 +159,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`Engine/Source/Runtime/VulKanRHI/Private/CommandList/CommandListVK_Rasterizer.cpp:5-37`
 
-**当前状态：已修复 | 复核 2026-11-05 | 证据 `:20`（`vkCmdSetViewport`）、`:36`（`vkCmdSetScissor`）；Y 轴翻转 `:14`（`y = topLeftY + height`）、`:16`（`height = -height`）**
+**当前状态：已修复 | 复核 2026-11-06 | 证据 `:20`（`vkCmdSetViewport`）、`:36`（`vkCmdSetScissor`）；Y 轴翻转 `:14`（`y = topLeftY + height`）、`:16`（`height = -height`）**
 
 `RSSetViewports` / `RSSetScissorRects` 均已实现：视口按 RHIViewport 转换并做 D3D→Vulkan Y 轴翻转；裁剪矩形按 RHIRect 的 left/top/right/bottom 转 `VkRect2D`（`w/h <= 0` 时截为 0）。
 
@@ -170,7 +173,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`CommandListVK_RootSignature.cpp:107-114`、`:116-123`、`:125-132`（graphics）、`:211-218`、`:220-227`、`:229-236`（compute）
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 六个函数体均为 `// TODO` + `(void)` 消除未使用参数，如 `:112-113,121-122,130-131,216-217,225-226,234-235`**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 六个函数体均为 `// TODO` + `(void)` 消除未使用参数，如 `:112-113,121-122,130-131,216-217,225-226,234-235`**
 
 **现象**：六个函数体全是 `// TODO`；debug 模式靠 `CHECK_BUFFER_TYPE` 宏打一条 warning。文件顶部 `:30-36` 的注释仍说明这是接口与目标 API 的结构性不匹配，不是漏写。
 
@@ -189,7 +192,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`CommandListVK_RootSignature.cpp:89-95`（graphics）、`:193-199`（compute）
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 `:94` 与 `:198`（`{RHIDescriptorHeapType::Standard,0}` 写死）；`layoutInfo`/`tableParam` 取出未用（`:89-90,:193-194`）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 `:94` 与 `:198`（`{RHIDescriptorHeapType::Standard,0}` 写死）；`layoutInfo`/`tableParam` 取出未用（`:89-90,:193-194`）**
 
 **现象**：
 ```cpp
@@ -213,7 +216,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`VulKanRHI/Private/RHIResourceVulKan.cpp:110-117`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 `:112`（`return nullptr;`）、`:116`（`DeleteSamplerState` 空体）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 `:112`（`return nullptr;`）、`:116`（`DeleteSamplerState` 空体）**
 
 ```cpp
     std::shared_ptr<RHISamplerState> DeviceVulKan::CreateSamplerState(const SamplerStateDesc& desc)
@@ -238,19 +241,19 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`CommandListVK_OutputMerger.cpp:113-121`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 `:115`（`OMSetBlendState` TODO）、`:120`（`OMSetDepthStencilState` TODO）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 `:115`（`OMSetBlendState` TODO）、`:120`（`OMSetDepthStencilState` TODO）**
 
 #### P1-5 VK 深度模板清除 —— **未修复**
 
 **位置**：`CommandListVK_Clear.cpp:36-38`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 `:37-38`（`ClearDepthStencilView` 空体）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 `:37-38`（`ClearDepthStencilView` 空体）**
 
 #### P1-8 D3D12 输出合并状态 —— **未修复**
 
 **位置**：`D3D12RHI/Private/CommandList/CommandListDX12_OutputMerger.cpp:32-40`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 `:34`（`OMSetBlendState` TODO）、`:39`（`OMSetDepthStencilState` TODO）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 `:34`（`OMSetBlendState` TODO）、`:39`（`OMSetDepthStencilState` TODO）**
 
 **判断**：这一组属于「接口已定义、实现留空」的半成品。当前 HelloTriangle 不需要它们；一旦要做 3D 场景（深度测试、透明混合）就会立刻撞墙。
 
@@ -262,7 +265,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`D3D12RHI/Private/RHIPipelineStateD3D12.cpp:25-53`，调用点 `:146,148,149`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 `:30`（Blend TODO）、`:40`（Rasterizer TODO）、`:50`（DepthStencil TODO）；调用点 `:146`（BlendState）、`:148`（RasterizerState）、`:149`（DepthStencilState）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 `:30`（Blend TODO）、`:40`（Rasterizer TODO）、`:50`（DepthStencil TODO）；调用点 `:146`（BlendState）、`:148`（RasterizerState）、`:149`（DepthStencilState）**
 
 ```cpp
         D3D12_BLEND_DESC ConvertBlendState(RHIBlendState* blendState)
@@ -286,7 +289,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`VulKanRHI/Private/RHIResourceVulKan.cpp:126,144`、`D3D12RHI/Private/RHIResourceD3D12.cpp:177,186`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 VK：`:126`（256 对齐改写 `desc.SizeInBytes`）、`:144`（`memcpy(..., desc.SizeInBytes)`）；D3D12：`:177`（对齐）、`:186`（`memcpy(..., desc.SizeInBytes)`）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 VK：`:126`（256 对齐改写 `desc.SizeInBytes`）、`:144`（`memcpy(..., desc.SizeInBytes)`）；D3D12：`:177`（对齐）、`:186`（`memcpy(..., desc.SizeInBytes)`）**
 
 **现象**：`CreateBuffer` 先按常量缓冲区规则把 `desc.SizeInBytes` 对齐到 256，这一步改的是**引用传入的调用方 desc**；随后初始化数据时又用这个**已放大的**尺寸做 `memcpy`。调用方给的 `InitialData` 只按原尺寸分配，于是最多多读 255 字节。
 
@@ -300,7 +303,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`VulKanRHI/Private/RHIRootSignatureVulKan.cpp:324-329,342`；消费端 `CommandListVK_RootSignature.cpp:149,253`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 `:324`（临时列表下标）、`:327`（`slot.PushRangeIndex = pushRangeIndex`）、`:329`（`PushConstantBaseOffset32 = 0`）、`:342`（`MergePushConstantRanges`）；消费端 `:149,:253`（按旧下标 `GetPushConstantRange`）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 `:324`（临时列表下标）、`:327`（`slot.PushRangeIndex = pushRangeIndex`）、`:329`（`PushConstantBaseOffset32 = 0`）、`:342`（`MergePushConstantRanges`）；消费端 `:149,:253`（按旧下标 `GetPushConstantRange`）**
 
 **现象**：每个 `RootParameterType::Constants` 参数在**合并前**把自己的下标存进 slot：
 ```cpp
@@ -320,7 +323,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`VulKanRHI/Private/DescriptorViewVulKan.cpp:90-108`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 纹理入口 `:97`（`Allocate()`）；采样器入口 `:107`（`Allocate()`）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 纹理入口 `:97`（`Allocate()`）；采样器入口 `:107`（`Allocate()`）**
 
 **现象**：
 ```cpp
@@ -342,7 +345,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`VulKanRHI/Private/RHIResourceVulKan.cpp:37-38`、`DescriptorHeapVulKan.cpp:275`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 usage：`:37-38`（SRV 仅 `STORAGE_TEXEL_BUFFER_BIT | UNIFORM_TEXEL_BUFFER_BIT`，无 `STORAGE_BUFFER_BIT`）；写入：`:275`（`VK_DESCRIPTOR_TYPE_STORAGE_BUFFER`）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 usage：`:37-38`（SRV 仅 `STORAGE_TEXEL_BUFFER_BIT | UNIFORM_TEXEL_BUFFER_BIT`，无 `STORAGE_BUFFER_BIT`）；写入：`:275`（`VK_DESCRIPTOR_TYPE_STORAGE_BUFFER`）**
 
 ```cpp
     if (EnumHasAnyFlags(bindFlags, BufferBindFlag::ShaderResource))
@@ -375,7 +378,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`VulKanRHI/Private/CommandList/CommandListVK_ResourceBarrier.cpp:95-103`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 `:98-100`（涉及深度即返回 `DEPTH_BIT|STENCIL_BIT`，不看 format）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 `:98-100`（涉及深度即返回 `DEPTH_BIT|STENCIL_BIT`，不看 format）**
 
 ```cpp
     if (涉及 DepthWrite/DepthRead)
@@ -394,7 +397,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`RHI/Private/RHIShaderCompiler/RHISPIRVGenerationReflection.cpp:156-172`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 `:163`（读 `DecorationDescriptorSet`）、`:164`（读 `DecorationBinding`）、`:170`（`resourcesBySet[res.set].push_back(res)`）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 `:163`（读 `DecorationDescriptorSet`）、`:164`（读 `DecorationBinding`）、`:170`（`resourcesBySet[res.set].push_back(res)`）**
 
 **现象**：push constant 循环里读 `DecorationDescriptorSet` / `DecorationBinding` 并 `reflection.resourcesBySet[res.set].push_back(res)`。push constant 按 SPIR-V 规范**没有** set/binding decoration，`get_decoration` 落到默认 0 → 被塞进 `set 0` 里、和真实资源撞号。
 
@@ -408,7 +411,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`RHI/Private/RHIShaderCompiler/RHICompilePipeline.cpp:50-56`（`BeginCompiler`）、`:66-72`（`EndCompiler` 同构）
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 `:51-53`（判空仅在 `#if RHI_ENABLE_DEBUG_INFO` 内）、`:56`（Release 下解引用 `controller`）；`EndCompiler`：`:67-69`、`:71-72`**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 `:51-53`（判空仅在 `#if RHI_ENABLE_DEBUG_INFO` 内）、`:56`（Release 下解引用 `controller`）；`EndCompiler`：`:67-69`、`:71-72`**
 
 ```cpp
     if (!controller) {
@@ -427,11 +430,11 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 ### P2-1 / P2-2 Vulkan 帧同步只有 1 个 fence
 
-**位置**：`VulKanRHI/Internal/RHICommandListVulKan.h:224`（`VkFence m_inFlightFence`，创建于 `:172` 且带 `SIGNALED` 位）、`RHICommandListVulKan.cpp:187,230,241`
+**位置**：`VulKanRHI/Internal/RHICommandListVulKan.h:238`（`VkFence m_inFlightFence`，构造时于 `:186` 创建并带 `SIGNALED` 位）、`RHICommandListVulKan.cpp:187,230,241`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 单 fence 成员 `:224`；提交 `:230`（`vkQueueSubmit(..., m_inFlightFence)`）；等待 `:241`（`vkWaitForFences(1, &m_inFlightFence, ...)`）；提交前重置 `:187`**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 单 fence 成员 `:238`；提交 `:230`（`vkQueueSubmit(..., m_inFlightFence)`）；等待 `:241`（`vkWaitForFences(1, &m_inFlightFence, ...)`）；提交前重置 `:187`**
 
-**现象**：`BeginFrame` 只 `vkWaitForFences(1, &m_inFlightFence, ...)`，`ExecuteCommandLists` 用同一个 fence 做 `vkQueueSubmit` 的完成信号。交换链有 3 张图，`m_RenderFinishedSemaphores` 也按 `imageIndex` 建了 3 个（`:225`），但 **CPU 侧只有 1 个 fence**，第 2、3 帧无法与第 1 帧重叠。
+**现象**：`BeginFrame` 只 `vkWaitForFences(1, &m_inFlightFence, ...)`，`ExecuteCommandLists` 用同一个 fence 做 `vkQueueSubmit` 的完成信号。交换链有 3 张图，`m_RenderFinishedSemaphores` 也按 `imageIndex` 建了 3 个（`:237`，实际在 `ExecuteCommandLists` 里按 `SwapChainBackBufferCount` 惰性创建，见 `RHICommandListVulKan.cpp:191-204`），但 **CPU 侧只有 1 个 fence**，第 2、3 帧无法与第 1 帧重叠。
 
 **P2-2 证据**：`RHICommandListVulKan.cpp:191-204` 在 `SwapChainBackBufferCount` 变化时 `resize` 信号量数组，旧信号量没有 `vkDestroySemaphore` 就被覆盖；信号量按 `:225` 的 `imageIndex` 取用。
 
@@ -445,7 +448,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`D3D12RHI/Private/RHICommandListD3D12.cpp:229,240,251`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 提交写值 `:229`（`m_FrameFenceValues[m_CurrentFrameIndex] = m_CurrentFenceValue`）；BeginFrame 读槽 `:240`；EndFrame 才换槽号 `:251`（`m_CurrentFrameIndex = m_SwapChainInfo.imageIndex`）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 提交写值 `:229`（`m_FrameFenceValues[m_CurrentFrameIndex] = m_CurrentFenceValue`）；BeginFrame 读槽 `:240`；EndFrame 才换槽号 `:251`（`m_CurrentFrameIndex = m_Requirements.imageIndex`，88c62df 后由 `m_SwapChainInfo.imageIndex` 改名而来）**
 
 **影响**：能跑（因为每帧都覆盖写），但 `m_FrameFenceValues[i]` 的语义变成「i 槽上一次提交的值」，而 `BeginFrame` 读同一个槽——两者错开一帧，一旦以后把 `BeginFrame` 改成更严格的等待策略就会变成偶发 hang。
 
@@ -457,7 +460,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`D3D12RHI/Private/RHIResourceD3D12.cpp:261`、`VulKanRHI/Private/RHIResourceVulKan.cpp:202`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 D3D12 `:261`（`m_CopyQueue...->WaitForGPU()`）；VK `:202`（`GetBasicCommandQueue(Copy)->WaitForGPU()`）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 D3D12 `:261`（`m_CopyQueue...->WaitForGPU()`）；VK `:202`（`GetBasicCommandQueue(Copy)->WaitForGPU()`）**
 
 两个后端的 `CreateBuffer` 在带 `InitialData` 时，都是「建 staging/upload → 录制拷贝 → 提交 → `WaitForGPU()`」，且这个等待会阻塞主线程。
 
@@ -471,7 +474,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`VulKanRHI/Private/RHIResourceVulKan.cpp:94`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 `:94`（`vkAllocateMemory` 每个 buffer 一次，见 `CreateBufferAndMemory:89-100`）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 `:94`（`vkAllocateMemory` 每个 buffer 一次，见 `CreateBufferAndMemory:89-100`）**
 
 **影响**：`vkAllocateMemory` 有设备级上限（常见 4096 左右 `maxMemoryAllocationCount`），大量小 buffer 会直接分配失败；每份分配都按 `memoryType` 对齐，显存浪费明显。D3D12 侧用 `CreateCommittedResource` 也是同构问题，但 D3D12 committed resource 内部有驱动分配器兜底，Vulkan 没有。
 
@@ -483,7 +486,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`CommandListVK_OutputMerger.cpp:104-111`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 `EndDynamicRendering:109-110`（只 `vkCmdEndRenderingKHR` + `m_IsDynamicRendering=false`，无 `m_CurrentRenderTargets.clear()`）；追加在 `:45`**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 `EndDynamicRendering:109-110`（只 `vkCmdEndRenderingKHR` + `m_IsDynamicRendering=false`，无 `m_CurrentRenderTargets.clear()`）；追加在 `:45`**
 
 ```cpp
     void CommandListVulKan::EndDynamicRendering()
@@ -508,7 +511,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`VulKanRHI/Private/SwapChainVulkan.cpp:147-158,169-192`、`D3D12RHI/Private/SwapChainD3D12.cpp:153-174`；Present 侧 `RHICommandListVulKan.cpp:270-273`、`RHICommandListD3D12.cpp:262-273`
 
-**当前状态：部分修复 | 复核 2026-11-05 | 缺的一半：Present 返回过期/遮挡时不触发重建**
+**当前状态：部分修复 | 复核 2026-11-06 | 缺的一半：Present 返回过期/遮挡时不触发重建**
 
 **已补上的一半**：
 - VK：`Resize(width,height)`（`:169-192`）先 `vkDeviceWaitIdle`，清 RTV/backbuffer，销毁旧链后 `VkCreateSwapChain` + 重建 RTV；`AcquireNextImage` 在 `VK_ERROR_OUT_OF_DATE_KHR` 时调 `Resize` 并重新 acquire（`:147-158`）。
@@ -525,7 +528,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **位置**：`RHICommandListVulKan.cpp:95-103`、`Internal/RHICommandListVulKan.h:62`
 
-**当前状态：未修复 | 复核 2026-11-05 | 证据 `:100`（`commandBufferCount = 1`）、`:103`（`vkAllocateCommandBuffers`）；析构 `:62`（`= default`，不释放）**
+**当前状态：未修复 | 复核 2026-11-06 | 证据 `:100`（`commandBufferCount = 1`）、`:103`（`vkAllocateCommandBuffers`）；析构 `:62`（`= default`，不释放）**
 
 `DeviceVulKan::CreateCommandList`（`:86-112`）每次 `vkAllocateCommandBuffers(count=1)`。虽然 `CommandPoolVulKan` 析构（`RHICommandListVulKan.cpp:115-122`）会 `vkDestroyCommandPool` 连带回收，不会真泄漏，但每帧新建的分配开销和 `RESET_COMMAND_BUFFER_BIT` 的代价都白付了。建议按 pool 预分配固定数量 primary buffer 循环使用。
 
@@ -562,9 +565,9 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 ## 3. 建议修复顺序
 
-> 按 2026-11-05 当前状态调整；已满足的条目标注「已满足」。
+> 按 2026-11-06 当前状态调整；已满足的条目标注「已满足」。
 
-1. **跑通已有构建产物并做基线验证**。`Binary\Debug\` 已有 2026-11-05 09:39 的整包产物（含 `Magic-VulKanRHI.dll`、`Magic-D3D12RHI.dll` 与三个测试 exe），但本次复核未运行；下一步先在这套产物上跑 D3D12 / Vulkan 基线，确认可启动、可出图，再继续修缺陷。顺带做 P3-1、P1-20（Release 空指针一编译就暴露）。
+1. **跑通已有构建产物并做基线验证**。`Binary\Debug\` 已有 2026-11-05 19:27 的整包产物（含 `Magic-VulKanRHI.dll`、`Magic-D3D12RHI.dll` 与三个测试 exe），且已确认与当前 HEAD 源码同源；但本次复核未运行。下一步先在这套产物上跑 D3D12 / Vulkan 基线，确认可启动、可出图，再继续修缺陷。顺带做 P3-1、P1-20（Release 空指针一编译就暴露），以及 **N6**（`GraphicsQueueRequirements` 缺虚析构，一行即可修，别等它被复制到别的接口上）。`out\bin\` 的旧 D3D11/D3D12 产物在当前工作副本里已经不存在，不必再当参照。
 2. **内存安全三件套（不依赖图形链路，可以现在就修）**：P1-9（CB 对齐后越界读，两后端）、P2-17（Buffer 边界溢出）、P2-19（D3D12 描述符视图越界）。
 3. **P0-1 → P0-3**：P0-2（管线绑定）、P0-4（视口/裁剪）已打通，剩余根断点是 **P0-1（图形 PSO 未创建）** 与 **P0-3（IA 空实现）**。建议同一批做，串起来才能拿到 Vulkan 第一张三角形；单独修任何一个都看不到图。
 4. **P1-2 → P1-11 → P1-12 → P1-1**：先修「绑错 set」「空纹理槽位」「descriptor type 不匹配」三个硬错误，再决定 root descriptor 的长期方案（推荐先立「Vulkan 只支持 descriptor table + push constant」的约束）。
@@ -578,9 +581,9 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 ## 4. 修复后的验收清单
 
-> 状态按 2026-11-05 复核标注；「未满足」注明卡在哪个文件。
+> 状态按 2026-11-06 复核标注；「未满足」注明卡在哪个文件。
 
-- [x] 后端 DLL 与测试可执行已生成（**已满足于构建层**：`Binary\Debug\` 2026-11-05 09:39 产物含 `Magic-D3D12RHI.dll`、`Magic-VulKanRHI.dll`、`Magic-RHI.dll`、`Magic-Core.dll` 及 `HelloTriangleTest.exe` / `TestSwapChain.exe` / `TestShaderCompile.exe`；**有构建产物，但本次复核未运行**。`out\bin\` 仅是更早的旧 D3D11/D3D12 产物）
+- [x] 后端 DLL 与测试可执行已生成（**已满足于构建层**：`Binary\Debug\` 2026-11-05 19:27:36~38 产物含 `Magic-D3D12RHI.dll`、`Magic-VulKanRHI.dll`、`Magic-RHI.dll`、`Magic-Core.dll` 及 `HelloTriangleTest.exe` / `TestSwapChain.exe` / `TestShaderCompile.exe`，且与当前 HEAD 源码同源；**仍未运行**。`out\bin\` 的旧 D3D11/D3D12 产物已不在工作副本中）
 - [ ] `HelloTriangleTest` 在 D3D12 下出三角形（基线，代码层链路基本完整，**运行时未验证**）
 - [ ] `HelloTriangleTest` 在 Vulkan 下出**同样的**三角形（**未满足**：卡在 P0-1 `RHIPipelineStateVulkan.cpp:158` 与 P0-3 `CommandListVK_InputAssembly.cpp:10-20`；P0-2、P0-4 命令路径已通）
 - [ ] Vulkan 校验层（`VkLayer_khronos_validation.dll` 已随 `Binary\Debug\` 提供）在整帧循环里零 error / 零 warning（校验层可用，但本次复核未启用、未运行）
@@ -610,18 +613,18 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 **假设**：
 - `ThirdParty/VulkanSdk` 是完整 SDK（目录存在，含 `Include`/`lib`/`dll`），未校验版本。
-- `Binary\Debug\` 已有 2026-11-05 09:39 的构建产物（含 `Magic-VulKanRHI.dll` 与三个测试 exe）及校验层 DLL，但本次复核未运行这些产物、未启用校验层；所有「能画出/画不出」的结论来自代码路径完整性，不是实测；barrier 合法性、内存一致性、GPU 可见性均需在真机/校验层下确认。
+- `Binary\Debug\` 的构建产物（含 `Magic-VulKanRHI.dll` 与三个测试 exe）时间戳为 2026-11-05 19:27:36~38，晚于全部源文件最后修改时间（19:27:20）、早于 HEAD 提交（19:35:13），故可认定其为当前 HEAD 源码的 Debug 全量构建；但本次复核**未运行**这些产物、未启用校验层；所有「能画出/画不出」的结论来自代码路径完整性，不是实测；barrier 合法性、内存一致性、GPU 可见性均需在真机/校验层下确认。
 - 附录 A 的旧文档条目判定标准是「回源码逐条核对」，只判断缺陷是否成立，不评价旧文档的分级与措辞。
 
-**近期已补能力（提交 8d0c383、46dbaf6、18bd47d、c410bb0，本次复核确认）**：`TextureVulKan::GetSize()` / `TextureD3D12::GetSize()` 已接入 `GetTextureSizeInBytes`（`RHIResourceVulKan.cpp:323-326`、`RHIResourceD3D12.cpp:289-292`、`RHIDefinitions.h:108-156`）；`R8_SRGB` 按 1 字节处理（`RHITypes.h:266-267`）。旧清单 48 条中无直接对应条目，此处记录为已补齐的语义能力。
+**近期已补能力（提交 8d0c383、46dbaf6、18bd47d、c410bb0，本次复核确认）**：`TextureVulKan::GetSize()` / `TextureD3D12::GetSize()` 已接入 `GetTextureSizeInBytes`（`RHIResourceVulKan.cpp:323-326`、`RHIResourceD3D12.cpp:289-292`、`RHIDefinitions.h:101-149`）；`R8_SRGB` 按 1 字节处理（`RHITypes.h:280-281`）。旧清单 48 条中无直接对应条目，此处记录为已补齐的语义能力。
 
 ---
 
 ## 附录 A：旧缺陷文档《代码缺陷.md》28 条核对结果
 
-判定口径：**属实且新增** = 本文此前未覆盖、回源码确认成立；**已覆盖** = 与本文某条为同一缺陷；**需更正** = 旧文档描述与实际代码不符。「现状（2026-11-05）」列逐条回 HEAD `18d30c2` 复核。
+判定口径：**属实且新增** = 本文此前未覆盖、回源码确认成立；**已覆盖** = 与本文某条为同一缺陷；**需更正** = 旧文档描述与实际代码不符。「现状（2026-11-06）」列逐条回 HEAD `88c62df` 复核（这些条目所在文件自 `18d30c2` 起未变）。
 
-| 旧编号 | 旧文档要点 | 判定 | 对应本文 | 现状（2026-11-05） |
+| 旧编号 | 旧文档要点 | 判定 | 对应本文 | 现状（2026-11-06） |
 |---|---|---|---|---|
 | 1 | 任务系统卸载时会遗弃排队任务 | 属实且新增（「永久阻塞」应表述为 `Wait` 空转） | P2-15 | 未修复：`JobSystem.cpp:71-78` 仍置位后直接 join，剩余队列不清空；`Wait:130-136` 仍 yield 空转 |
 | 2 | Vulkan 图形管线创建始终失败 | 已覆盖 | P0-1 | 未修复：`RHIPipelineStateVulkan.cpp:158` 仍 `return false`，无 `vkCreateGraphicsPipelines` |
@@ -656,12 +659,15 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 
 ---
 
-## 新增（未编号，复核于 2026-11-05）
+## 新增（未编号，复核于 2026-11-05；2026-11-06 追加 N6~N8）
 
-> 以下为本次复核在 48 条之外新发现的问题，暂不分配 P0~P3 编号，待后续评估定级。证据均为 HEAD `18d30c2` 静态代码位置。
+> 以下为本次复核在 48 条之外新发现的问题，暂不分配 P0~P3 编号，待后续评估定级。N1~N5 的证据为 HEAD `18d30c2` 静态代码位置（所在文件自那时起未变，行号已于 2026-11-06 回读确认）；N6~N8 的证据为 HEAD `88c62df`。
 
 - **N1 每描述符一条 `VkDescriptorSetLayout` 泄漏**：`DescriptorHeapVulKan.cpp:179-191`（`AllocateDescriptorSet`）为每个描述符新建一条 1-binding 的 `VkDescriptorSetLayout`，存入 `binding.layout`；`Free`（`:111-115`）只 `Release()` 绑定，堆析构（`:50-57`）只 `vkDestroyDescriptorPool`，**这条 layout 从不销毁**。对照：根签名的 layout 在 `RHIRootSignatureVulKan.cpp:382` 有 `vkDestroyDescriptorSetLayout`，堆内这条没有。长期反复分配/释放会持续泄漏 descriptor set layout。
 - **N2 计算管线局部 `VkPipelineLayoutCreateInfo` 死代码**：`RHIPipelineStateVulkan.cpp:210-213` 构造了 `layoutInfo`（`setLayoutCount=0`、`pushConstantRangeCount=0`，两处 TODO），但 `:219` 实际传给 `vkCreateComputePipelines` 的是 `rootSig->GetPipelineLayout()`；局部 `layoutInfo` 从未被使用。易误读为「计算管线用了独立 layout」。
 - **N3 Vulkan buffer GPU 虚拟地址恒为 0**：`RHIResourceVulKan.cpp:296-299` `BufferVulKan::GetGPUVirtualAddress()` 直接 `return 0`。Vulkan root CBV/SRV/UAV 按 GPU 地址取值的路径（P1-1）即便补实现，也缺少可用的地址来源；需明确 RHI 层在 VK 侧只支持 descriptor table。
 - **N4 `ResetFrameCaches` 未清当前 PSO 缓存指针**：`RHICommandListVulKan.cpp:171-177` 重置了 RS 指针与渲染附件缓存，但 `m_pCurrentGraphicsPSO` / `m_pCurrentComputePSO`（`Internal/RHICommandListVulKan.h:150-151`）未置空。跨录制复用命令列表时，上一帧的 PSO 残留可能被后续逻辑误用；建议在 `ResetFrameCaches` 一并置空。
 - **N5 测试按 `ImageIndex` 索引命令列表，缺边界保护**：`Tests/TestSwapChain/TestSwapChain.cpp:104,108` 用 `ImageIndex` 直接索引 `cmdPools[ImageIndex]` / `cmdLists[ImageIndex]`，未校验 `ImageIndex < RHI_MULTI_BUFFERING`；`AcquireNextImage` 返回 `UINT32_MAX`（失败，见 `SwapChainVulkan.cpp:162`）时会越界。`HelloTriangleTest` 同构用法需一并检查。
+- **N6 `GraphicsQueueRequirements` 缺虚析构，经 `unique_ptr<基类>` 析构是 UB**：`RHIDefinitions.h:29-35` 的基类声明了纯虚 `GetType()`，却没有 `virtual ~GraphicsQueueRequirements()`；而取交接口的返回类型是 `std::unique_ptr<GraphicsQueueRequirements>`（`RHIInterface.h:329`），两个后端都用 `std::make_unique<派生结构>` 构造（`SwapChainVulkan.cpp:216`、`SwapChainD3D12.cpp:194`）。两个派生结构只有标量/指针成员，实践上大概率看不出问题，但「删基类指针指向的派生对象」按标准属 UB（要求基类析构为 virtual），换编译器、开优化或给派生结构加成员后都可能暴露。修法一行：基类加 `virtual ~GraphicsQueueRequirements() = default;`。
+- **N7 `SetGraphicsQueueRequirements` 未判空即解引用**：两端实现的第一句都是 `if(Info->GetType() != RHIType::<X>)`（`RHICommandListD3D12.cpp:291`、`RHICommandListVulKan.cpp:291`），`Info == nullptr` 会直接崩在虚调用上；而紧接着的 `SafeCast` 结果判空（`:296-300`）说明作者本意是要判空的，只是判空位置排在了解引用之后。当前两个测试传的都是 `GQSCInfo.get()`（非空），所以尚未暴露；但接口收的是裸指针，调用方传空完全可能。修法：入口先 `if (!Info) { ThrowErrorMessage(...); return; }`。**顺带一提**：`SafeCast` 本身在 Release 下退化为 `static_cast`（`Core/Public/Common/Check.h:39-63`，只有 `_DEBUG` 才 `dynamic_cast` + assert），不做运行时校验；这条路径靠前置的 `GetType()` 比对兜住了类型，但一旦某后端 `GetType()` 返回值和派生结构对不上（比如复制粘贴忘了改），Release 下不会报错、只会按错位的字段读写。
+- **N8 每帧一次堆分配取交接信息**：`GetGraphicsQueueRequirements()` 每次调用都 `std::make_unique` 一个新对象（`SwapChainVulkan.cpp:216`、`SwapChainD3D12.cpp:194`），而两个测试在**帧循环里**每帧调一次（`HelloTriangleTest.cpp:280`、`TestSwapChain.cpp:105`），随后 `SetGraphicsQueueRequirements` 又整份拷贝一次（`RHICommandListD3D12.cpp:303`、`RHICommandListVulKan.cpp:303`）。一帧一次 `new`/`delete` 不至于压垮 60fps，但整个流程是纯冗余：结构只有 5 个字段，生命周期就是本帧。修法二选一——接口改成 `void GetGraphicsQueueRequirements(GraphicsQueueRequirements& Out)` 由调用方栈上持有；或让 `SetGraphicsQueueRequirements` 收 `const GraphicsQueueRequirements&` 直接读，后者还能顺带消掉 N6（不再有跨基类指针的所有权转移）。
