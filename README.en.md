@@ -11,11 +11,14 @@ MagicRHI is a C++ RHI (Rendering Hardware Interface) project. It currently inclu
 | Operating system | Windows x64 | The project uses the Windows API and the MSVC toolchain |
 | Visual Studio | 2022 or 2026 | Install the "Desktop development with C++" workload and a Windows SDK |
 | CMake | 3.15 or later | Matches the minimum version declared in the root `CMakeLists.txt` |
+| Vulkan SDK | Required | Required for both Debug and Release builds; install it and make sure CMake can find it |
 | Git | Any current version | Used to obtain and update the source code |
 | Git LFS | Required | Used to obtain `.dll` and `.lib` files tracked by LFS in ThirdParty |
 | Ninja | Required when building with Ninja | Not needed when building with Visual Studio/MSBuild |
 
 When building with Ninja, `ninja` and the MSVC compiler `cl` must also be available in the terminal. It is recommended to start the build from an **x64 Native Tools Command Prompt for VS** or the corresponding Developer PowerShell.
+
+The Vulkan SDK is not included in this repository. Both Debug and Release builds include the Vulkan backend, so the SDK must be installed for CMake configuration and building. Download it from the [LunarG Vulkan SDK](https://vulkan.lunarg.com/sdk/home).
 
 ## Getting the Source
 
@@ -33,7 +36,7 @@ After cloning, make sure LFS-managed dependencies have been downloaded and are n
 git lfs pull
 ```
 
-The ThirdParty directory in the repository contains dependencies required by the project, including Vulkan SDK, DirectX Shader Compiler, and SPIRV-Cross. To update an existing checkout, you can run `update.bat`; it executes `git pull` and `git lfs pull`. Resolve any local uncommitted changes before updating.
+The ThirdParty directory in the repository contains dependencies such as DirectX Shader Compiler and SPIRV-Cross. The Vulkan SDK must be installed separately by the user. To update an existing checkout, you can run `update.bat`; it executes `git pull` and `git lfs pull`. Resolve any local uncommitted changes before updating.
 
 ## Building
 
@@ -66,7 +69,13 @@ Binary\Debug\
 Binary\Release\
 ```
 
-For example, test programs from a Debug build are located in `Binary\Debug\`. Vulkan runtime files and DXC DLLs are copied to the corresponding output directory during the build.
+For example, test programs from a Debug build are located in `Binary\Debug\`. DXC DLLs are copied to the corresponding output directory during the build; Vulkan SDK files and validation layers are not copied.
+
+## Vulkan Runtime Requirements
+
+Debug builds enable the Vulkan validation layer by default. To run a Debug build using the Vulkan backend, install the Vulkan SDK and make sure the Vulkan Loader can find `VK_LAYER_KHRONOS_validation`. Release builds do not enable validation layers and do not require them.
+
+Both Debug and Release Vulkan backends require the system `vulkan-1.dll` (the Vulkan Loader) and a compatible graphics driver at runtime. This DLL is not an SDK-only Debug dependency: the application links against the Vulkan Loader at build time, and the system Vulkan Runtime/graphics driver provides it at runtime. Without a Vulkan Loader or driver, the Vulkan backend is unavailable; D3D12-only use does not require the Vulkan runtime.
 
 ## Running the Test Programs
 

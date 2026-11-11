@@ -612,7 +612,7 @@ vkCmdBindIndexBuffer(m_CommandBuffer, SafeCast<BufferVulKan>(pIndexBuffer)->GetB
 **未逐行展开**：`Core` 模块其余部分（日志捕获/断言宏/`SubsystemControl` 实现）、`D3D12RHI/DescriptorViewD3D12.cpp` 的 buffer 分支细节、`SPIRV-Cross` 与 `DirectXShaderCompiler` 第三方、`SingleHeaderInit*` 的初始化聚合、`ThirdParty` 全部。
 
 **假设**：
-- `ThirdParty/VulkanSdk` 是完整 SDK（目录存在，含 `Include`/`lib`/`dll`），未校验版本。
+- **已过时（2026-11-11）**：上述旧审查假设称 `ThirdParty/VulkanSdk` 含完整 SDK；该目录已从仓库移除。当前 Debug/Release 构建都要求用户单独安装 Vulkan SDK，Debug 运行还要求可用的 `VK_LAYER_KHRONOS_validation`。
 - `Binary\Debug\` 的构建产物（含 `Magic-VulKanRHI.dll` 与三个测试 exe）时间戳为 2026-11-05 19:27:36~38，晚于全部源文件最后修改时间（19:27:20）、早于 HEAD 提交（19:35:13），故可认定其为当前 HEAD 源码的 Debug 全量构建；但本次复核**未运行**这些产物、未启用校验层；所有「能画出/画不出」的结论来自代码路径完整性，不是实测；barrier 合法性、内存一致性、GPU 可见性均需在真机/校验层下确认。
 - 附录 A 的旧文档条目判定标准是「回源码逐条核对」，只判断缺陷是否成立，不评价旧文档的分级与措辞。
 
