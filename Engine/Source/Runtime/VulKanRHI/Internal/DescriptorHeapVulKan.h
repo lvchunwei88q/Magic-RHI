@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vulkan.h>
+#include <vulkan/vulkan.h>
 #include "RHIResourceVulKan.h"
 #include <vector>
 #include <memory>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <RHIPipelineState.h>
-#include <vulkan.h>
+#include <vulkan/vulkan.h>
 
 namespace RHI
 {

@@ -2,7 +2,7 @@
 
 #include "Common/VULKANRHI_API.h"
 #include <RHIRootSignature.h>
-#include <vulkan.h>
+#include <vulkan/vulkan.h>
 #include <vector>
 
 namespace RHI
