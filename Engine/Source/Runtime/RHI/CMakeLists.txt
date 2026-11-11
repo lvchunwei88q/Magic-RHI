@@ -32,14 +32,25 @@ target_link_libraries(RHI PRIVATE Core)
 target_link_libraries(RHI PRIVATE spirv-cross-core)
 target_link_libraries(RHI PRIVATE spirv-cross-backend)
 # dx shader compiler
-target_link_libraries(RHI PRIVATE ${DXC_ROOT}/dxcompiler.lib)
+if (WIN32)
+    target_link_libraries(RHI PRIVATE ${DXC_ROOT}/lib/win64/dxcompiler.lib)
+elseif(UNIX)
+    target_link_libraries(RHI PRIVATE ${DXC_ROOT}/lib/linux/libdxcompiler.so)
+else()
+    message(FATAL_ERROR "Unsupported platform")
+endif()
 
+if (WIN32)
 # Collect all files in the dll directory
-file(GLOB DXC_DLL_FILES "${DXC_ROOT}/dll/*.dll")
+file(GLOB DXC_LIB_FILES "${DXC_ROOT}/lib/win64/*.dll")
+elseif(UNIX)
+# Collect all files in the so directory
+file(GLOB DXC_LIB_FILES "${DXC_ROOT}/lib/linux/*.so")
+endif()
 
 # Copy all collected files
 add_custom_command(TARGET RHI POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${DXC_DLL_FILES}
+        ${DXC_LIB_FILES}
         $<TARGET_FILE_DIR:RHI>
 )

@@ -8,8 +8,8 @@
 // Use Win32 platform
 #define VK_USE_PLATFORM_WIN32_KHR
 #include <windows.h>
-#include <vulkan.h>
-#include "vulkan_win32.h"
+#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_win32.h>
 #include "RHIFormatVulkan.h"
 
 // DescriptorHeap

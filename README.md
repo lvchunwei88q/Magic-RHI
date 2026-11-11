@@ -11,11 +11,14 @@ MagicRHI 是一个使用 C++ 开发的 RHI（渲染硬件接口）项目，当�
 | 操作系统 | Windows x64 | 项目使用 Windows API 和 MSVC 工具链 |
 | Visual Studio | 2022 或 2026 | 安装“使用 C++ 的桌面开发”工作负载及 Windows SDK |
 | CMake | 3.15 或更高 | 与根目录 `CMakeLists.txt` 声明的最低版本一致 |
+| Vulkan SDK | 必需 | Debug 和 Release 构建都需要；请安装 Vulkan SDK，并确保 CMake 能找到它 |
 | Git | 可用版本 | 用于获取和更新源码 |
 | Git LFS | 必需 | 用于获取 ThirdParty 中受 LFS 管理的 `.dll` 和 `.lib` 文件 |
 | Ninja | 使用 Ninja 构建时需要 | 使用 Visual Studio/MSBuild 构建时不需要 |
 
 使用 Ninja 构建时，还需要在终端中能够找到 `ninja` 和 MSVC 编译器 `cl`。建议从 **x64 Native Tools Command Prompt for VS** 或相应的开发者 PowerShell 启动构建。
+
+Vulkan SDK 不包含在仓库中。Debug 和 Release 都会构建 Vulkan 后端，因此配置和构建时都需要安装 SDK。可从 [LunarG Vulkan SDK](https://vulkan.lunarg.com/sdk/home) 获取。
 
 ## 获取源码
 
@@ -33,7 +36,7 @@ cd Magic-RHI
 git lfs pull
 ```
 
-仓库内的 ThirdParty 目录包含项目所需的 Vulkan SDK、DirectX Shader Compiler 和 SPIRV-Cross 等依赖。更新已有源码时可运行 `update.bat`；该脚本会执行 `git pull` 和 `git lfs pull`。更新前请先处理本地未提交的修改。
+仓库内的 ThirdParty 目录包含 DirectX Shader Compiler 和 SPIRV-Cross 等依赖；Vulkan SDK 需由用户自行安装。更新已有源码时可运行 `update.bat`；该脚本会执行 `git pull` 和 `git lfs pull`。更新前请先处理本地未提交的修改。
 
 ## 构建
 
@@ -66,7 +69,13 @@ Binary\Debug\
 Binary\Release\
 ```
 
-例如，Debug 构建的测试程序位于 `Binary\Debug\`。Vulkan 运行时文件和 DXC DLL 会在构建时复制到相应的输出目录。
+例如，Debug 构建的测试程序位于 `Binary\Debug\`。DXC DLL 会在构建时复制到相应的输出目录；Vulkan SDK 文件和验证层不会随构建产物复制。
+
+## Vulkan 运行要求
+
+Debug 版默认启用 Vulkan 验证层。运行 Debug 版并使用 Vulkan 后端时，需要安装 Vulkan SDK，并确保 `VK_LAYER_KHRONOS_validation` 验证层可被 Vulkan Loader 找到。Release 版不启用验证层，不要求安装验证层。
+
+Debug 和 Release 的 Vulkan 后端运行时都需要系统提供 `vulkan-1.dll`（Vulkan Loader）及兼容的显卡驱动。该 DLL 不是只在 Debug 下需要的 SDK 文件：构建时会链接 Vulkan Loader，运行时由系统的 Vulkan Runtime/显卡驱动提供。如果目标机器没有 Vulkan Loader 或驱动，Vulkan 后端不可用；仅使用 D3D12 时不需要 Vulkan SDK 运行时。
 
 ## 运行测试程序
 

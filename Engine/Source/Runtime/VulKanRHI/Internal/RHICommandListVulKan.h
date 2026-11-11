@@ -1,7 +1,7 @@
 #pragma once
 #include <CoreMinimal.h>
 
-#include <vulkan.h>
+#include <vulkan/vulkan.h>
 #include <Common/Check.h>
 #include <Common/RHIConfig.h>
 #include <RHICommandList.h>
