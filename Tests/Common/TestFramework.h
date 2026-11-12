@@ -1,4 +1,4 @@
-// Test.h
+// TestFramework.h
 // The test database is used for some functional testing
 #include <iostream>
 #include <vector>
@@ -74,6 +74,21 @@ inline int& GetFailedCount() { static int count = 0; return count; }
             std::exit(1); \
         } \
     } while (0)
+
+template<typename Exception, typename Callable>
+void ExpectThrows(Callable&& callable)
+{
+	bool threw = false;
+	try {
+		callable();
+	}
+	catch (const Exception&) {
+		threw = true;
+	}
+
+	EXPECT_TRUE(threw);
+}
+
 // main function for running tests
 inline int RunTests(void (*testFunc)()) 
 {

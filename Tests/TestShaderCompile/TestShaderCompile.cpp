@@ -2,8 +2,8 @@
 #include <CoreMinimal.h>
 #include <RHI.hpp>
 #include <IO.h>
-#include "../Common/Test.h"
-#include "RHIPlatformDetection.h"
+#include "../Common/TestFramework.h"
+#include <RHIPlatformDetection.h>
 
 #include <algorithm>
 #include <array>

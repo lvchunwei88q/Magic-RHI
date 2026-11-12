@@ -5,7 +5,7 @@
 #include <RHI.hpp>
 #include <IO.h>
 #include <chrono>
-#include "../Common/Test.h"
+#include "../Common/TestFramework.h"
 
 uint32_t x, y;
 bool ExeSetSize = false;
@@ -60,9 +60,13 @@ void RunTestDeviceAndSwapChain(RHI::RHIType rhiType,const std::wstring& windowTi
 
         auto device = loader->CreateDevice();
         ASSERT_TRUE(device && device->Initialize() && device->IsValid());
+        
+        RHI::NativeWindowHandle windowHandle;
+        windowHandle.hwnd = reinterpret_cast<uint64_t>(hwnd);
+        windowHandle.hinstance = reinterpret_cast<uint64_t>(GetModuleHandle(nullptr));
 
         RHI::SwapChainDesc swapChainDesc = {};
-        swapChainDesc.WindowHandleRef = hwnd;
+        swapChainDesc.WindowHandle = windowHandle;
         swapChainDesc.Width = 800;
         swapChainDesc.Height = 600;
         swapChainDesc.VSync = false;

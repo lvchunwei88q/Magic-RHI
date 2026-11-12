@@ -30,7 +30,9 @@ namespace RHI
     {
         m_Initialization = InitialState::Initialize;
         // Get the window handle from the device
-        HWND windowHandle = static_cast<HWND>(desc.WindowHandleRef);
+        HWND windowHandle = reinterpret_cast<HWND>(desc.WindowHandle.hwnd);
+        // You usually don't need to use this
+        HINSTANCE hInstance = reinterpret_cast<HINSTANCE>(desc.WindowHandle.hinstance);
 
         m_pRHI = SafeCast<DeviceD3D12>(device);
         if (!m_pRHI)

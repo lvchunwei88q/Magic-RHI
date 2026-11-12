@@ -57,16 +57,14 @@ namespace RHI
 
     // ===========================================================================
 
-    bool SwapChainVulKan::CreateVulkanWindowSurface(HWND windowHandle)
+    bool SwapChainVulKan::CreateVulkanWindowSurface(NativeWindowHandle windowHandle)
     {
         return m_pRHI->CreateVulkanWindowSurface(windowHandle);
     }
 
     bool SwapChainVulKan::Initialize(Device* device, const SwapChainDesc& desc)
     {
-        // Get the window handle from the device
-        HWND windowHandle = static_cast<HWND>(desc.WindowHandleRef);
-
+        // Ensure the device is a valid Vulkan device
         m_pRHI = SafeCast<DeviceVulKan>(device);
         if (!m_pRHI)
         {
@@ -75,7 +73,7 @@ namespace RHI
         }
 
         // Create Vulkan window surface
-        if (!CreateVulkanWindowSurface(windowHandle))
+        if (!CreateVulkanWindowSurface(desc.WindowHandle))
         {
             ThrowErrorMessage("Failed to create Vulkan window surface");
             return false;

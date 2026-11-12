@@ -11,13 +11,20 @@
 
 namespace RHI
 {
+/**
+ * @brief Native Window Handle
+ */
+struct NativeWindowHandle {
+    uint64_t hwnd;       // Windows: HWND；Wayland: wl_surface*
+    uint64_t hinstance;  // Windows: HINSTANCE；Wayland: wl_display*
+};
 
 /**
  * @brief Swap Chain Description.
  */
 struct SwapChainDesc
 {
-    void* WindowHandleRef;
+    NativeWindowHandle WindowHandle;
     uint32_t Width      = UINT_INITIAL_VALUE;
     uint32_t Height     = UINT_INITIAL_VALUE;
     bool VSync = false;

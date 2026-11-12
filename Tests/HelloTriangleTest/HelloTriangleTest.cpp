@@ -1,4 +1,5 @@
 #include <Subsystem/Subsystem.h>
+#include <cstdint>
 #include <iostream>
 #include <windows.h>
 
@@ -6,7 +7,7 @@
 #include <RHI.hpp>
 #include <IO.h>
 
-#include "../Common/Test.h"
+#include "../Common/TestFramework.h"
 
 uint32_t x, y; // windows size 
 bool ExeSetSize = false;
@@ -134,8 +135,12 @@ void TestHelloTriangle()
         std::cout << "Shader Model Version: " << ShaderModelToString(device->GetShaderModelVersion()) << std::endl;
         std::wcout << L"Device initialized successfully: " << device->GetAdapterName() << std::endl;
         
+        RHI::NativeWindowHandle windowHandle;
+        windowHandle.hwnd = reinterpret_cast<uint64_t>(hwnd);
+        windowHandle.hinstance = reinterpret_cast<uint64_t>(GetModuleHandle(nullptr));
+
         RHI::SwapChainDesc swapChainDesc = {};
-        swapChainDesc.WindowHandleRef = hwnd;
+        swapChainDesc.WindowHandle = windowHandle;
         swapChainDesc.Width = 800;
         swapChainDesc.Height = 600;
         swapChainDesc.VSync = false;

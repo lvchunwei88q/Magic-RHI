@@ -857,7 +857,7 @@ namespace RHI
         return true;
     }
 
-    bool DeviceVulKan::CreateVulkanWindowSurface(HWND windowHandle)
+    bool DeviceVulKan::CreateVulkanWindowSurface(NativeWindowHandle windowHandle)
     {
         if (!m_Instance)
         {
@@ -865,12 +865,22 @@ namespace RHI
             return false;
         }
 
-        VkWin32SurfaceCreateInfoKHR createInfo = {};
-        createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-        createInfo.hwnd = windowHandle;
-        createInfo.hinstance = GetModuleHandle(nullptr);
+        VkResult result = VK_ERROR_INITIALIZATION_FAILED;
 
-        VkResult result = vkCreateWin32SurfaceKHR(m_Instance, &createInfo, nullptr, &m_Surface);
+#if defined(_WIN32)
+        VkWin32SurfaceCreateInfoKHR createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+        createInfo.hwnd = reinterpret_cast<HWND>(windowHandle.hwnd); // HWND
+        createInfo.hinstance = reinterpret_cast<HINSTANCE>(windowHandle.hinstance); // HINSTANCE
+        result = vkCreateWin32SurfaceKHR(m_Instance, &createInfo, nullptr, &m_Surface);
+#elif defined(__linux__)
+        VkWaylandSurfaceCreateInfoKHR createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
+        createInfo.display = reinterpret_cast<wl_display*>(windowHandle.hinstance); // wl_display*
+        createInfo.surface = reinterpret_cast<wl_surface*>(windowHandle.hwnd);      // wl_surface*
+        result = vkCreateWaylandSurfaceKHR(m_Instance, &createInfo, nullptr, &m_Surface);
+#endif
+
         if (result != VK_SUCCESS)
         {
             ThrowErrorMessage("Failed to create Vulkan surface");

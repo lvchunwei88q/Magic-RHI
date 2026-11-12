@@ -5,13 +5,20 @@
 #include <RHIResource.h>
 #include <cstdint>
 
-// Use Win32 platform
-#define VK_USE_PLATFORM_WIN32_KHR
-#include <windows.h>
 #include <vulkan/vulkan.h>
-#include <vulkan/vulkan_win32.h>
-#include "RHIFormatVulkan.h"
 
+// Use Vulkan platform
+#if defined(_WIN32)
+    #define VK_USE_PLATFORM_WIN32_KHR
+    #include <windows.h>
+    #include <vulkan/vulkan_win32.h>
+#elif defined(__linux__)
+    #define VK_USE_PLATFORM_WAYLAND_KHR
+    #include <wayland-client.h>
+    #include <vulkan/vulkan_wayland.h>
+#endif
+
+#include "RHIFormatVulkan.h"
 // DescriptorHeap
 #include "DescriptorHeapVulKan.h"
 
@@ -95,7 +102,7 @@ namespace RHI
         [[nodiscard]] const VkInstance* GetInstance()               const { return &m_Instance; }
         [[nodiscard]] const VkSurfaceKHR* GetVulkanWindowSSurface() const { return &m_Surface; }
         // Create a Vulkan window surface
-        bool CreateVulkanWindowSurface(HWND windowHandle);
+        bool CreateVulkanWindowSurface(NativeWindowHandle windowHandle);
 
         uint32_t GetGraphicsQueueFamilyIndex() const { return m_GraphicsQueueFamilyIndex; }
         uint32_t GetComputeQueueFamilyIndex() const { return m_ComputeQueueFamilyIndex; }
@@ -181,7 +188,7 @@ namespace RHI
         VkPhysicalDevice GetPhysicalDevice() const;
         // Create and Get the Vulkan window surface.
         VkSurfaceKHR GetVulkanWindowSurface() const;
-        bool CreateVulkanWindowSurface(HWND windowHandle);
+        bool CreateVulkanWindowSurface(NativeWindowHandle windowHandle);
 
     private:
         bool VkCreateSwapChain();
