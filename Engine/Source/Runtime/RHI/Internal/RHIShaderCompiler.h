@@ -4,7 +4,7 @@
 #include "IRHIModule.h"
 #include "Common/RHIConfig.h"
 #include <CoreMinimal.h>
-#include <Tools/Singleton.h>
+#include <Utilities/Singleton.h>
 #include "RHIInterface.h"
 
 // Windows headers

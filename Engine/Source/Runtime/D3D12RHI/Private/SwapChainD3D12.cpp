@@ -2,7 +2,7 @@
  * Because we used forward declarations and C++ smart pointers,
  * we need to include the definitions of the forward declarations first.
  */
-#include <Common/Check.h>
+#include <Common/Checker.h>
 #include <cstdint>
 #include "CoreMinimal.h"
 #include "RHICommandListD3D12.h"

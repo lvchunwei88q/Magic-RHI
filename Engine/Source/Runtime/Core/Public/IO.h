@@ -1,59 +1,72 @@
 #pragma once
 
 #include "Common/CORE_API.h"
-#include "Common/Check.h"
-#include "Tools/Singleton.h"
-#include "Tools/Buffer.h"
+#include "Common/Checker.h"
+#include "Utilities/Singleton.h"
+#include "Utilities/BinaryRW.h"
 #include <string>
 #include <vector>
 
 #define CACHE L"Cache\\"
 #define CONFIG L"Config\\"
 
-#ifdef MoveFile
-#undef MoveFile 
-#endif
+// Get rid of Windows macro clutter
+#undef CreateFile
+#undef CreateDirectory
+#undef MoveFile
+
 
 DISABLE_DLL_WARNINGS_PUSH;
 
 /*
-* 注意这里的bool不代表操作成功或失败，具体请参考STL源码
+* Note that the 'bool' here doesn't indicate whether an operation succeeded or failed;
+* in some cases, it might mean something different. For details, check the STL source code.
 */
 
 namespace IO {
-	// 读取整个文件
+	// Read text to file
 	CORE_API std::string ReadAllText(const std::wstring& path);
-	CORE_API std::vector<char> ReadAllBytes(const std::wstring& path);
-	CORE_API std::vector<uint8_t> ReadAllU8Bytes(const std::wstring& path);
-	// 写入字符串到文件
+	// Read bytes to file
+	CORE_API std::vector<char> ReadAllCharBytes(const std::wstring& path);
+	CORE_API std::vector<uint8_t> ReadAllUINT8Bytes(const std::wstring& path);
+	CORE_API BinaryReader ReadAllBinaryReaderBytes(const std::wstring& path);
+	// Write string to file
 	CORE_API void WriteAllText(const std::wstring& path, const std::string& content);
-	// 写入字节到文件
-	CORE_API void WriteAllBytes(const std::wstring& path, const BinaryWrite& data);
-	// 追加字符串到文件末尾
+	// Write byte to file
+	CORE_API void WriteAllBytes(const std::wstring& path, const std::vector<char>& data);
+	CORE_API void WriteAllBytes(const std::wstring& path, const std::vector<uint8_t>& data);
+	CORE_API void WriteAllBytes(const std::wstring& path, const BinaryWriter& data);
+	CORE_API void WriteAllBytes(const std::wstring& path, const uint8_t* data, size_t size);
+	CORE_API void WriteAllBytes(const std::wstring& path, const char* data, size_t size);
+	// Append a string to the end of the file
 	CORE_API void AppendText(const std::wstring& path, const std::string& content);
-	// 追加字节到文件末尾
-	CORE_API void AppendBytes(const std::wstring& path, const BinaryWrite& data);
-	// 删除文件
+	// Append bytes to the end of the file
+	CORE_API void AppendBytes(const std::wstring& path, const std::vector<char>& data);
+	CORE_API void AppendBytes(const std::wstring& path, const std::vector<uint8_t>& data);
+	CORE_API void AppendBytes(const std::wstring& path, const BinaryWriter& data);
+	CORE_API void AppendBytes(const std::wstring& path, const uint8_t* data, size_t size);
+	CORE_API void AppendBytes(const std::wstring& path, const char* data, size_t size);
+	// deleta file
 	CORE_API bool DeleteToFile(const std::wstring& path);
-	// 删除文件夹
+	// deleta directory
 	CORE_API bool DeleteToDirectory(const std::wstring& path);
-	// 创建空文件（如果文件已存在则更新其时间戳）
-	CORE_API bool MakeFile(const std::wstring& path);
-	// 移动/重命名文件或目录
+	// Create an empty file (or update its timestamp if the file already exists)
+	CORE_API bool CreateFile(const std::wstring& path);
+	// Move/Rename Files or Folders
 	CORE_API bool MoveFile(const std::wstring& src, const std::wstring& dst);
-	// 获取文件的目录
+	// Get the file directory
 	CORE_API bool GetFileDirectory(const std::wstring& src, std::wstring& dst);
-	// 获取文件的名称
+	// Get the file name
 	CORE_API bool GetFileName(const std::wstring& src, std::wstring& dst);
-	// 创建目录（包括父目录）
-	CORE_API bool MakeDirectory(const std::wstring& path);
-	// 检查文件或目录是否存在
+	// Create directory (including parent directories)
+	CORE_API bool CreateDirectory(const std::wstring& path);
+	// Check if a file or directory exists
 	CORE_API bool Exists(const std::wstring& path);
-	// 扫描指定目录下的所有文件（不含子目录），返回文件名列表
+	// Scan all files in the specified directory (excluding subdirectories) and return a list of file names
 	CORE_API std::vector<std::string> GetFilesInDirectory(const std::wstring& path);
-	// 窄字符转宽字符 (UTF-8 to UTF-16)
+	// Convert narrow characters to wide characters (UTF-8 to UTF-16)
 	CORE_API std::wstring ToWideString(const std::string& narrow);
-	// 宽字符转窄字符 (UTF-16 to UTF-8)
+	// Convert wide characters to narrow characters (UTF-16 to UTF-8)
 	CORE_API std::string ToNarrowString(const std::wstring& wide);
 
 	struct BaseDirectory {
@@ -92,27 +105,27 @@ namespace IO {
 		ScriptDirectory() = delete;
 	};
 
-	class CORE_API AbsolutePath : public Singleton<AbsolutePath> // 绝对路径
+	class CORE_API AbsolutePath : public Singleton<AbsolutePath> // Absolute Path
 	{
 	public:
 		AbsolutePath() = default;
 
-		// 获取可执行文件所在目录
+		// Get the directory where the executable file is located
 		std::wstring GetExecutableDirectory();
-		// 获取可执行文件的完整路径
+		// Get the full path of the executable file
 		std::wstring GetExecutablePath();
 
-		// 获取当前工作目录
+		// Get current working directory
 		WorkingDirectory GetCurrentWorkingDirectory();
-		// 获取内容路径
+		// Get content directory
 		ContentDirectory GetContentDirectory();
-		// 获取脚本路径
+		// Get script directory
 		ScriptDirectory GetScriptDirectory();
 
-		// 清除缓存
+		// Clear cache
 		void ClearCache();
 	private:
-		// 缓存路径结果，避免重复计算
+		// Cache the path results to avoid recalculating
 		std::wstring ExecutableDirectory;
 		std::wstring CurrentWorkingDirectory;
 		std::wstring ExecutablePath;

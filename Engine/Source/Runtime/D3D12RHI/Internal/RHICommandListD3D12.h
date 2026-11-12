@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <d3d12.h>
 
-#include <Common/Check.h>
+#include <Common/Checker.h>
 #include <Common/RHIConfig.h> // RHI configuration
 
 #include <array>

@@ -1,5 +1,5 @@
 #include "RHILoader.h"
-#include "Tools/EnumClassFlags.h"
+#include <Utilities/EnumClassFlags.h>
 #include <RHI.modules.generated.h>
 
 #include <type_traits>

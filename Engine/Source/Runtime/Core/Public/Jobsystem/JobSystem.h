@@ -3,8 +3,8 @@
 
 #include "Subsystem/Subsystem.h"
 #include "Subsystem/SubsystemTemplate.h" // AUTO_REGISTER_SINGLETON
-#include "Tools/Singleton.h"
-#include "Common/Check.h"
+#include "Utilities/Singleton.h"
+#include "Common/Checker.h"
 #include <memory>
 #include <atomic>
 #include <cstddef>
@@ -102,6 +102,7 @@ namespace Core
         };
 
         void WorkerLoop();
+        void ExecuteTask(Task& task);
         bool TryRunOne(); // Returns true if a task was executed.
 
         uint8_t workerCount = 4u;

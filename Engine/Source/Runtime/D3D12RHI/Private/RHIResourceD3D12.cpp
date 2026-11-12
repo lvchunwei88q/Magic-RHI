@@ -2,7 +2,7 @@
  * Because we used a forward declaration with smart pointers,
  * we need to include the header file with the implementation first.
  */
- #include <Common/Check.h>
+ #include <Common/Checker.h>
 #include "RHICommandListD3D12.h"
 #include "RHID3D12.h"
 

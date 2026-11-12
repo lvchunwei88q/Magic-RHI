@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cassert>
 #include <condition_variable>
+#include <exception>
 #include <mutex>
 #include <queue>
 #include <thread>
@@ -148,13 +149,26 @@ namespace Core
             m_pool->queue.pop();
         }
 
+        ExecuteTask(task);
+        return true;
+    }
+
+    void JobSystem::ExecuteTask(Task& task)
+    {
         if (task.fn) {
-            task.fn();
+            try {
+                task.fn();
+            }
+            catch (const std::exception& error) {
+                ErrorCapture::Capture(std::string("JobSystem task failed: ") + error.what());
+            }
+            catch (...) {
+                ErrorCapture::Capture("JobSystem task failed with an unknown exception");
+            }
         }
         if (task.counter) {
             task.counter->fetch_sub(1, std::memory_order_acq_rel);
         }
-        return true;
     }
 
     void JobSystem::WorkerLoop()
@@ -177,15 +191,7 @@ namespace Core
                 m_pool->queue.pop();
             }
 
-            if (task.fn) {
-                // Errors in user-supplied jobs are bugs in the caller — let
-                // them propagate so the worker thread terminates with a
-                // diagnosable stack instead of silently dropping work.
-                task.fn();
-            }
-            if (task.counter) {
-                task.counter->fetch_sub(1, std::memory_order_acq_rel);
-            }
+            ExecuteTask(task);
         }
     }
 

@@ -1,6 +1,6 @@
 #include "RHIResourceD3D12.h"
 #include <Common/RHIDefinitions.h>
-#include <Common/Check.h>
+#include <Common/Checker.h>
 #include "RHID3D12.h"
 
 #include <IO.h>

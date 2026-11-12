@@ -1,6 +1,6 @@
 #pragma once
 #include <cstdint>
-#include <Tools/EnumClassFlags.h>
+#include <Utilities/EnumClassFlags.h>
 
 #define MAX_uint32_t 0xFFFFFFFF
 #define MAX_uint8_t 0xFF

@@ -11,20 +11,19 @@ using UINT = unsigned int;
 #define FAILED(hr) (((HRESULT)(hr)) < 0)
 #endif
 
-// Visual Studio IntelliSense
-#if defined(__INTELLISENSE__)
-#define MAGIC_IN_IDE 1  
-// JetBrains ReSharper C++
-#elif defined(__RESHARPER__) || defined(__JETBRAINS_IDE__)
-#define MAGIC_IN_IDE 1
-// Clang tools
-#elif defined(__clang_analyzer__)
-#define MAGIC_IN_IDE 1
-// Other static analysis tools
-#elif defined(__cppcheck__) || defined(__clang_tidy__)
-#define MAGIC_IN_IDE 1
-#else
-#define MAGIC_IN_IDE 0
+#ifndef MAGIC_IN_IDE
+  // Visual Studio IntelliSense
+  #if defined(__INTELLISENSE__)
+    #define MAGIC_IN_IDE 1
+  #elif defined(__RESHARPER__) || defined(__JETBRAINS_IDE__)
+    #define MAGIC_IN_IDE 1
+  #elif defined(__clang_analyzer__)
+    #define MAGIC_IN_IDE 1
+  #elif defined(__cppcheck__) || defined(__clang_tidy__)
+    #define MAGIC_IN_IDE 1
+  #else
+    #define MAGIC_IN_IDE 0
+  #endif
 #endif
 
 /*

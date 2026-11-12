@@ -29,8 +29,8 @@ else {																									\
 		BinaryStr = oss.str();																			\
 	}																									\
 																										\
-	IO::MakeDirectory(object##_context_dir);															\
-	IO::MakeFile(object##_context_path);																\
+	IO::CreateDirectory(object##_context_dir);															\
+	IO::CreateFile(object##_context_path);																\
 	IO::WriteAllText(object##_context_path, BinaryStr);													\
 }																										
 
@@ -47,7 +47,7 @@ else {																									\
 		BinaryStr = oss.str();																			\
 	}																									\
 																										\
-	IO::MakeDirectory(object##_context_dir);															\
-	IO::MakeFile(object##_context_path);																\
+	IO::CreateDirectory(object##_context_dir);															\
+	IO::CreateFile(object##_context_path);																\
 	IO::WriteAllText(object##_context_path, BinaryStr);													\
 }

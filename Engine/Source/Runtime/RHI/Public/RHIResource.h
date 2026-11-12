@@ -4,7 +4,7 @@
 #include "Common/RHIConfig.h"
 #include "Common/RHITypes.h"
 #include "Common/RHIDefinitions.h"
-#include <Common/Check.h>
+#include <Common/Checker.h>
 #include <string>
 #include <memory>
 

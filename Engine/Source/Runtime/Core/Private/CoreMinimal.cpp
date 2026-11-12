@@ -1,10 +1,18 @@
 #include "CoreMinimal.h"
+#ifdef _WIN32
 #include <Windows.h>
+#else
+#include <cstdio>
+#endif
 
 #ifdef _DEBUG
-#define LOG_OUTPUT(msg) OutputDebugStringA(msg)
+    #ifdef _WIN32
+        #define LOG_OUTPUT(msg) OutputDebugStringA(msg)
+    #else
+        #define LOG_OUTPUT(msg) do { std::fprintf(stderr, "%s", (msg)); } while (0)
+    #endif
 #else
-#define LOG_OUTPUT(msg) ((void)0)
+    #define LOG_OUTPUT(msg) ((void)0)
 #endif
 
 #define TEMPPLATE_CAPTURE_IMPL(Target)                                                  \

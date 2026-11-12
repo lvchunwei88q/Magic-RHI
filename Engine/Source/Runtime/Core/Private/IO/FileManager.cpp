@@ -5,6 +5,35 @@
 
 namespace fs = std::filesystem;
 namespace IO {
+    namespace {
+        void WriteAllBytesImpl(const std::wstring& path, const void* data, size_t size) {
+            fs::path p(path);
+            std::ofstream file(p, std::ios::out | std::ios::binary | std::ios::trunc);
+            if (!file.is_open()) {
+                throw std::runtime_error("Failed to write file: " + ToNarrowString(path));
+            }
+            if (size > 0) {
+                file.write(static_cast<const char*>(data), static_cast<std::streamsize>(size));
+                if (!file) {
+                    throw std::runtime_error("Failed to write data to file: " + ToNarrowString(path));
+                }
+            }
+        }
+
+        void AppendBytesImpl(const std::wstring& path, const void* data, size_t size) {
+            fs::path p(path);
+            std::ofstream file(p, std::ios::out | std::ios::binary | std::ios::app);
+            if (!file.is_open()) {
+                throw std::runtime_error("Failed to append to file: " + ToNarrowString(path));
+            }
+            if (size > 0) {
+                file.write(static_cast<const char*>(data), static_cast<std::streamsize>(size));
+                if (!file) {
+                    throw std::runtime_error("Failed to append data to file: " + ToNarrowString(path));
+                }
+            }
+        }
+    } // namespace
 
     std::string ReadAllText(const std::wstring& path) {
         fs::path p(path);
@@ -17,7 +46,7 @@ namespace IO {
         return content;
     }
 
-    std::vector<char> ReadAllBytes(const std::wstring& path) {
+    std::vector<char> ReadAllCharBytes(const std::wstring& path) {
         fs::path p(path);
         std::ifstream file(p, std::ios::in | std::ios::binary);
         if (!file.is_open()) {
@@ -28,11 +57,17 @@ namespace IO {
         return content;
     }
 
-    std::vector<uint8_t> ReadAllU8Bytes(const std::wstring& path)
-    {
-        std::vector<char> Content = ReadAllBytes(path);
+    std::vector<uint8_t> ReadAllUINT8Bytes(const std::wstring& path) {
+        std::vector<char> Content = ReadAllCharBytes(path);
         std::vector<uint8_t> uint8_content(Content.begin(), Content.end());
         return uint8_content;
+    }
+
+    BinaryReader ReadAllBinaryReaderBytes(const std::wstring& path)
+    {
+        std::vector<char> Content = ReadAllCharBytes(path);
+        std::vector<uint8_t> uint8_content(Content.begin(), Content.end());
+        return BinaryReader(uint8_content);
     }
 
     void WriteAllText(const std::wstring& path, const std::string& content) {
@@ -44,13 +79,30 @@ namespace IO {
         file.write(content.data(), content.size());
     }
 
-    void WriteAllBytes(const std::wstring& path, const BinaryWrite& data) {
-        fs::path p(path);
-        std::ofstream file(p, std::ios::out | std::ios::binary | std::ios::trunc);
-        if (!file.is_open()) {
-            throw std::runtime_error("Failed to write file: " + ToNarrowString(path));
+    void WriteAllBytes(const std::wstring& path, const std::vector<char>& data) {
+        WriteAllBytesImpl(path, data.data(), data.size());
+    }
+
+    void WriteAllBytes(const std::wstring& path, const std::vector<uint8_t>& data) {
+        WriteAllBytesImpl(path, data.data(), data.size());
+    }
+
+    void WriteAllBytes(const std::wstring& path, const BinaryWriter& data) {
+        WriteAllBytesImpl(path, data.DataU8(), data.GetWrittenSize());
+    }
+
+    void WriteAllBytes(const std::wstring& path, const uint8_t* data, size_t size) {
+        if (size > 0 && data == nullptr) {
+            throw std::invalid_argument("WriteAllBytes: null data pointer");
         }
-        file.write(data.DataChar(), data.GetUsedSize());
+        WriteAllBytesImpl(path, data, size);
+    }
+
+    void WriteAllBytes(const std::wstring& path, const char* data, size_t size) {
+        if (size > 0 && data == nullptr) {
+            throw std::invalid_argument("WriteAllBytes: null data pointer");
+        }
+        WriteAllBytesImpl(path, data, size);
     }
 
     void AppendText(const std::wstring& path, const std::string& content) {
@@ -62,13 +114,30 @@ namespace IO {
         file.write(content.data(), content.size());
     }
 
-    void AppendBytes(const std::wstring& path, const BinaryWrite& data) {
-        fs::path p(path);
-        std::ofstream file(p, std::ios::out | std::ios::binary | std::ios::app);
-        if (!file.is_open()) {
-            throw std::runtime_error("Failed to append to file: " + ToNarrowString(path));
+    void AppendBytes(const std::wstring& path, const std::vector<char>& data) {
+        AppendBytesImpl(path, data.data(), data.size());
+    }
+
+    void AppendBytes(const std::wstring& path, const std::vector<uint8_t>& data) {
+        AppendBytesImpl(path, data.data(), data.size());
+    }
+
+    void AppendBytes(const std::wstring& path, const BinaryWriter& data) {
+        AppendBytesImpl(path, data.DataU8(), data.GetWrittenSize());
+    }
+
+    void AppendBytes(const std::wstring& path, const uint8_t* data, size_t size) {
+        if (size > 0 && data == nullptr) {
+            throw std::invalid_argument("AppendBytes: null data pointer");
         }
-        file.write(data.DataChar(), data.GetUsedSize());
+        AppendBytesImpl(path, data, size);
+    }
+
+    void AppendBytes(const std::wstring& path, const char* data, size_t size) {
+        if (size > 0 && data == nullptr) {
+            throw std::invalid_argument("AppendBytes: null data pointer");
+        }
+        AppendBytesImpl(path, data, size);
     }
 
     bool DeleteToFile(const std::wstring& path) {
@@ -84,16 +153,16 @@ namespace IO {
         std::error_code ec;
 
         if (fs::is_directory(p)) {
-            fs::remove_all(p, ec);  // 删除文件夹及其所有内容
+            fs::remove_all(p, ec);  // remove all content
             return !ec;
         }
-        return false;  // 不是文件夹，返回 false
+        return false;  // Not a folder, return false
     }
 
-    bool MakeFile(const std::wstring& path) {
+    bool CreateFile(const std::wstring& path) {
         fs::path p(path);
         if (fs::exists(p)) {
-            // 更新最后修改时间
+            // Update Last Modified Time
             fs::last_write_time(p, fs::file_time_type::clock::now());
             return true;
         }
@@ -106,12 +175,12 @@ namespace IO {
             fs::path srcPath(src);
             fs::path dstPath(dst);
 
-            // 如果目标已存在且是文件，先删除
+            // No, if the target already exists and is a file, delete it first
             if (fs::exists(dstPath) && fs::is_regular_file(dstPath)) {
                 fs::remove(dstPath);
             }
 
-            // 移动/重命名
+            // Move/Rename
             fs::rename(srcPath, dstPath);
             return true;
         }
@@ -136,7 +205,7 @@ namespace IO {
             std::filesystem::path path(src);
             // Get FileName
             std::filesystem::path filename = path.filename();
-            // 去除扩展名
+            // Remove the extension
             std::filesystem::path stem = filename.stem();
 
             dst = stem.wstring();
@@ -148,12 +217,16 @@ namespace IO {
         }
     }
 
-    bool MakeDirectory(const std::wstring& path) {
+    bool CreateDirectory(const std::wstring& path) {
         fs::path p(path);
-        if (fs::exists(p)) {
-            return fs::is_directory(p);
+        std::error_code error;
+        fs::create_directories(p, error);
+        if (!error) {
+            return true;
         }
-        return fs::create_directories(p);
+
+        std::error_code statusError;
+        return fs::is_directory(p, statusError) && !statusError;
     }
 
     bool Exists(const std::wstring& path) {
