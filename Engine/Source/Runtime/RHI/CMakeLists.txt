@@ -9,12 +9,25 @@ add_engine_library(RHI SHARED
 )
 
 # output RHI.modules.generated.h file
+set(RHI_MODULES_CONTENT "#pragma once\n")
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    # The D3D12 module only supports Windows
+    string(APPEND RHI_MODULES_CONTENT
+        "#define RHI_D3D12_DLL_FILE \"$<TARGET_FILE_NAME:D3D12RHI>\"\n")
+else()
+    string(APPEND RHI_MODULES_CONTENT
+        "#define RHI_D3D12_DLL_FILE \"\"\n")
+endif()
+
+string(APPEND RHI_MODULES_CONTENT
+    "#define RHI_VULKAN_DLL_FILE \"$<TARGET_FILE_NAME:VulKanRHI>\"\n")
+
 file(GENERATE
     OUTPUT ${CMAKE_GENERATE_OUTPUT_DIRECTORY}/RHI/RHI.modules.generated.h
-    CONTENT "#pragma once
-            \n#define RHI_D3D12_DLL_FILE \"$<TARGET_FILE_NAME:D3D12RHI>\"
-            \n#define RHI_VULKAN_DLL_FILE \"$<TARGET_FILE_NAME:VulKanRHI>\""
+    CONTENT "${RHI_MODULES_CONTENT}"
 )
+
 target_include_directories(RHI PUBLIC ${CMAKE_GENERATE_OUTPUT_DIRECTORY}/RHI)
 
 target_include_directories(RHI

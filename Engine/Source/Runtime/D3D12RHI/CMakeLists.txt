@@ -1,5 +1,11 @@
 include(${PROJECT_SOURCE_DIR}/Engine/Cmake/macro.cmake)
 
+# D3D12RHI is only supported on Windows
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    message(STATUS "D3D12RHI: skipped on Linux")
+    return()
+endif()
+
 add_module_sources(D3D12RHI)
 
 add_engine_library(D3D12RHI SHARED
