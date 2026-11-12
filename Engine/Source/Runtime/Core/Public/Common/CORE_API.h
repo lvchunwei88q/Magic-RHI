@@ -1,5 +1,5 @@
 #pragma once
-// 导出/导入宏
+// Export/Import Macro
 #ifdef CORE_EXPORTS
 #define CORE_API __declspec(dllexport)
 #else

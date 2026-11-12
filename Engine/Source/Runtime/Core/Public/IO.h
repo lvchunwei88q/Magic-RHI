@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Common/Core_API.h"
+#include "Common/CORE_API.h"
 #include "Common/Check.h"
 #include "Tools/Singleton.h"
 #include "Tools/Buffer.h"
