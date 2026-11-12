@@ -1,8 +1,3 @@
-# 如果支持，请为 MSVC 编译器启用热重载。
-if (POLICY CMP0141)
-  cmake_policy(SET CMP0141 NEW)
-  set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF:$<AND:$<C_COMPILER_ID:MSVC>,$<CXX_COMPILER_ID:MSVC>>,$<$<CONFIG:Debug,RelWithDebInfo>:EditAndContinue>,$<$<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
-endif()
 
 if(MSVC)
     message(STATUS "🔧 MSVC: Applying MSVC-specific settings...")
@@ -13,34 +8,38 @@ if(MSVC)
     string(REPLACE "/showIncludes" "" CMAKE_DEPFILE_FLAGS_C "${CMAKE_DEPFILE_FLAGS_C}")
     string(REPLACE "/showIncludes" "" CMAKE_DEPFILE_FLAGS_CXX "${CMAKE_DEPFILE_FLAGS_CXX}")
     message(STATUS "MSVC: /utf-8 enabled")
-    # 更改最大数
+    # Max object size for MSVC is 2GB, but we can increase it to 4GB with /bigobj
     add_compile_options(/bigobj)
 endif()
 
-# 定义第三方库的根目录
-set(THIRD_PARTY_DIR ${CMAKE_SOURCE_DIR}/Engine/Thirdparty)
-# 定义内容根目录
+# Define the third-party libraries directory
+set(THIRD_PARTY_DIR ${CMAKE_SOURCE_DIR}/Engine/ThirdParty)
+# Define the content root directory
 set(CONTENT_DIR ${CMAKE_SOURCE_DIR}/Engine/Content)
 
-# 设置输出目录为项目根目录下的 /Binary/BUILD_TYPE
+# Set the output directory for runtime files
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/Binary/$<CONFIG>)
-# 设置生成文件的输出目录
-set(CMAKE_GENERATE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/out/Generate)
+# Set the output directory for generated files
+set(CMAKE_GENERATE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/out/engine_mht_generate)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(MAGIC_HEADER_TOOL_TARGET "MagicHeaderTool"    CACHE INTERNAL "MagicHeaderTool target name")
 set(MAGIC_HEADER_TOOL_RUN    "RunMagicHeaderTool" CACHE INTERNAL "MagicHeaderTool run name")
 
-# 设置 C++ 标准
+# Set C++ standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# 写入所有头文件列表的文件路径
-set(HEADER_LIST_FILE "${CMAKE_GENERATE_OUTPUT_DIRECTORY}/engine_generate_info/engine_headers.buildmeta")
-set(GENERATE_HEADER_MODEL "")
-file(WRITE ${HEADER_LIST_FILE} "")
+# Write the list of header files into a text file, which will be used for generating reflection code in MHT
+set(ENGINE_GENERATE_INFO_DIRECTORY "${CMAKE_GENERATE_OUTPUT_DIRECTORY}/engine_generate_info")
+set(HEADER_LIST_FILE "${ENGINE_GENERATE_INFO_DIRECTORY}/engine_headers.buildmeta")
+set(ENGINE_COMPILE_COMMANDS_FILE "${ENGINE_GENERATE_INFO_DIRECTORY}/engine_compile_commands.buildmeta")
+set(GENERATE_HEADER_LINKPATH "")
+file(MAKE_DIRECTORY "${ENGINE_GENERATE_INFO_DIRECTORY}")
+file(WRITE "${HEADER_LIST_FILE}" "")
 
-# Windows API 用宽字符版本
+# Windows API use Unicode by default
 add_definitions(-DUNICODE -D_UNICODE)
 
 # ============================================================
